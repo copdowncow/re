@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#8B2A3F">
+<title>ReBuket — Букеты и сладости</title>
+<meta name="description" content="ReBuket — маркетплейс букетов, корзин, мишки и сладостей в Таджикистане">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<nav>
+  <div class="nav-wrap">
+    <div class="logo" onclick="goPage('home')">🌸&nbsp;<em>ReBuket</em></div>
+    <ul class="nav-links">
+      <li><a data-nav="home"    onclick="goPage('home')">Главная</a></li>
+      <li><a data-nav="catalog" onclick="goPage('catalog')">Каталог</a></li>
+      <li><a data-nav="sell"    onclick="goPage('sell')">+ Продать</a></li>
+      <li><a data-nav="admin"   class="nav-admin" onclick="goPage('admin')">⚙ Панель</a></li>
+    </ul>
+    <button class="burger" id="burger" onclick="toggleBurger()" aria-label="Меню">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+  <div class="nav-drawer" id="nav-drawer">
+    <a data-nav="home"    onclick="goPage('home')">🏠 Главная</a>
+    <a data-nav="catalog" onclick="goPage('catalog')">🛍 Каталог</a>
+    <a data-nav="sell"    onclick="goPage('sell')">➕ Разместить объявление</a>
+    <a data-nav="admin"   class="nav-admin" onclick="goPage('admin')">⚙ Панель администратора</a>
+  </div>
+</nav>
+
+<div id="page-home" class="page active">
+  <div class="hero">
+    <div class="hero-inner">
+      <h1>🌸 ReBuket</h1>
+      <p>Купи или продай букеты, корзины, мишки и сладости.<br>Свежие цветы и угощения по всему Таджикистану.</p>
+      <div class="hero-btns">
+        <button class="btn btn-white"   onclick="goPage('catalog')">💐 Смотреть каталог</button>
+        <button class="btn btn-outline" onclick="goPage('sell')">+ Разместить</button>
+      </div>
+    </div>
+  </div>
+  
+  <div class="section">
+    <h2 class="section-title">Категории</h2>
+    <p class="section-sub">Выберите категорию или разместите своё объявление</p>
+    <div class="cats">
+      <div class="cat-card" onclick="filterAndGo('Букет')">
+        <div class="cat-img ci-bouquet">💐</div>
+        <div class="cat-body"><h3>Букеты</h3><p>Классические и авторские</p><span class="cat-cnt" id="cnt-bouquet">…</span></div>
+      </div>
+      <div class="cat-card" onclick="filterAndGo('Корзина')">
+        <div class="cat-img ci-basket">🧺</div>
+        <div class="cat-body"><h3>Корзины</h3><p>Праздничные корзины</p><span class="cat-cnt" id="cnt-basket">…</span></div>
+      </div>
+      <div class="cat-card" onclick="filterAndGo('Игрушки')">
+        <div class="cat-img ci-bear">🧸</div>
+        <div class="cat-body"><h3>Игрушки</h3><p>Игрушки с цветами</p><span class="cat-cnt" id="cnt-bear">…</span></div>
+      </div>
+      <div class="cat-card" onclick="filterAndGo('Сладости')">
+        <div class="cat-img ci-sweets">🍰</div>
+        <div class="cat-body"><h3>Сладости</h3><p>Торты, трайфлы, панкейки, капкейки</p><span class="cat-cnt" id="cnt-sweets">…</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="page-catalog" class="page">
+  <div class="section">
+        <button class="back" onclick="goPage('home')">← Назад</button>
+
+    <h2 class="section-title">Каталог</h2>
+    <p class="section-sub">Найдите идеальный подарок</p>
+    <div class="filters">
+      <div class="fg">
+        <label>Категория</label>
+        <div class="chips" id="cat-chips">
+          <button class="chip active" onclick="setCat('Все',this)">Все</button>
+          <button class="chip" onclick="setCat('Букеты',this)">💐 Букеты</button>
+          <button class="chip" onclick="setCat('Корзины',this)">🧺 Корзины</button>
+          <button class="chip" onclick="setCat('Мишки',this)">🧸 Мишки</button>
+          <button class="chip" onclick="setCat('Сладости',this)">🍰 Сладости</button>
+        </div>
+      </div>
+      <div class="fg">
+        <label>Город</label>
+        <select id="f-city" onchange="applyFilters()">
+          <option value="">Все города</option>
+        </select>
+      </div>
+      <div class="fg">
+        <label>Цена до (TJS)</label>
+        <input type="number" id="f-price" placeholder="Любая" oninput="applyFilters()" style="width:120px">
+      </div>
+      <div class="fg">
+        <label>Поиск</label>
+        <input type="text" id="f-search" placeholder="Название…" oninput="applyFilters()" style="width:160px">
+      </div>
+    </div>
+    <div class="pgrid" id="pgrid"><div class="loader">🌸 Загружаем…</div></div>
+    <div id="pgn" class="pgn"></div>
+  </div>
+</div>
+
+<div id="page-product" class="page">
+  <div class="section">
+    <button class="back" onclick="history.back()">← Назад</button>
+    <div id="pd-content"></div>
+  </div>
+</div>
+
+<div id="page-sell" class="page">
+  <div class="section">
+  
+    <button class="back" onclick="goPage('home')">← Назад</button>
+  
+    <h2 class="section-title">Разместить объявление</h2>
+    <p class="section-sub">Ваш товар увидят покупатели после проверки администратором</p>
+    <div class="sell-wrap">
+
+      <div class="form-group" style="margin-bottom:20px">
+        <label>Категория *</label>
+        <div class="radio-row">
+          <label class="rl"><input type="radio" name="sell-cat" value="bouquet" checked> 💐 Букет</label>
+          <label class="rl"><input type="radio" name="sell-cat" value="basket"> 🧺 Корзина</label>
+          <label class="rl"><input type="radio" name="sell-cat" value="bear"> 🧸 Игрушки</label>
+          <label class="rl"><input type="radio" name="sell-cat" value="sweets"> 🍰 Сладости</label>
+        </div>
+      </div>
+
+      <div class="fgrid">
+        <div class="form-group fg-full">
+          <label>Название *</label>
+          <input type="text" id="sell-title" placeholder="Нежный букет из роз / Трайфл клубничный">
+        </div>
+        <div class="form-group fg-full">
+          <label>Описание</label>
+          <textarea id="sell-desc" placeholder="Состав, особенности, повод, вес (для сладостей)…"></textarea>
+        </div>
+        <div class="form-group">
+          <label>Цена (TJS) *</label>
+          <input type="number" id="sell-price" placeholder="350">
+        </div>
+        <div class="form-group">
+          <label>Город *</label>
+          <select id="sell-city">
+            <option value="">— Выберите —</option>
+            <option>Душанбе</option><option>Худжанд</option><option>Куляб</option>
+            <option>Бохтар</option><option>Курган-Тюбе</option><option>Вахдат</option>
+            <option>Турсунзода</option><option>Исфара</option>
+          </select>
+        </div>
+
+        <div class="form-group fg-full" style="background:var(--warm);border-radius:12px;padding:16px">
+          <p style="font-weight:700;margin-bottom:12px;color:var(--mid)">🔐 Ваши контакты (видит только администратор)</p>
+          <div class="fgrid">
+            <div class="form-group">
+              <label>Ваше имя</label>
+              <input type="text" id="sell-name" placeholder="Алина">
+            </div>
+            <div class="form-group">
+              <label>Телефон *</label>
+              <input type="tel" id="sell-phone" placeholder="+992 900 000000">
+            </div>
+            <div class="form-group">
+              <label>Telegram</label>
+              <input type="text" id="sell-tg" placeholder="@username">
+            </div>
+            <div class="form-group">
+              <label>Адрес</label>
+              <input type="text" id="sell-address" placeholder="ул. Рудаки, 12">
+            </div>
+            <div class="form-group">
+              <label>Время получения</label>
+              <input type="text" id="sell-time" placeholder="09:00–21:00 ежедневно">
+            </div>
+          </div>
+          <p style="font-size:.78rem;color:var(--gray);margin-top:10px">
+            Покупатели увидят только кнопки Instagram и Telegram администратора. Ваши личные контакты защищены.
+          </p>
+        </div>
+
+        <div class="form-group fg-full">
+          <label>Фотографии * <span style="color:var(--gray);font-weight:400">(минимум 3 фото)</span></label>
+          <div class="photo-area" onclick="document.getElementById('sell-photos').click()">
+            <span class="icon">📸</span>
+            <b>Нажмите для загрузки</b>
+            <p style="color:var(--gray);font-size:.82rem;margin-top:3px">JPG, PNG, WebP — до 10 МБ каждое</p>
+            <input type="file" 
+                   id="sell-photos" 
+                   accept="image/*" 
+                   multiple 
+                   style="display: none !important;" 
+                   onchange="handlePhotos(event)">
+          </div>
+          <div class="photo-grid" id="sell-photo-grid"></div>
+          <p class="photo-hint" id="photo-hint">Загружено 0 из 3 (минимум 3 фото)</p>
+        </div>
+      </div>
+
+      <button class="btn btn-primary" id="sell-btn" style="width:100%;padding:14px;margin-top:8px;font-size:1rem" onclick="submitListing()">
+        ✅ Разместить объявление
+      </button>
+    </div>
+  </div>
+</div>
+
+<div id="page-admin" class="page">
+  <div class="section">
+
+    <div id="a-login" style="max-width:400px;margin:50px auto;background:#fff;border-radius:var(--rr);padding:40px;box-shadow:0 8px 40px rgba(0,0,0,.12);text-align:center">
+      <div style="font-size:2.8rem;margin-bottom:14px">🔐</div>
+      <h2 style="margin-bottom:5px">Панель администратора</h2>
+      <p style="color:var(--gray);margin-bottom:26px;font-size:.88rem"></p>
+      <div class="form-group" style="margin-bottom:14px">
+        <input type="text"     id="a-user" placeholder="Логин" style="text-align:center" onkeydown="if(event.key==='Enter')adminLogin()">
+      </div>
+      <div class="form-group" style="margin-bottom:20px">
+        <input type="password" id="a-pass" placeholder="Пароль" style="text-align:center" onkeydown="if(event.key==='Enter')adminLogin()">
+      </div>
+      <button class="btn btn-primary" id="a-btn" style="width:100%" onclick="adminLogin()">Войти</button>
+    </div>
+
+    <div id="a-dash" style="display:none">
+      <div class="a-hdr">
+        <div>
+          <h2>🌸 ReBuket — Администратор</h2>
+          <p id="a-welcome" style="opacity:.65;font-size:.82rem;margin-top:2px"></p>
+        </div>
+        <button class="btn btn-outline" onclick="adminLogout()" style="font-size:.82rem;padding:7px 16px;border-color:rgba(255,255,255,.4)">Выйти</button>
+      </div>
+      <div class="stats-bar" id="a-stats">
+        <div class="s-card"><em>⏳</em><b>—</b><small>Загрузка…</small></div>
+      </div>
+      <div class="atabs">
+        <button class="atab active" data-tab="products"  onclick="switchTab('products')">📦 Объявления</button>
+        <button class="atab"        data-tab="inquiries" onclick="switchTab('inquiries')">🛒 Заявки</button>
+        <button class="atab"        data-tab="stats"     onclick="switchTab('stats')">📊 Статистика</button>
+      </div>
+      <div id="tab-products"  class="atab-pane"></div>
+      <div id="tab-inquiries" class="atab-pane" style="display:none"></div>
+      <div id="tab-stats"     class="atab-pane" style="display:none"></div>
+    </div>
+
+  </div>
+</div>
+
+<div class="overlay" id="inq-modal">
+  <div class="modal">
+    <button class="modal-x" onclick="closeModal('inq-modal')">✕</button>
+    <h3 id="inq-title">Оставить заявку</h3>
+    <p style="color:var(--gray);margin-bottom:20px;font-size:.88rem">Ваши данные увидит только администратор</p>
+    <input type="hidden" id="inq-pid">
+    <div class="form-group" style="margin-bottom:13px">
+      <label>Имя</label>
+      <input type="text" id="inq-name" placeholder="Необязательно">
+    </div>
+    <div class="form-group" style="margin-bottom:13px">
+      <label>Телефон *</label>
+      <input type="tel" id="inq-phone" placeholder="+992 900 000000">
+    </div>
+    <div class="form-group" style="margin-bottom:13px">
+      <label>Telegram</label>
+      <input type="text" id="inq-tg" placeholder="@username">
+    </div>
+    <div class="form-group" style="margin-bottom:20px">
+      <label>Пожелания</label>
+      <textarea id="inq-note" placeholder="Желаемое время, особые пожелания…" style="height:72px"></textarea>
+    </div>
+    <button class="btn btn-primary" id="inq-btn" style="width:100%" onclick="submitInquiry()">📩 Отправить заявку</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<footer>
+  <div class="logo">🌸&nbsp;<em>ReBuket</em></div>
+  <p>© 2024 ReBuket — Букеты и сладости по всему Таджикистану</p>
+</footer>
+
+<script type="module">
+import { api, isAuth, setTok, clrTok } from './js/api.js';
+import { goPage, toast } from './js/utils.js';
+import { loadCatalog, loadCounts, loadCities, filterAndGo, handleRoute, loadConfig } from './js/main.js';
+import { checkAdminAuth } from './js/admin.js';
+
+window.toggleBurger = () => {
+  document.getElementById('burger').classList.toggle('open');
+  document.getElementById('nav-drawer').classList.toggle('open');
+};
+
+document.querySelectorAll('.overlay').forEach(el => {
+  el.addEventListener('click', e => { if (e.target === el) el.classList.remove('open'); });
+});
+
+window.addEventListener('rbt:unauth', () => { toast('Сессия истекла','err'); goPage('admin'); });
+
+window.addEventListener('rbt:page', e => {
+  const p = e.detail;
+  if (p === 'catalog') loadCatalog();
+  if (p === 'home')    loadCounts();
+  if (p === 'admin')   checkAdminAuth();
+});
+
+await loadConfig();
+await loadCounts();
+loadCities('f-city');
+
+window.addEventListener('popstate', () => handleRoute());
+
+handleRoute();
+</script>
+
+</body>
+</html>

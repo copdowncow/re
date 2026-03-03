@@ -1,0 +1,207 @@
+'use strict';
+import { api, setTok, clrTok, isAuth } from './api.js';
+import { esc, fmt, fmtD, toast }        from './utils.js';
+
+export function checkAdminAuth() {
+  if (isAuth()) showDash();
+}
+
+window.adminLogin = async () => {
+  const u = document.getElementById('a-user').value.trim();
+  const p = document.getElementById('a-pass').value;
+  if (!u||!p) return;
+  const btn = document.getElementById('a-btn');
+  btn.disabled=true; btn.textContent='Входим…';
+  try {
+    const r = await api.login(u, p);
+    setTok(r.token);
+    document.getElementById('a-welcome').textContent = 'Добро пожаловать, ' + r.admin.username + '!';
+    showDash();
+    toast('Вход выполнен!','ok');
+  } catch(e) { toast(e.message,'err'); }
+  finally { btn.disabled=false; btn.textContent='Войти'; }
+};
+
+window.adminLogout = () => {
+  clrTok();
+  document.getElementById('a-login').style.display = '';
+  document.getElementById('a-dash').style.display  = 'none';
+  toast('Вы вышли из системы');
+};
+
+function showDash() {
+  document.getElementById('a-login').style.display = 'none';
+  document.getElementById('a-dash').style.display  = '';
+  loadDashStats();
+  switchTab('products');
+}
+
+async function loadDashStats() {
+  try {
+    const d  = await api.stats();
+    const pS = d.products || {};
+    const iS = d.inquiries || {};
+    document.getElementById('a-stats').innerHTML = [
+      { e:'📦', n:pS.total||0,   l:'Всего товаров' },
+      { e:'⏳', n:pS.pending||0, l:'На проверке' },
+      { e:'✅', n:pS.active||0,  l:'Активных' },
+      { e:'🛒', n:iS.total||0,   l:'Заявок' },
+      { e:'🆕', n:iS.new_inq||0, l:'Новых заявок' },
+    ].map(s=>`<div class="s-card"><em>${s.e}</em><b>${s.n}</b><small>${s.l}</small></div>`).join('');
+  } catch {}
+}
+
+let _curTab = 'products';
+window.switchTab = async name => {
+  _curTab = name;
+  document.querySelectorAll('.atab').forEach(b => b.classList.toggle('active', b.dataset.tab===name));
+  document.querySelectorAll('.atab-pane').forEach(p => p.style.display='none');
+  document.getElementById('tab-'+name).style.display='';
+  if (name==='products')  await renderProducts();
+  if (name==='inquiries') await renderInquiries();
+  if (name==='stats')     await renderStats();
+};
+
+let pFilter = '';
+window.setPFilter = (s,el) => {
+  pFilter = s;
+  document.querySelectorAll('#p-filter-chips .chip').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  renderProducts();
+};
+
+async function renderProducts() {
+  const el = document.getElementById('tab-products');
+  el.innerHTML = `
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px" id="p-filter-chips">
+      ${[['','Все'],['pending','⏳ На проверке'],['active','✅ Активные'],['hidden','🙈 Скрытые']]
+        .map(([v,l])=>`<button class="chip${pFilter===v?' active':''}" onclick="setPFilter('${v}',this)">${l}</button>`).join('')}
+    </div>
+    <div id="p-table"><div class="loader">Загружаем…</div></div>`;
+
+  try {
+    const r = await api.adminProducts({ status:pFilter, limit:100 });
+    const t = document.getElementById('p-table');
+    if (!r.data?.length) { t.innerHTML='<div class="empty"><span>📭</span><h3>Нет объявлений</h3></div>'; return; }
+    const CAT = { bouquet:'💐 Букет', basket:'🧺 Корзина', bear:'🧸 Игрушки', sweets:'🍰 Сладости' };
+    const BD  = { active:`<span class="bd-g">✅ Активно</span>`, pending:`<span class="bd-y">⏳ Проверка</span>`, hidden:`<span class="bd-r">🙈 Скрыто</span>` };
+    t.innerHTML=`<div class="atable-wrap"><table class="atable">
+      <thead><tr><th>Тип</th><th>Название</th><th>Цена</th><th>Город</th><th>Продавец</th><th>Телефон</th><th>Telegram</th><th>Статус</th><th>Действия</th></tr></thead>
+      <tbody>${r.data.map(p=>`<tr>
+        <td>${CAT[p.category]||p.category}</td>
+        <td>
+          <b>${esc(p.title)}</b><br>
+          <small style="color:var(--gray)">${fmtD(p.created_at)}</small>
+          ${(p.photos||[]).length?`<div class="admin-photos">${(p.photos||[]).slice(0,3).map(ph=>`<img src="${esc(ph)}" onclick="window.open('${esc(ph)}','_blank')" title="Открыть фото">`).join('')}</div>`:''}
+        </td>
+        <td><b>${fmt(p.price)}</b></td>
+        <td>📍${esc(p.city)}</td>
+        <td>${esc(p.seller_name||'—')}</td>
+        <td><a href="tel:${esc(p.seller_phone)}">${esc(p.seller_phone)}</a></td>
+        <td>${p.seller_telegram?`<a href="https://t.me/${esc(p.seller_telegram.replace('@',''))}" target="_blank">${esc(p.seller_telegram)}</a>`:'—'}</td>
+        <td>${BD[p.status]||p.status}</td>
+        <td><div style="display:flex;gap:5px;flex-wrap:wrap">
+          ${p.status==='pending'?`<button class="abtn g" onclick="pAct('${p.id}','active')">✅</button><button class="abtn r" onclick="pAct('${p.id}','hidden')">❌</button>`:''  }
+          ${p.status==='active' ?`<button class="abtn"   onclick="pAct('${p.id}','hidden')">🙈</button>`:'' }
+          ${p.status==='hidden' ?`<button class="abtn g" onclick="pAct('${p.id}','active')">👁</button>`:''}
+          <a class="abtn b" href="/#product-${esc(p.slug||p.id)}" target="_blank">🔗</a>
+          <button class="abtn r" onclick="pDel('${p.id}')">🗑</button>
+        </div></td>
+      </tr>`).join('')}</tbody>
+    </table></div>`;
+  } catch(e) { document.getElementById('p-table').innerHTML=`<div class="empty"><h3>${e.message}</h3></div>`; }
+}
+
+window.pAct = async (id,status) => {
+  try {
+    const fd = new FormData(); fd.append('status',status);
+    await api.updateProduct(id,fd);
+    toast('Обновлено','ok'); renderProducts(); loadDashStats();
+  } catch(e) { toast(e.message,'err'); }
+};
+window.pDel = async id => {
+  if (!confirm('Удалить объявление?')) return;
+  try { await api.deleteProduct(id); toast('Удалено','ok'); renderProducts(); loadDashStats(); }
+  catch(e) { toast(e.message,'err'); }
+};
+
+let iFilter = '';
+window.setIFilter = (s,el) => {
+  iFilter = s;
+  document.querySelectorAll('#i-filter-chips .chip').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  renderInquiries();
+};
+
+async function renderInquiries() {
+  const el = document.getElementById('tab-inquiries');
+  el.innerHTML = `
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px" id="i-filter-chips">
+      ${[['','Все'],['new','🆕 Новые'],['done','✅ Обработанные']]
+        .map(([v,l])=>`<button class="chip${iFilter===v?' active':''}" onclick="setIFilter('${v}',this)">${l}</button>`).join('')}
+    </div>
+    <div id="i-list"><div class="loader">Загружаем…</div></div>`;
+
+  try {
+    const r = await api.inquiries({ status:iFilter, limit:100 });
+    const l = document.getElementById('i-list');
+    if (!r.data?.length) { l.innerHTML='<div class="empty"><span>📭</span><h3>Нет заявок</h3></div>'; return; }
+
+    l.innerHTML = r.data.map(inq => {
+      const prod = inq.products;
+      return `<div class="inq-card">
+        <div class="inq-hd">
+          <div><b>Заявка #${esc(inq.id.substring(0,8))}</b> <small style="color:var(--gray)">${fmtD(inq.created_at)}</small></div>
+          ${inq.status==='new'?`<span class="bd-y">🆕 Новая</span>`:`<span class="bd-g">✅ Готово</span>`}
+        </div>
+        <div class="inq-body">
+          <div>
+            <div>👤 <b>${esc(inq.customer_name||'—')}</b></div>
+            <div>📞 <a href="tel:${esc(inq.customer_phone)}" style="color:var(--rose-d);font-weight:700">${esc(inq.customer_phone)}</a></div>
+            ${inq.customer_telegram?`<div>✈️ <a href="https://t.me/${esc(inq.customer_telegram.replace('@',''))}" target="_blank">${esc(inq.customer_telegram)}</a></div>`:''}
+            ${inq.note?`<div>📝 ${esc(inq.note)}</div>`:''}
+          </div>
+          <div>
+            ${prod?`<div>📦 <b>${esc(prod.title)}</b></div><div>💰 ${fmt(prod.price)}</div>`:'<div>Без привязки к товару</div>'}
+          </div>
+        </div>
+        ${inq.status==='new'?`<div style="display:flex;gap:7px;padding-top:10px;border-top:1px solid #f0f0f0">
+          <button class="abtn g" onclick="iDone('${inq.id}')">✅ Обработано</button>
+        </div>`:''}
+      </div>`;
+    }).join('');
+  } catch(e) { document.getElementById('i-list').innerHTML=`<div class="empty"><h3>${e.message}</h3></div>`; }
+}
+
+window.iDone = async id => {
+  try { await api.updInquiry(id,'done'); toast('Готово','ok'); renderInquiries(); loadDashStats(); }
+  catch(e) { toast(e.message,'err'); }
+};
+
+async function renderStats() {
+  const el = document.getElementById('tab-stats');
+  el.innerHTML = '<div class="loader">Загружаем…</div>';
+  try {
+    const d = await api.stats();
+    const p = d.products||{}, i = d.inquiries||{};
+    el.innerHTML = `
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:18px">
+        <div class="stat-box"><h4>📦 Товары</h4>
+          ${[['Всего',p.total],['Активных',p.active],['На проверке',p.pending],['💐 Букеты',p.bouquets],['🧺 Корзины',p.baskets],['🧸 Мишки',p.bears],['🍰 Сладости',p.sweets]]
+            .map(([l,v])=>`<div class="srow"><span>${l}</span><b>${v||0}</b></div>`).join('')}
+        </div>
+        <div class="stat-box"><h4>🛒 Заявки</h4>
+          ${[['Всего',i.total],['Новых',i.new_inq],['Обработано',(i.total||0)-(i.new_inq||0)]]
+            .map(([l,v])=>`<div class="srow"><span>${l}</span><b>${v||0}</b></div>`).join('')}
+        </div>
+      </div>
+      <div class="stat-box"><h4>📅 Заявки за 30 дней</h4>
+        ${d.by_day?.length
+          ? `<table style="width:100%;border-collapse:collapse">
+              <thead><tr>${['Дата','Заявок'].map(h=>`<th style="text-align:left;padding:7px;color:var(--gray);font-size:.75rem;border-bottom:2px solid #eee">${h}</th>`).join('')}</tr></thead>
+              <tbody>${d.by_day.map(r=>`<tr><td style="padding:7px">${r.date}</td><td style="padding:7px;font-weight:700">${r.count}</td></tr>`).join('')}</tbody>
+            </table>`
+          : '<p style="color:var(--gray);padding:10px 0">Нет данных</p>'}
+      </div>`;
+  } catch(e) { el.innerHTML=`<div class="empty"><h3>${e.message}</h3></div>`; }
+}
