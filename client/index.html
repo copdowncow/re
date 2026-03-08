@@ -4,17 +4,15 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="theme-color" content="#8B2A3F">
-<title>Rebuket — Букеты и сладости</title>
-<meta name="description" content="Rebuket — маркетплейс букетов, корзин, мишек и сладостей в Таджикистане">
-<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<title>ReBuket — Букеты и сладости</title>
+<meta name="description" content="ReBuket — маркетплейс букетов, корзин, мишки и сладостей в Таджикистане">
 <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
 
-<!-- ════ NAV ════════════════════════════════════════════ -->
 <nav>
   <div class="nav-wrap">
-    <div class="logo" onclick="goPage('home')">🌸&nbsp;<em>Rebuket</em></div>
+    <div class="logo" onclick="goPage('home')">🌸&nbsp;<em>ReBuket</em></div>
     <ul class="nav-links">
       <li><a data-nav="home"    onclick="goPage('home')">Главная</a></li>
       <li><a data-nav="catalog" onclick="goPage('catalog')">Каталог</a></li>
@@ -25,7 +23,6 @@
       <span></span><span></span><span></span>
     </button>
   </div>
-  <!-- Mobile drawer -->
   <div class="nav-drawer" id="nav-drawer">
     <a data-nav="home"    onclick="goPage('home')">🏠 Главная</a>
     <a data-nav="catalog" onclick="goPage('catalog')">🛍 Каталог</a>
@@ -34,18 +31,18 @@
   </div>
 </nav>
 
-<!-- ════ HOME ════════════════════════════════════════════ -->
 <div id="page-home" class="page active">
   <div class="hero">
     <div class="hero-inner">
-      <h1>🌸 Rebuket</h1>
-      <p>Купи или продай букеты, корзины, мишек и сладости.<br>Свежие цветы и угощения по всему Таджикистану.</p>
+      <h1>🌸 ReBuket</h1>
+      <p>Купи или продай букеты, корзины, мишки и сладости.<br>Свежие цветы и угощения по всему Таджикистану.</p>
       <div class="hero-btns">
         <button class="btn btn-white"   onclick="goPage('catalog')">💐 Смотреть каталог</button>
         <button class="btn btn-outline" onclick="goPage('sell')">+ Разместить</button>
       </div>
     </div>
   </div>
+  
   <div class="section">
     <h2 class="section-title">Категории</h2>
     <p class="section-sub">Выберите категорию или разместите своё объявление</p>
@@ -58,9 +55,9 @@
         <div class="cat-img ci-basket">🧺</div>
         <div class="cat-body"><h3>Корзины</h3><p>Праздничные корзины</p><span class="cat-cnt" id="cnt-basket">…</span></div>
       </div>
-      <div class="cat-card" onclick="filterAndGo('Мишка')">
+      <div class="cat-card" onclick="filterAndGo('Игрушки')">
         <div class="cat-img ci-bear">🧸</div>
-        <div class="cat-body"><h3>Мишки</h3><p>Мишки с цветами</p><span class="cat-cnt" id="cnt-bear">…</span></div>
+        <div class="cat-body"><h3>Игрушки</h3><p>Игрушки с цветами</p><span class="cat-cnt" id="cnt-bear">…</span></div>
       </div>
       <div class="cat-card" onclick="filterAndGo('Сладости')">
         <div class="cat-img ci-sweets">🍰</div>
@@ -70,9 +67,10 @@
   </div>
 </div>
 
-<!-- ════ CATALOG ════════════════════════════════════════ -->
 <div id="page-catalog" class="page">
   <div class="section">
+        <button class="back" onclick="goPage('home')">← Назад</button>
+
     <h2 class="section-title">Каталог</h2>
     <p class="section-sub">Найдите идеальный подарок</p>
     <div class="filters">
@@ -106,7 +104,6 @@
   </div>
 </div>
 
-<!-- ════ PRODUCT DETAIL ══════════════════════════════════ -->
 <div id="page-product" class="page">
   <div class="section">
     <button class="back" onclick="history.back()">← Назад</button>
@@ -114,36 +111,34 @@
   </div>
 </div>
 
-<!-- ════ SELL ════════════════════════════════════════════ -->
 <div id="page-sell" class="page">
   <div class="section">
+  
+    <button class="back" onclick="goPage('home')">← Назад</button>
+  
     <h2 class="section-title">Разместить объявление</h2>
     <p class="section-sub">Ваш товар увидят покупатели после проверки администратором</p>
     <div class="sell-wrap">
 
-      <!-- Категория -->
       <div class="form-group" style="margin-bottom:20px">
         <label>Категория *</label>
         <div class="radio-row">
           <label class="rl"><input type="radio" name="sell-cat" value="bouquet" checked> 💐 Букет</label>
           <label class="rl"><input type="radio" name="sell-cat" value="basket"> 🧺 Корзина</label>
-          <label class="rl"><input type="radio" name="sell-cat" value="bear"> 🧸 Мишка</label>
+          <label class="rl"><input type="radio" name="sell-cat" value="bear"> 🧸 Игрушки</label>
           <label class="rl"><input type="radio" name="sell-cat" value="sweets"> 🍰 Сладости</label>
         </div>
       </div>
 
       <div class="fgrid">
-        <!-- Название -->
         <div class="form-group fg-full">
           <label>Название *</label>
           <input type="text" id="sell-title" placeholder="Нежный букет из роз / Трайфл клубничный">
         </div>
-        <!-- Описание -->
         <div class="form-group fg-full">
           <label>Описание</label>
           <textarea id="sell-desc" placeholder="Состав, особенности, повод, вес (для сладостей)…"></textarea>
         </div>
-        <!-- Цена и город -->
         <div class="form-group">
           <label>Цена (TJS) *</label>
           <input type="number" id="sell-price" placeholder="350">
@@ -158,7 +153,6 @@
           </select>
         </div>
 
-        <!-- Контакты продавца (только для администратора) -->
         <div class="form-group fg-full" style="background:var(--warm);border-radius:12px;padding:16px">
           <p style="font-weight:700;margin-bottom:12px;color:var(--mid)">🔐 Ваши контакты (видит только администратор)</p>
           <div class="fgrid">
@@ -188,14 +182,18 @@
           </p>
         </div>
 
-        <!-- Фотографии -->
         <div class="form-group fg-full">
           <label>Фотографии * <span style="color:var(--gray);font-weight:400">(минимум 3 фото)</span></label>
           <div class="photo-area" onclick="document.getElementById('sell-photos').click()">
             <span class="icon">📸</span>
             <b>Нажмите для загрузки</b>
             <p style="color:var(--gray);font-size:.82rem;margin-top:3px">JPG, PNG, WebP — до 10 МБ каждое</p>
-            <input type="file" id="sell-photos" accept="image/*" multiple onchange="handlePhotos(event)">
+            <input type="file" 
+                   id="sell-photos" 
+                   accept="image/*" 
+                   multiple 
+                   style="display: none !important;" 
+                   onchange="handlePhotos(event)">
           </div>
           <div class="photo-grid" id="sell-photo-grid"></div>
           <p class="photo-hint" id="photo-hint">Загружено 0 из 3 (минимум 3 фото)</p>
@@ -209,15 +207,13 @@
   </div>
 </div>
 
-<!-- ════ ADMIN ════════════════════════════════════════════ -->
 <div id="page-admin" class="page">
   <div class="section">
 
-    <!-- Login -->
     <div id="a-login" style="max-width:400px;margin:50px auto;background:#fff;border-radius:var(--rr);padding:40px;box-shadow:0 8px 40px rgba(0,0,0,.12);text-align:center">
       <div style="font-size:2.8rem;margin-bottom:14px">🔐</div>
       <h2 style="margin-bottom:5px">Панель администратора</h2>
-      <p style="color:var(--gray);margin-bottom:26px;font-size:.88rem">Логин: <b>admin</b> &nbsp;/&nbsp; Пароль: <b>admin123</b></p>
+      <p style="color:var(--gray);margin-bottom:26px;font-size:.88rem"></p>
       <div class="form-group" style="margin-bottom:14px">
         <input type="text"     id="a-user" placeholder="Логин" style="text-align:center" onkeydown="if(event.key==='Enter')adminLogin()">
       </div>
@@ -227,11 +223,10 @@
       <button class="btn btn-primary" id="a-btn" style="width:100%" onclick="adminLogin()">Войти</button>
     </div>
 
-    <!-- Dashboard -->
     <div id="a-dash" style="display:none">
       <div class="a-hdr">
         <div>
-          <h2>🌸 Rebuket — Администратор</h2>
+          <h2>🌸 ReBuket — Администратор</h2>
           <p id="a-welcome" style="opacity:.65;font-size:.82rem;margin-top:2px"></p>
         </div>
         <button class="btn btn-outline" onclick="adminLogout()" style="font-size:.82rem;padding:7px 16px;border-color:rgba(255,255,255,.4)">Выйти</button>
@@ -252,7 +247,6 @@
   </div>
 </div>
 
-<!-- ════ INQUIRY MODAL ═══════════════════════════════════ -->
 <div class="overlay" id="inq-modal">
   <div class="modal">
     <button class="modal-x" onclick="closeModal('inq-modal')">✕</button>
@@ -279,12 +273,11 @@
   </div>
 </div>
 
-<!-- ════ TOAST ═══════════════════════════════════════════ -->
 <div class="toast" id="toast"></div>
 
 <footer>
-  <div class="logo">🌸&nbsp;<em>Rebuket</em></div>
-  <p>© 2024 Rebuket — Букеты и сладости по всему Таджикистану</p>
+  <div class="logo">🌸&nbsp;<em>ReBuket</em></div>
+  <p>© 2024 ReBuket — Букеты и сладости по всему Таджикистану</p>
 </footer>
 
 <script type="module">
@@ -293,21 +286,17 @@ import { goPage, toast } from './js/utils.js';
 import { loadCatalog, loadCounts, loadCities, filterAndGo, handleRoute, loadConfig } from './js/main.js';
 import { checkAdminAuth } from './js/admin.js';
 
-// ── Mobile nav ──────────────────────────────────────────
 window.toggleBurger = () => {
   document.getElementById('burger').classList.toggle('open');
   document.getElementById('nav-drawer').classList.toggle('open');
 };
 
-// ── Close overlay on bg click ───────────────────────────
 document.querySelectorAll('.overlay').forEach(el => {
   el.addEventListener('click', e => { if (e.target === el) el.classList.remove('open'); });
 });
 
-// ── Unauthorized ────────────────────────────────────────
 window.addEventListener('rbt:unauth', () => { toast('Сессия истекла','err'); goPage('admin'); });
 
-// ── Page change events ──────────────────────────────────
 window.addEventListener('rbt:page', e => {
   const p = e.detail;
   if (p === 'catalog') loadCatalog();
@@ -315,15 +304,12 @@ window.addEventListener('rbt:page', e => {
   if (p === 'admin')   checkAdminAuth();
 });
 
-// ── Init ────────────────────────────────────────────────
 await loadConfig();
 await loadCounts();
 loadCities('f-city');
 
-// ── Handle back/forward navigation ──────────────────────
 window.addEventListener('popstate', () => handleRoute());
 
-// ── Initial route ────────────────────────────────────────
 handleRoute();
 </script>
 

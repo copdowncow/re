@@ -5,6 +5,8 @@ const TG = require('node-telegram-bot-api');
 let userBot  = null;
 let adminBot = null;
 
+// Список chat_id админов — заполняется автоматически когда пишут /start
+// или берётся из .env
 const adminChatIds = new Set();
 
 function getMiniAppUrl() {
@@ -22,15 +24,18 @@ function escHtml(s) {
 //  Инициализация
 // ─────────────────────────────────────────────
 function initBots() {
+
+  // Загружаем chat_id из .env
   if (process.env.ADMIN_CHAT_ID_1) adminChatIds.add(process.env.ADMIN_CHAT_ID_1);
   if (process.env.ADMIN_CHAT_ID_2) adminChatIds.add(process.env.ADMIN_CHAT_ID_2);
   if (process.env.ADMIN_CHAT_ID)   adminChatIds.add(process.env.ADMIN_CHAT_ID);
+
   initUserBot();
   initAdminBot();
 }
 
 // ─────────────────────────────────────────────
-//  USER BOT
+//  USER BOT — для пользователей / мини-апп
 // ─────────────────────────────────────────────
 function initUserBot() {
   const token = process.env.BOT_TOKEN_USER;
@@ -41,6 +46,7 @@ function initUserBot() {
   userBot.onText(/\/start/, async (msg) => {
     const name   = msg.from?.first_name || 'друг';
     const appUrl = getMiniAppUrl();
+
     await userBot.sendMessage(msg.chat.id,
       `🌸 <b>Привет, ${escHtml(name)}!</b>\n\n` +
       `Добро пожаловать в <b>Rebuket</b> — маркетплейс букетов и сладостей в Таджикистане.\n\n` +
@@ -97,6 +103,7 @@ function initUserBot() {
     );
   });
 
+  // Любое не-командное сообщение
   userBot.on('message', async (msg) => {
     if (msg.text?.startsWith('/')) return;
     await userBot.sendMessage(msg.chat.id,
@@ -117,7 +124,7 @@ function initUserBot() {
 }
 
 // ─────────────────────────────────────────────
-//  ADMIN BOT
+//  ADMIN BOT — уведомления администратору
 // ─────────────────────────────────────────────
 function initAdminBot() {
   const token = process.env.BOT_TOKEN_ADMIN;
@@ -125,18 +132,22 @@ function initAdminBot() {
 
   adminBot = new TG(token, { polling: true });
 
+  // /start — автоматически регистрирует chat_id администратора
   adminBot.onText(/\/start/, async (msg) => {
     const chatId = String(msg.chat.id);
     const isNew  = !adminChatIds.has(chatId);
     adminChatIds.add(chatId);
+
     await adminBot.sendMessage(msg.chat.id,
       `🔐 <b>Rebuket Admin Bot</b>\n\n` +
       (isNew
-        ? `✅ Ваш Chat ID <b>${chatId}</b> добавлен.\nТеперь вы будете получать уведомления.`
+        ? `✅ Ваш Chat ID <b>${chatId}</b> добавлен.\nТеперь вы будете получать уведомления о новых объявлениях и заявках.`
         : `Вы уже подключены. Ваш Chat ID: <b>${chatId}</b>`),
       { parse_mode: 'HTML' }
     );
-    if (isNew) console.log(`✅ Новый админ. Добавьте в .env: ADMIN_CHAT_ID_1=${chatId}`);
+
+    // Выводим в консоль чтобы можно было добавить в .env
+    if (isNew) console.log(`✅ Новый админ подключён. Добавьте в .env: ADMIN_CHAT_ID_1=${chatId}`);
   });
 
   adminBot.on('polling_error', (err) => {
@@ -165,59 +176,13 @@ async function sendToAdmins(text, opts = {}) {
 }
 
 // ─────────────────────────────────────────────
-//  Уведомление продавцу — объявление одобрено
-// ─────────────────────────────────────────────
-async function notifySellerApproved(p) {
-  if (!userBot || !p.seller_chat_id) return;
-  const url = `${getMiniAppUrl()}/#product-${p.slug || p.id}`;
-  try {
-    await userBot.sendMessage(p.seller_chat_id,
-      `🎉 <b>Ваше объявление одобрено!</b>\n\n` +
-      `📦 <b>${escHtml(p.title)}</b>\n` +
-      `💰 ${p.price} TJS · 📍 ${escHtml(p.city)}\n\n` +
-      `Теперь его видят все покупатели. Удачных продаж! 🌸`,
-      {
-        parse_mode: 'HTML',
-        reply_markup: { inline_keyboard: [[
-          { text: '🔗 Открыть моё объявление', web_app: { url } }
-        ]]}
-      }
-    );
-  } catch(e) {
-    console.log('Не удалось уведомить продавца:', e.message);
-  }
-}
-
-// ─────────────────────────────────────────────
-//  Уведомление продавцу — объявление отклонено
-// ─────────────────────────────────────────────
-async function notifySellerRejected(p) {
-  if (!userBot || !p.seller_chat_id) return;
-  try {
-    await userBot.sendMessage(p.seller_chat_id,
-      `❌ <b>Ваше объявление отклонено</b>\n\n` +
-      `📦 <b>${escHtml(p.title)}</b>\n\n` +
-      `К сожалению, объявление не прошло модерацию.\n` +
-      `Вы можете разместить новое объявление:`,
-      {
-        parse_mode: 'HTML',
-        reply_markup: { inline_keyboard: [[
-          { text: '➕ Разместить новое', web_app: { url: getMiniAppUrl() + '#sell' } }
-        ]]}
-      }
-    );
-  } catch(e) {
-    console.log('Не удалось уведомить продавца:', e.message);
-  }
-}
-
-// ─────────────────────────────────────────────
-//  Уведомление — новое объявление (для админов)
+//  Уведомление — новое объявление
 // ─────────────────────────────────────────────
 const CATS = { bouquet:'💐 Букет', basket:'🧺 Корзина', bear:'🧸 Игрушки', sweets:'🍰 Сладости' };
 
 async function notifyProduct(p) {
   const url = `${getMiniAppUrl()}/#product-${p.slug || p.id}`;
+
   await sendToAdmins(
     `📦 <b>Новое объявление на проверке!</b>\n─────────────────\n` +
     `${CATS[p.category] || p.category}: <b>${escHtml(p.title)}</b>\n` +
@@ -238,7 +203,7 @@ async function notifyProduct(p) {
 }
 
 // ─────────────────────────────────────────────
-//  Уведомление — новая заявка (для админов)
+//  Уведомление — новая заявка
 // ─────────────────────────────────────────────
 async function notifyInquiry(inq, productTitle, productSlug, productId) {
   const url = (productSlug || productId)
@@ -267,7 +232,7 @@ function setupCallbacks(onApprove, onReject) {
     const [action, id] = (q.data || '').split(':');
 
     if (action === 'approve') {
-      await onApprove(id);
+      onApprove(id);
       await adminBot.answerCallbackQuery(q.id, { text: '✅ Одобрено!' });
       await adminBot.editMessageReplyMarkup(
         { inline_keyboard: [[{ text: '✅ Одобрено', callback_data: 'done' }]] },
@@ -276,7 +241,7 @@ function setupCallbacks(onApprove, onReject) {
     }
 
     if (action === 'reject') {
-      await onReject(id);
+      onReject(id);
       await adminBot.answerCallbackQuery(q.id, { text: '❌ Отклонено' });
       await adminBot.editMessageReplyMarkup(
         { inline_keyboard: [[{ text: '❌ Отклонено', callback_data: 'done' }]] },
@@ -286,11 +251,4 @@ function setupCallbacks(onApprove, onReject) {
   });
 }
 
-module.exports = {
-  initBots,
-  notifyProduct,
-  notifyInquiry,
-  notifySellerApproved,
-  notifySellerRejected,
-  setupCallbacks
-};
+module.exports = { initBots, notifyProduct, notifyInquiry, setupCallbacks };
