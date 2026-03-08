@@ -1,0 +1,271 @@
+'use strict';
+import { api }  from './api.js';
+import { esc, fmt, toast, openModal, goPage } from './utils.js';
+
+// ── Constants ─────────────────────────────────────────────
+const CAT_LABEL = { bouquet:'Букет', basket:'Корзина', bear:'Игрушки', sweets:'Сладости' };
+const CAT_EM    = { bouquet:'💐', basket:'🧺', bear:'🧸', sweets:'🍰' };
+const CAT_CLS   = { bouquet:'pi-bouquet', basket:'pi-basket', bear:'pi-bear', sweets:'pi-sweets' };
+
+let _cfg = { instagram: 'https://instagram.com/rebuket.tj', telegram: 'https://t.me/rebuket_admin' };
+export async function loadConfig() {
+  try { _cfg = await api.config(); } catch {}
+}
+
+let filters = { category:'', city:'', max_price:'', search:'', page:1 };
+
+export async function loadCatalog(extra = {}) {
+  Object.assign(filters, extra, { page:1 });
+  await renderGrid();
+}
+
+async function renderGrid() {
+  const grid = document.getElementById('pgrid');
+  const pgn  = document.getElementById('pgn');
+  grid.innerHTML = '<div class="loader">🌸 Загружаем...</div>';
+  try {
+    const r = await api.products(filters);
+    if (!r.data?.length) {
+      grid.innerHTML = '<div class="empty"><span>🔍</span><h3>Ничего не найдено</h3><p>Попробуйте изменить фильтры</p></div>';
+      pgn.innerHTML = ''; return;
+    }
+    grid.innerHTML = r.data.map(pCard).join('');
+    renderPgn(r.total_pages, r.page, pgn);
+  } catch(e) {
+    grid.innerHTML = `<div class="empty"><span>❌</span><h3>${e.message}</h3></div>`;
+  }
+}
+
+function pCard(p) {
+  const photos = Array.isArray(p.photos) ? p.photos : [];
+  const img = photos[0]
+    ? `<img src="${esc(photos[0])}" alt="${esc(p.title)}" loading="lazy">`
+    : `<div class="pcard-ph ${CAT_CLS[p.category]||''}">${CAT_EM[p.category]||'🌸'}</div>`;
+  return `<div class="pcard" onclick="openProduct('${esc(p.slug||p.id)}')">
+    <div class="pcard-img">${img}<span class="pbadge">${CAT_LABEL[p.category]||p.category}</span></div>
+    <div class="pcard-body">
+      <h4>${esc(p.title)}</h4>
+      <p>${esc((p.description||'').substring(0,65))}…</p>
+      <div class="pmeta"><span class="pprice">${fmt(p.price)}</span><span class="pcity">📍${esc(p.city)}</span></div>
+    </div>
+  </div>`;
+}
+
+function renderPgn(total, cur, el) {
+  if (total <= 1) { el.innerHTML = ''; return; }
+  el.innerHTML = Array.from({length:total},(_,i)=>i+1)
+    .map(n => `<button class="pgn-btn${n===cur?' active':''}" onclick="changePage(${n})">${n}</button>`).join('');
+}
+window.changePage = async n => { filters.page=n; await renderGrid(); window.scrollTo({top:0}); };
+
+window.openProduct = async (slugOrId) => {
+  history.pushState(null, '', '#product-' + slugOrId);
+  goPage('product', false);
+  const el = document.getElementById('pd-content');
+  el.innerHTML = '<div class="loader" style="padding:60px">🌸 Загружаем...</div>';
+  try {
+    const p = await api.product(slugOrId);
+    renderDetail(p, el);
+  } catch(e) {
+    el.innerHTML = `<div class="empty"><span>❌</span><h3>${e.message}</h3></div>`;
+  }
+};
+
+function renderDetail(p, el) {
+  const photos = Array.isArray(p.photos) ? p.photos : [];
+  const pUrl = `${location.origin}/#product-${p.slug||p.id}`;
+
+  const thumbsHtml = photos.length > 1
+    ? `<div class="pd-thumbs">${photos.map((ph,i) =>
+        `<img src="${esc(ph)}" class="${i===0?'active':''}" onclick="switchThumb('${esc(ph)}',this)" loading="lazy">`
+      ).join('')}</div>`
+    : '';
+
+  const mainImg = photos[0]
+    ? `<img id="pd-main" class="pd-main" src="${esc(photos[0])}" alt="${esc(p.title)}">`
+    : `<div class="pd-main-ph ${CAT_CLS[p.category]||''}">${CAT_EM[p.category]||'🌸'}</div>`;
+
+  el.innerHTML = `
+  <div class="pd-wrap">
+    <div class="pd-gallery">${mainImg}${thumbsHtml}</div>
+    <div class="pd-body">
+      <div class="pd-chips">
+        <span class="pd-chip rose">${CAT_LABEL[p.category]||p.category}</span>
+        <span class="pd-chip">📍 ${esc(p.city)}</span>
+        <span class="pd-chip">👁 ${p.view_count||0} просмотров</span>
+      </div>
+      <h2>${esc(p.title)}</h2>
+      <div class="pd-price">${fmt(p.price)}</div>
+      <p class="pd-desc">${esc(p.description||'')}</p>
+      <div class="share-row">
+        🔗 <input id="share-inp" type="text" value="${esc(pUrl)}" readonly>
+        <button onclick="copyLink()">Копировать</button>
+      </div>
+      ${p.address||p.pickup_time ? `<div class="pd-info">
+        ${p.address    ? `<div><div class="pd-info-lbl">Адрес</div><div>📍 ${esc(p.address)}</div></div>` : ''}
+        ${p.pickup_time? `<div><div class="pd-info-lbl">Время</div><div>🕐 ${esc(p.pickup_time)}</div></div>` : ''}
+      </div>` : ''}
+    </div>
+    <div class="pd-contact">
+      <p>Хотите купить?</p>
+      <div class="pd-contact-btns">
+        <button class="btn btn-primary" onclick="openInqModal('${esc(p.id)}','${esc(p.title)}')">📩 Оставить заявку</button>
+        <a class="btn btn-ig"  href="${esc(_cfg.instagram)}" target="_blank">📸 Instagram</a>
+        <a class="btn btn-tg"  href="${esc(_cfg.telegram)}"  target="_blank">✈️ Telegram</a>
+      </div>
+      <p class="pd-contact-note">Ваши данные увидит только администратор. Мы свяжемся с вами.</p>
+    </div>
+  </div>`;
+}
+
+window.switchThumb = (src, el) => {
+  const main = document.getElementById('pd-main');
+  if (main) main.src = src;
+  document.querySelectorAll('.pd-thumbs img').forEach(i => i.classList.remove('active'));
+  el.classList.add('active');
+};
+window.copyLink = () => {
+  const v = document.getElementById('share-inp')?.value;
+  if (v) navigator.clipboard.writeText(v).then(() => toast('Ссылка скопирована!','ok')).catch(()=>{});
+};
+
+window.openInqModal = (pid, title) => {
+  document.getElementById('inq-pid').value = pid || '';
+  document.getElementById('inq-title').textContent = 'Заявка: ' + title;
+  openModal('inq-modal');
+};
+window.submitInquiry = async () => {
+  const phone = document.getElementById('inq-phone').value.trim();
+  if (!phone) { toast('Введите телефон!','err'); return; }
+  const btn = document.getElementById('inq-btn');
+  btn.disabled = true; btn.textContent = 'Отправляем…';
+  try {
+    await api.inquiry({
+      product_id:       document.getElementById('inq-pid').value || undefined,
+      customer_name:    document.getElementById('inq-name').value.trim() || undefined,
+      customer_phone:   phone,
+      customer_telegram:document.getElementById('inq-tg').value.trim() || undefined,
+      note:             document.getElementById('inq-note').value.trim() || undefined,
+    });
+    closeModal('inq-modal');
+    toast('✅ Заявка отправлена! Мы свяжемся с вами.','ok');
+    ['inq-name','inq-phone','inq-tg','inq-note'].forEach(id => { document.getElementById(id).value=''; });
+  } catch(e) { toast('Ошибка: '+e.message,'err'); }
+  finally { btn.disabled=false; btn.textContent='📩 Отправить заявку'; }
+};
+
+export function filterAndGo(cat) {
+  const map = { Букет:'bouquet', Корзина:'basket', Мишка:'bear', Сладости:'sweets' };
+  filters.category = map[cat] || '';
+  goPage('catalog');
+  loadCatalog();
+}
+window.filterAndGo = filterAndGo;
+
+window.setCat = (cat, el) => {
+  document.querySelectorAll('#cat-chips .chip').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  const map = { Все:'', Букеты:'bouquet', Корзины:'basket', Мишки:'bear', Сладости:'sweets' };
+  filters.category = map[cat] || '';
+  loadCatalog();
+};
+window.applyFilters = () => {
+  filters.city      = document.getElementById('f-city')?.value   || '';
+  filters.max_price = document.getElementById('f-price')?.value  || '';
+  filters.search    = document.getElementById('f-search')?.value || '';
+  loadCatalog();
+};
+
+let sellFiles = [];
+
+window.handlePhotos = e => {
+  sellFiles = [...sellFiles, ...Array.from(e.target.files)];
+  renderSellPhotos();
+  e.target.value = '';
+};
+function renderSellPhotos() {
+  const grid = document.getElementById('sell-photo-grid');
+  const hint = document.getElementById('photo-hint');
+  if (!grid) return;
+  grid.innerHTML = sellFiles.map((f, i) => {
+    const url = URL.createObjectURL(f);
+    return `<div class="photo-thumb"><img src="${url}"><button class="photo-del" onclick="removePhoto(${i})">×</button></div>`;
+  }).join('');
+  if (hint) hint.textContent = sellFiles.length < 3
+    ? `Загружено ${sellFiles.length} из 3 (минимум 3 фото)`
+    : `✅ Загружено ${sellFiles.length} фото`;
+}
+window.removePhoto = i => { sellFiles.splice(i,1); renderSellPhotos(); };
+
+window.submitListing = async () => {
+  const title    = document.getElementById('sell-title').value.trim();
+  const price    = document.getElementById('sell-price').value;
+  const city     = document.getElementById('sell-city').value;
+  const phone    = document.getElementById('sell-phone').value.trim();
+  const category = document.querySelector('input[name="sell-cat"]:checked')?.value;
+
+  if (!title||!price||!city||!phone||!category) { toast('Заполните все обязательные поля!','err'); return; }
+  if (sellFiles.length < 3) { toast('Загрузите минимум 3 фотографии!','err'); return; }
+
+  const fd = new FormData();
+  fd.append('title',    title);
+  fd.append('description', document.getElementById('sell-desc').value.trim());
+  fd.append('category', category);
+  fd.append('price',    price);
+  fd.append('city',     city);
+  fd.append('seller_name',     document.getElementById('sell-name').value.trim());
+  fd.append('seller_phone',    phone);
+  fd.append('seller_telegram', document.getElementById('sell-tg').value.trim());
+  fd.append('address',         document.getElementById('sell-address').value.trim());
+  fd.append('pickup_time',     document.getElementById('sell-time').value.trim());
+  sellFiles.forEach(f => fd.append('photos', f));
+
+  const btn = document.getElementById('sell-btn');
+  btn.disabled = true; btn.textContent = 'Отправляем…';
+  try {
+    await api.addProduct(fd);
+    toast('✅ Объявление подано! Ждёт проверки.','ok');
+    ['sell-title','sell-desc','sell-price','sell-phone','sell-name','sell-tg','sell-address','sell-time']
+      .forEach(id => { const el=document.getElementById(id); if(el) el.value=''; });
+    document.getElementById('sell-city').value = '';
+    sellFiles = []; renderSellPhotos();
+    setTimeout(() => goPage('catalog'), 1600);
+  } catch(e) { toast('Ошибка: '+e.message,'err'); }
+  finally { btn.disabled=false; btn.textContent='✅ Разместить объявление'; }
+};
+
+export async function loadCounts() {
+  try {
+    const [a,b,c,d] = await Promise.all([
+      api.products({category:'bouquet',limit:1}),
+      api.products({category:'basket', limit:1}),
+      api.products({category:'bear',   limit:1}),
+      api.products({category:'sweets', limit:1}),
+    ]);
+    const set = (id,v) => { const el=document.getElementById(id); if(el) el.textContent=v+' предложений'; };
+    set('cnt-bouquet', a.total); set('cnt-basket', b.total);
+    set('cnt-bear',    c.total); set('cnt-sweets', d.total);
+  } catch {}
+}
+
+export async function loadCities(selId) {
+  try {
+    const cities = await api.cities();
+    const all = [...new Set(['Душанбе','Худжанд','Куляб','Бохтар','Курган-Тюбе',...cities])].sort();
+    const sel = document.getElementById(selId);
+    if (!sel) return;
+    sel.innerHTML = '<option value="">Все города</option>' + all.map(c=>`<option>${esc(c)}</option>`).join('');
+  } catch {}
+}
+
+export function handleRoute() {
+  const hash = location.hash || '#home';
+  if (hash.startsWith('#product-')) {
+    window.openProduct(hash.replace('#product-',''));
+  } else {
+    const page = hash.replace('#','') || 'home';
+    const valid = ['home','catalog','sell','admin','product'];
+    goPage(valid.includes(page) ? page : 'home', false);
+    if (page === 'catalog') loadCatalog();
+  }
+}
