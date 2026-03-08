@@ -3,15 +3,17 @@ import { api }  from './api.js';
 import { esc, fmt, toast, openModal, goPage } from './utils.js';
 
 // ── Constants ─────────────────────────────────────────────
-const CAT_LABEL = { bouquet:'Букет', basket:'Корзина', bear:'Игрушки', sweets:'Сладости' };
+const CAT_LABEL = { bouquet:'Букет', basket:'Корзина', bear:'Мишка', sweets:'Сладости' };
 const CAT_EM    = { bouquet:'💐', basket:'🧺', bear:'🧸', sweets:'🍰' };
 const CAT_CLS   = { bouquet:'pi-bouquet', basket:'pi-basket', bear:'pi-bear', sweets:'pi-sweets' };
 
-let _cfg = { instagram: 'https://instagram.com/rebuket.tj', telegram: 'https://t.me/rebuket_admin' };
+// Social links from server
+let _cfg = { instagram: 'https://instagram.com/rebuket', telegram: 'https://t.me/rebuket_admin' };
 export async function loadConfig() {
   try { _cfg = await api.config(); } catch {}
 }
 
+// ── CATALOG ───────────────────────────────────────────────
 let filters = { category:'', city:'', max_price:'', search:'', page:1 };
 
 export async function loadCatalog(extra = {}) {
@@ -58,6 +60,7 @@ function renderPgn(total, cur, el) {
 }
 window.changePage = async n => { filters.page=n; await renderGrid(); window.scrollTo({top:0}); };
 
+// ── PRODUCT DETAIL ────────────────────────────────────────
 window.openProduct = async (slugOrId) => {
   history.pushState(null, '', '#product-' + slugOrId);
   goPage('product', false);
@@ -129,6 +132,7 @@ window.copyLink = () => {
   if (v) navigator.clipboard.writeText(v).then(() => toast('Ссылка скопирована!','ok')).catch(()=>{});
 };
 
+// ── INQUIRY MODAL ─────────────────────────────────────────
 window.openInqModal = (pid, title) => {
   document.getElementById('inq-pid').value = pid || '';
   document.getElementById('inq-title').textContent = 'Заявка: ' + title;
@@ -154,6 +158,7 @@ window.submitInquiry = async () => {
   finally { btn.disabled=false; btn.textContent='📩 Отправить заявку'; }
 };
 
+// ── FILTERS ───────────────────────────────────────────────
 export function filterAndGo(cat) {
   const map = { Букет:'bouquet', Корзина:'basket', Мишка:'bear', Сладости:'sweets' };
   filters.category = map[cat] || '';
@@ -176,6 +181,7 @@ window.applyFilters = () => {
   loadCatalog();
 };
 
+// ── SELL FORM ─────────────────────────────────────────────
 let sellFiles = [];
 
 window.handlePhotos = e => {
@@ -197,6 +203,17 @@ function renderSellPhotos() {
 }
 window.removePhoto = i => { sellFiles.splice(i,1); renderSellPhotos(); };
 
+// Получаем Telegram user id если открыто через Mini App
+function getTelegramUserId() {
+  try {
+    const tg = window.Telegram?.WebApp;
+    if (tg?.initDataUnsafe?.user?.id) {
+      return String(tg.initDataUnsafe.user.id);
+    }
+  } catch {}
+  return null;
+}
+
 window.submitListing = async () => {
   const title    = document.getElementById('sell-title').value.trim();
   const price    = document.getElementById('sell-price').value;
@@ -208,17 +225,21 @@ window.submitListing = async () => {
   if (sellFiles.length < 3) { toast('Загрузите минимум 3 фотографии!','err'); return; }
 
   const fd = new FormData();
-  fd.append('title',    title);
-  fd.append('description', document.getElementById('sell-desc').value.trim());
-  fd.append('category', category);
-  fd.append('price',    price);
-  fd.append('city',     city);
+  fd.append('title',        title);
+  fd.append('description',  document.getElementById('sell-desc').value.trim());
+  fd.append('category',     category);
+  fd.append('price',        price);
+  fd.append('city',         city);
   fd.append('seller_name',     document.getElementById('sell-name').value.trim());
   fd.append('seller_phone',    phone);
   fd.append('seller_telegram', document.getElementById('sell-tg').value.trim());
   fd.append('address',         document.getElementById('sell-address').value.trim());
   fd.append('pickup_time',     document.getElementById('sell-time').value.trim());
   sellFiles.forEach(f => fd.append('photos', f));
+
+  // Передаём Telegram chat_id продавца — чтобы уведомить его после модерации
+  const tgUserId = getTelegramUserId();
+  if (tgUserId) fd.append('seller_chat_id', tgUserId);
 
   const btn = document.getElementById('sell-btn');
   btn.disabled = true; btn.textContent = 'Отправляем…';
@@ -234,6 +255,7 @@ window.submitListing = async () => {
   finally { btn.disabled=false; btn.textContent='✅ Разместить объявление'; }
 };
 
+// ── HOME COUNTS ───────────────────────────────────────────
 export async function loadCounts() {
   try {
     const [a,b,c,d] = await Promise.all([
@@ -258,6 +280,7 @@ export async function loadCities(selId) {
   } catch {}
 }
 
+// ── HASH ROUTER ───────────────────────────────────────────
 export function handleRoute() {
   const hash = location.hash || '#home';
   if (hash.startsWith('#product-')) {

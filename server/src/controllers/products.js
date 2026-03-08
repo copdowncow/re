@@ -1,6 +1,6 @@
 'use strict';
 const { q, uploadPhoto, getClient } = require('../db/supabase');
-const { notifyProduct } = require('../services/telegram');
+const { notifyProduct, notifySellerApproved, notifySellerRejected } = require('../services/telegram'); // ← добавлено
 const { v4: uuid } = require('uuid');
 
 function toSlug(str) {
@@ -24,15 +24,11 @@ function toSlug(str) {
 
 async function uniqueSlug(base) {
   if (!base) return `product-${Date.now()}`;
-  
   let slug = base;
   let i = 1;
   while (true) {
-    const rows = await q(sb => 
-      sb.from('products')
-        .select('id')
-        .eq('slug', slug)
-        .limit(1)
+    const rows = await q(sb =>
+      sb.from('products').select('id').eq('slug', slug).limit(1)
     );
     if (!rows?.length) return slug;
     slug = `${base}-${i++}`;
@@ -42,13 +38,12 @@ async function uniqueSlug(base) {
 
 function publicProduct(p) {
   if (!p) return null;
-  const { seller_phone, seller_telegram, seller_name, ...pub } = p;
+  const { seller_phone, seller_telegram, seller_name, seller_chat_id, ...pub } = p; // ← seller_chat_id тоже скрываем
   return {
     ...pub,
-    status: p.status || 'unknown'  
+    status: p.status || 'unknown'
   };
 }
-
 
 exports.getProducts = async (req, res) => {
   try {
@@ -64,9 +59,7 @@ exports.getProducts = async (req, res) => {
     if (category)  query = query.eq('category', category);
     if (city)      query = query.eq('city', city);
     if (max_price) query = query.lte('price', Number(max_price));
-    if (search) {
-      query = query.or(`title.ilike.%${search}%,description.ilike.%${search}%`);
-    }
+    if (search)    query = query.or(`title.ilike.%${search}%,description.ilike.%${search}%`);
 
     const { data, error, count } = await query
       .order('created_at', { ascending: false })
@@ -90,23 +83,18 @@ exports.getProducts = async (req, res) => {
 exports.getProduct = async (req, res) => {
   try {
     const param = req.params.id;
-
     const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(param);
 
-    const query = getClient()
+    const { data, error } = await getClient()
       .from('products')
       .select('*')
       .eq(isUUID ? 'id' : 'slug', param)
       .eq('status', 'active')
       .single();
 
-    const { data, error } = await query;
-
     if (error || !data) {
       console.log(`[getProduct] не найден: param=${param}, type=${isUUID ? 'UUID' : 'slug'}`);
-      return res.status(404).json({ 
-        error: 'Товар не найден, не активен или на модерации' 
-      });
+      return res.status(404).json({ error: 'Товар не найден, не активен или на модерации' });
     }
 
     await getClient()
@@ -147,7 +135,8 @@ exports.createProduct = async (req, res) => {
     const {
       title, description, category, price, city,
       seller_name, seller_phone, seller_telegram,
-      address, pickup_time
+      address, pickup_time,
+      seller_chat_id  // ← добавлено: chat_id продавца из Telegram
     } = req.body;
 
     if (!title || !category || !price || !city || !seller_phone) {
@@ -173,14 +162,15 @@ exports.createProduct = async (req, res) => {
         category,
         price: Number(price),
         city,
-        seller_name: seller_name || null,
+        seller_name:     seller_name     || null,
         seller_phone,
         seller_telegram: seller_telegram || null,
-        address: address || null,
-        pickup_time: pickup_time || null,
+        address:         address         || null,
+        pickup_time:     pickup_time     || null,
+        seller_chat_id:  seller_chat_id  || null, // ← добавлено
         photos,
         slug,
-        status: 'pending'  
+        status: 'pending'
       })
       .select()
       .single();
@@ -201,7 +191,6 @@ exports.createProduct = async (req, res) => {
     res.status(500).json({ error: e.message || 'Ошибка при создании объявления' });
   }
 };
-
 
 exports.adminList = async (req, res) => {
   try {
@@ -275,9 +264,7 @@ exports.adminUpdate = async (req, res) => {
     ];
 
     for (const f of fields) {
-      if (req.body[f] !== undefined) {
-        updates[f] = req.body[f];
-      }
+      if (req.body[f] !== undefined) updates[f] = req.body[f];
     }
 
     if (updates.price !== undefined) {
@@ -299,6 +286,15 @@ exports.adminUpdate = async (req, res) => {
       .single();
 
     if (error) throw error;
+
+    // ── Уведомляем продавца при смене статуса ──────────────
+    if (updates.status === 'active' && existing.status !== 'active') {
+      notifySellerApproved(data).catch(() => {});
+    }
+    if (updates.status === 'hidden' && existing.status === 'pending') {
+      notifySellerRejected(data).catch(() => {});
+    }
+    // ───────────────────────────────────────────────────────
 
     res.json(data);
   } catch (e) {
