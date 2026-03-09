@@ -195,7 +195,7 @@
             <option value="">— Выберите —</option>
             <option>Душанбе</option><option>Худжанд</option><option>Куляб</option>
             <option>Бохтар</option><option>Курган-Тюбе</option><option>Вахдат</option>
-            <option>Турсунзода</option><option>Исфара</option><option>Шахринав</option><option>Дангара</option><option>Регар</option><option>Чкаловск</option>
+            <option>Турсунзода</option><option>Исфара</option><option>Шахринав</option><option>Дангара</option><option>Регар</option><option>Чкаловск</option> <option>Канабадам</option>
           </select>
         </div>
 
@@ -320,12 +320,11 @@
   </div>
 </div>
 
-<!-- ════ TOAST ═══════════════════════════════════════════ -->
 <div class="toast" id="toast"></div>
 
 <footer>
   <div class="logo">🌸&nbsp;<em>ReBuket</em></div>
-  <p>© 2024 ReBuket — подарки по всему Таджикистану</p>
+  <p>© 2025 ReBuket — подарки по всему Таджикистану</p>
 </footer>
 
 <script type="module">
@@ -334,7 +333,6 @@ import { goPage, toast } from './js/utils.js';
 import { loadCatalog, loadCounts, loadCities, filterAndGo, handleRoute, loadConfig } from './js/main.js';
 import { checkAdminAuth } from './js/admin.js';
 
-// ── Mobile nav ──────────────────────────────────────────
 window.toggleBurger = () => {
   document.getElementById('burger').classList.toggle('open');
   document.getElementById('nav-drawer').classList.toggle('open');
