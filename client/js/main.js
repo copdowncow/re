@@ -2,16 +2,23 @@
 import { api }  from './api.js';
 import { esc, fmt, toast, openModal, goPage } from './utils.js';
 
+// ── Commission ───────────────────────────────────────────
+const COMMISSION = 0.25; // 25%
+function priceWithCommission(p) { return Math.ceil(Number(p) * (1 + COMMISSION)); }
+function fmtPrice(p) { return Number(p).toLocaleString('ru-RU') + ' TJS'; }
+
 // ── Constants ─────────────────────────────────────────────
-const CAT_LABEL = { bouquet:'Букет', basket:'Корзина', bear:'Игрушки', sweets:'Сладости' };
+const CAT_LABEL = { bouquet:'Букет', basket:'Корзина', bear:'Мишка', sweets:'Сладости' };
 const CAT_EM    = { bouquet:'💐', basket:'🧺', bear:'🧸', sweets:'🍰' };
 const CAT_CLS   = { bouquet:'pi-bouquet', basket:'pi-basket', bear:'pi-bear', sweets:'pi-sweets' };
 
+// Social links from server
 let _cfg = { instagram: 'https://instagram.com/rebuket.tj', telegram: 'https://t.me/rebuket_admin' };
 export async function loadConfig() {
   try { _cfg = await api.config(); } catch {}
 }
 
+// ── CATALOG ───────────────────────────────────────────────
 let filters = { category:'', city:'', max_price:'', search:'', page:1 };
 
 export async function loadCatalog(extra = {}) {
@@ -46,7 +53,12 @@ function pCard(p) {
     <div class="pcard-body">
       <h4>${esc(p.title)}</h4>
       <p>${esc((p.description||'').substring(0,65))}…</p>
-      <div class="pmeta"><span class="pprice">${fmt(p.price)}</span><span class="pcity">📍${esc(p.city)}</span></div>
+      <div class="pmeta">
+        <div>
+          <span class="pprice">${fmtPrice(priceWithCommission(p.price))}</span>
+        </div>
+        <span class="pcity">📍${esc(p.city)}</span>
+      </div>
     </div>
   </div>`;
 }
@@ -58,6 +70,7 @@ function renderPgn(total, cur, el) {
 }
 window.changePage = async n => { filters.page=n; await renderGrid(); window.scrollTo({top:0}); };
 
+// ── PRODUCT DETAIL ────────────────────────────────────────
 window.openProduct = async (slugOrId) => {
   history.pushState(null, '', '#product-' + slugOrId);
   goPage('product', false);
@@ -95,7 +108,8 @@ function renderDetail(p, el) {
         <span class="pd-chip">👁 ${p.view_count||0} просмотров</span>
       </div>
       <h2>${esc(p.title)}</h2>
-      <div class="pd-price">${fmt(p.price)}</div>
+      <div class="pd-price">${fmtPrice(priceWithCommission(p.price))}</div>
+     
       <p class="pd-desc">${esc(p.description||'')}</p>
       <div class="share-row">
         🔗 <input id="share-inp" type="text" value="${esc(pUrl)}" readonly>
@@ -129,6 +143,7 @@ window.copyLink = () => {
   if (v) navigator.clipboard.writeText(v).then(() => toast('Ссылка скопирована!','ok')).catch(()=>{});
 };
 
+// ── INQUIRY MODAL ─────────────────────────────────────────
 window.openInqModal = (pid, title) => {
   document.getElementById('inq-pid').value = pid || '';
   document.getElementById('inq-title').textContent = 'Заявка: ' + title;
@@ -154,6 +169,7 @@ window.submitInquiry = async () => {
   finally { btn.disabled=false; btn.textContent='📩 Отправить заявку'; }
 };
 
+// ── FILTERS ───────────────────────────────────────────────
 export function filterAndGo(cat) {
   const map = { Букет:'bouquet', Корзина:'basket', Мишка:'bear', Сладости:'sweets' };
   filters.category = map[cat] || '';
@@ -176,12 +192,15 @@ window.applyFilters = () => {
   loadCatalog();
 };
 
+// ── SELL FORM ─────────────────────────────────────────────
 let sellFiles = [];
 
 window.handlePhotos = e => {
-  sellFiles = [...sellFiles, ...Array.from(e.target.files)];
+  const newFiles = Array.from(e.target.files);
+  sellFiles = [...sellFiles, ...newFiles];
   renderSellPhotos();
-  e.target.value = '';
+  // Сбрасываем через setTimeout чтобы браузер успел прочитать файлы
+  setTimeout(() => { e.target.value = ''; }, 100);
 };
 function renderSellPhotos() {
   const grid = document.getElementById('sell-photo-grid');
@@ -196,6 +215,18 @@ function renderSellPhotos() {
     : `✅ Загружено ${sellFiles.length} фото`;
 }
 window.removePhoto = i => { sellFiles.splice(i,1); renderSellPhotos(); };
+
+window.updatePricePreview = () => {
+  const val = Number(document.getElementById('sell-price').value);
+  const preview = document.getElementById('price-preview');
+  if (!val || val <= 0) { preview.style.display = 'none'; return; }
+  const commission = Math.ceil(val * COMMISSION);
+  const total      = val + commission;
+  document.getElementById('price-seller').textContent     = fmtPrice(val);
+  document.getElementById('price-commission').textContent = fmtPrice(commission);
+  document.getElementById('price-total').textContent      = fmtPrice(total);
+  preview.style.display = 'block';
+};
 
 window.submitListing = async () => {
   const title    = document.getElementById('sell-title').value.trim();
@@ -234,6 +265,7 @@ window.submitListing = async () => {
   finally { btn.disabled=false; btn.textContent='✅ Разместить объявление'; }
 };
 
+// ── HOME COUNTS ───────────────────────────────────────────
 export async function loadCounts() {
   try {
     const [a,b,c,d] = await Promise.all([
@@ -258,6 +290,7 @@ export async function loadCities(selId) {
   } catch {}
 }
 
+// ── HASH ROUTER ───────────────────────────────────────────
 export function handleRoute() {
   const hash = location.hash || '#home';
   if (hash.startsWith('#product-')) {
