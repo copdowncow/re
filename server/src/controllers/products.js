@@ -82,9 +82,13 @@ exports.getProducts = async (req, res) => {
   }
 };
 
+// Кеш просмотров: ip+productId -> timestamp последнего просмотра
+const _viewCache = new Map();
+const VIEW_TTL   = 30 * 60 * 1000; // 30 минут
+
 exports.getProduct = async (req, res) => {
   try {
-    const param = req.params.id;
+    const param  = req.params.id;
     const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(param);
 
     const { data, error } = await getClient()
@@ -95,15 +99,27 @@ exports.getProduct = async (req, res) => {
       .single();
 
     if (error || !data) {
-      console.log(`[getProduct] не найден: param=${param}, type=${isUUID ? 'UUID' : 'slug'}`);
+      console.log(`[getProduct] не найден: param=${param}`);
       return res.status(404).json({ error: 'Товар не найден, не активен или на модерации' });
     }
 
-    const newCount = (data.view_count || 0) + 1;
-    await getClient()
-      .from('products')
-      .update({ view_count: newCount })
-      .eq('id', data.id);
+    // Считаем просмотр только раз в 30 минут с одного IP
+    const ip      = req.headers['x-forwarded-for']?.split(',')[0] || req.socket.remoteAddress || 'unknown';
+    const cacheKey = ip + ':' + data.id;
+    const lastView = _viewCache.get(cacheKey);
+    const now      = Date.now();
+
+    let newCount = data.view_count || 0;
+    if (!lastView || now - lastView > VIEW_TTL) {
+      _viewCache.set(cacheKey, now);
+      newCount += 1;
+      getClient()
+        .from('products')
+        .update({ view_count: newCount })
+        .eq('id', data.id)
+        .then(() => {})
+        .catch(e => console.log('view_count update error:', e.message));
+    }
 
     res.json(publicProduct({ ...data, view_count: newCount }));
   } catch (e) {
