@@ -99,12 +99,13 @@ exports.getProduct = async (req, res) => {
       return res.status(404).json({ error: 'Товар не найден, не активен или на модерации' });
     }
 
+    const newCount = (data.view_count || 0) + 1;
     await getClient()
       .from('products')
-      .update({ view_count: (data.view_count || 0) + 1 })
+      .update({ view_count: newCount })
       .eq('id', data.id);
 
-    res.json(publicProduct(data));
+    res.json(publicProduct({ ...data, view_count: newCount }));
   } catch (e) {
     console.error('[getProduct]', e);
     res.status(500).json({ error: e.message || 'Ошибка сервера' });

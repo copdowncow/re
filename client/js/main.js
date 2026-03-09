@@ -3,7 +3,7 @@ import { api }  from './api.js';
 import { esc, fmt, toast, openModal, goPage } from './utils.js';
 
 // ── Commission ───────────────────────────────────────────
-const COMMISSION = 0.25; // 25%
+const COMMISSION = 0.20; // 20%
 function priceWithCommission(p) { return Math.ceil(Number(p) * (1 + COMMISSION)); }
 function fmtPrice(p) { return Number(p).toLocaleString('ru-RU') + ' TJS'; }
 
@@ -81,7 +81,6 @@ function pCard(p) {
       <div class="pmeta">
         <div>
           <span class="pprice">${fmtPrice(priceWithCommission(p.price))}</span>
-          <span style="font-size:.75rem;color:var(--gray);display:block">продавец получит ${fmtPrice(p.price)}</span>
         </div>
         <span class="pcity">📍${esc(p.city)}</span>
       </div>
@@ -136,9 +135,7 @@ function renderDetail(p, el) {
       </div>
       <h2>${esc(p.title)}</h2>
       <div class="pd-price">${fmtPrice(priceWithCommission(p.price))}</div>
-      <div style="font-size:.82rem;color:var(--gray);margin-top:-6px;margin-bottom:10px">
-        Цена с комиссией площадки 25% · продавец получит ${fmtPrice(p.price)}
-      </div>
+      
       <p class="pd-desc">${esc(p.description||'')}</p>
       <div class="share-row">
         🔗 <input id="share-inp" type="text" value="${esc(pUrl)}" readonly>
