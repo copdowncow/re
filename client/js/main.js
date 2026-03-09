@@ -312,7 +312,7 @@ export async function loadCounts() {
 export async function loadCities(selId) {
   try {
     const cities = await api.cities();
-    const all = [...new Set(['Душанбе','Худжанд','Куляб','Бохтар','Курган-Тюбе','Вахдат','Турсунзода','Исфара','Шахринав','Дангара','Регар','Чкаловск',...cities])].sort();
+    const all = [...new Set(['Душанбе','Худжand','Куляб','Бохтар','Курган-Тюбе','Вахдат','Турсунзода','Исфара','Шахринав','Дангара','Регар','Чкаловск','Канибадам',...cities])].sort();
     const sel = document.getElementById(selId);
     if (!sel) return;
     sel.innerHTML = '<option value="">Все города</option>' + all.map(c=>`<option>${esc(c)}</option>`).join('');
