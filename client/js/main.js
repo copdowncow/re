@@ -3,7 +3,7 @@ import { api }  from './api.js';
 import { esc, fmt, toast, openModal, goPage } from './utils.js';
 
 // ── Commission ───────────────────────────────────────────
-const COMMISSION = 0.25; // 25%
+const COMMISSION = 0.20; // 20%
 function priceWithCommission(p) { return Math.ceil(Number(p) * (1 + COMMISSION)); }
 function fmtPrice(p) { return Number(p).toLocaleString('ru-RU') + ' TJS'; }
 
