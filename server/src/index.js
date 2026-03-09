@@ -12,6 +12,8 @@ const routes = require('./routes/index');
 const app  = express();
 const PORT = process.env.PORT || 3000;
 
+app.set('trust proxy', 1); // Доверяем прокси (Railway/Render/Nginx)
+
 app.use(helmet({ contentSecurityPolicy: false, crossOriginResourcePolicy: { policy: 'cross-origin' } }));
 app.use(cors({ origin: '*' }));
 app.use(rateLimit({ windowMs: 15*60*1000, max: 500, standardHeaders: true, legacyHeaders: false }));
