@@ -8,6 +8,31 @@
 <meta name="description" content="ReBuket — маркетплейс букетов, корзин, мишек и сладостей в Таджикистане">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <link rel="stylesheet" href="css/style.css">
+<style>
+.timer-badge {
+  position: absolute;
+  bottom: 8px;
+  left: 8px;
+  background: rgba(0,0,0,.55);
+  color: #fff;
+  font-size: .72rem;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 20px;
+  backdrop-filter: blur(4px);
+}
+.timer-badge.urgent {
+  background: #dc3545;
+  animation: pulse 1.2s infinite;
+}
+.timer-badge.expired {
+  background: #6c757d;
+}
+@keyframes pulse {
+  0%,100% { opacity:1; }
+  50%      { opacity:.6; }
+}
+</style>
 </head>
 <body>
 
@@ -207,12 +232,12 @@
         <!-- Фотографии -->
         <div class="form-group fg-full">
           <label>Фотографии * <span style="color:var(--gray);font-weight:400">(минимум 3 фото)</span></label>
-          <div class="photo-area" onclick="document.getElementById('sell-photos').click()">
+          <label class="photo-area" for="sell-photos" style="cursor:pointer">
             <span class="icon">📸</span>
             <b>Нажмите для загрузки</b>
             <p style="color:var(--gray);font-size:.82rem;margin-top:3px">JPG, PNG, WebP — до 10 МБ каждое</p>
-            <input type="file" id="sell-photos" accept="image/*" multiple onchange="handlePhotos(event)">
-          </div>
+          </label>
+          <input type="file" id="sell-photos" accept="image/*" multiple onchange="handlePhotos(event)" style="display:none">
           <div class="photo-grid" id="sell-photo-grid"></div>
           <p class="photo-hint" id="photo-hint">Загружено 0 из 3 (минимум 3 фото)</p>
         </div>

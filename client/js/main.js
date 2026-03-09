@@ -3,9 +3,34 @@ import { api }  from './api.js';
 import { esc, fmt, toast, openModal, goPage } from './utils.js';
 
 // ── Commission ───────────────────────────────────────────
-const COMMISSION = 0.20; // 20%
+const COMMISSION = 0.25; // 25%
 function priceWithCommission(p) { return Math.ceil(Number(p) * (1 + COMMISSION)); }
 function fmtPrice(p) { return Number(p).toLocaleString('ru-RU') + ' TJS'; }
+
+// ── Expiry timer ─────────────────────────────────────────
+const EXPIRY_CATS = ['bouquet', 'basket']; // категории с таймером
+
+function getTimeLeft(expiresAt) {
+  if (!expiresAt) return null;
+  const diff = new Date(expiresAt) - Date.now();
+  if (diff <= 0) return null;
+  const h = Math.floor(diff / 3600000);
+  const m = Math.floor((diff % 3600000) / 60000);
+  if (h >= 24) {
+    const d = Math.floor(h / 24);
+    const hr = h % 24;
+    return `${d}д ${hr}ч`;
+  }
+  return h > 0 ? `${h}ч ${m}м` : `${m}м`;
+}
+
+function timerBadge(p) {
+  if (!EXPIRY_CATS.includes(p.category) || !p.expires_at) return '';
+  const left = getTimeLeft(p.expires_at);
+  if (!left) return '<span class="timer-badge expired">⏰ Истёк</span>';
+  const urgent = (new Date(p.expires_at) - Date.now()) < 3 * 3600000; // < 3 часов
+  return `<span class="timer-badge${urgent ? ' urgent' : ''}">⏰ ${left}</span>`;
+}
 
 // ── Constants ─────────────────────────────────────────────
 const CAT_LABEL = { bouquet:'Букет', basket:'Корзина', bear:'Мишка', sweets:'Сладости' };
@@ -13,7 +38,7 @@ const CAT_EM    = { bouquet:'💐', basket:'🧺', bear:'🧸', sweets:'🍰' };
 const CAT_CLS   = { bouquet:'pi-bouquet', basket:'pi-basket', bear:'pi-bear', sweets:'pi-sweets' };
 
 // Social links from server
-let _cfg = { instagram: 'https://instagram.com/rebuket.tj', telegram: 'https://t.me/rebuket_admin' };
+let _cfg = { instagram: 'https://instagram.com/rebuket', telegram: 'https://t.me/rebuket_admin' };
 export async function loadConfig() {
   try { _cfg = await api.config(); } catch {}
 }
@@ -49,13 +74,14 @@ function pCard(p) {
     ? `<img src="${esc(photos[0])}" alt="${esc(p.title)}" loading="lazy">`
     : `<div class="pcard-ph ${CAT_CLS[p.category]||''}">${CAT_EM[p.category]||'🌸'}</div>`;
   return `<div class="pcard" onclick="openProduct('${esc(p.slug||p.id)}')">
-    <div class="pcard-img">${img}<span class="pbadge">${CAT_LABEL[p.category]||p.category}</span></div>
+    <div class="pcard-img">${img}<span class="pbadge">${CAT_LABEL[p.category]||p.category}</span>${timerBadge(p)}</div>
     <div class="pcard-body">
       <h4>${esc(p.title)}</h4>
       <p>${esc((p.description||'').substring(0,65))}…</p>
       <div class="pmeta">
         <div>
           <span class="pprice">${fmtPrice(priceWithCommission(p.price))}</span>
+          <span style="font-size:.75rem;color:var(--gray);display:block">продавец получит ${fmtPrice(p.price)}</span>
         </div>
         <span class="pcity">📍${esc(p.city)}</span>
       </div>
@@ -106,10 +132,13 @@ function renderDetail(p, el) {
         <span class="pd-chip rose">${CAT_LABEL[p.category]||p.category}</span>
         <span class="pd-chip">📍 ${esc(p.city)}</span>
         <span class="pd-chip">👁 ${p.view_count||0} просмотров</span>
+        ${EXPIRY_CATS.includes(p.category) && p.expires_at ? `<span class="pd-chip" style="background:#fff3cd;color:#856404">⏰ Активно ещё: ${getTimeLeft(p.expires_at) || 'истёк'}</span>` : ''}
       </div>
       <h2>${esc(p.title)}</h2>
       <div class="pd-price">${fmtPrice(priceWithCommission(p.price))}</div>
-     
+      <div style="font-size:.82rem;color:var(--gray);margin-top:-6px;margin-bottom:10px">
+        Цена с комиссией площадки 25% · продавец получит ${fmtPrice(p.price)}
+      </div>
       <p class="pd-desc">${esc(p.description||'')}</p>
       <div class="share-row">
         🔗 <input id="share-inp" type="text" value="${esc(pUrl)}" readonly>
@@ -197,10 +226,10 @@ let sellFiles = [];
 
 window.handlePhotos = e => {
   const newFiles = Array.from(e.target.files);
+  if (!newFiles.length) return;
   sellFiles = [...sellFiles, ...newFiles];
   renderSellPhotos();
-  // Сбрасываем через setTimeout чтобы браузер успел прочитать файлы
-  setTimeout(() => { e.target.value = ''; }, 100);
+  e.target.value = '';
 };
 function renderSellPhotos() {
   const grid = document.getElementById('sell-photo-grid');
