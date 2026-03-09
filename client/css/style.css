@@ -298,14 +298,22 @@ nav {
 .form-group select:focus,
 .form-group textarea:focus { border-color:var(--rose); background:#fff; }
 .form-group textarea { height:80px; resize:vertical; }
-.radio-row { display:flex; gap:8px; flex-wrap:wrap; }
+.radio-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+@media (min-width: 480px) {
+  .radio-row { grid-template-columns: repeat(4, 1fr); }
+}
 .rl {
-  display:flex; align-items:center; gap:6px; padding:8px 13px;
-  border:2px solid #eee; border-radius:10px; cursor:pointer;
-  font-size:.86rem; font-weight:600; transition:.2s;
+  display: flex; align-items: center; gap: 6px;
+  padding: 10px 12px; border: 2px solid #eee; border-radius: 10px;
+  cursor: pointer; font-size: .86rem; font-weight: 600; transition: .2s;
+  white-space: nowrap; min-width: 0;
 }
 .rl:has(input:checked) { border-color:var(--rose); background:var(--rose-l); color:var(--rose-d); }
-.rl input { accent-color:var(--rose); }
+.rl input { accent-color:var(--rose); flex-shrink:0; }
 
 .photo-area {
   border:2px dashed var(--rose-l); border-radius:12px; padding:24px 16px;
