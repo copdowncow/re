@@ -307,13 +307,23 @@ nav {
   .radio-row { grid-template-columns: repeat(4, 1fr); }
 }
 .rl {
-  display: flex; align-items: center; gap: 6px;
-  padding: 10px 12px; border: 2px solid #eee; border-radius: 10px;
-  cursor: pointer; font-size: .86rem; font-weight: 600; transition: .2s;
-  white-space: nowrap; min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 6px;
+  padding: 10px 10px;
+  border: 2px solid #eee;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: .84rem;
+  font-weight: 600;
+  transition: .2s;
+  overflow: hidden;
+  min-width: 0;
 }
+.rl span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .rl:has(input:checked) { border-color:var(--rose); background:var(--rose-l); color:var(--rose-d); }
-.rl input { accent-color:var(--rose); flex-shrink:0; }
+.rl input { accent-color:var(--rose); flex-shrink:0; margin:0; }
 
 .photo-area {
   border:2px dashed var(--rose-l); border-radius:12px; padding:24px 16px;
