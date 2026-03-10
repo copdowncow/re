@@ -168,6 +168,9 @@ async function sendToAdmins(text, opts = {}) {
 //  Уведомление продавцу — объявление одобрено
 // ─────────────────────────────────────────────
 async function notifySellerApproved(p) {
+  // Всегда публикуем в канал
+  publishToChannel(p).catch(e => console.log('Channel publish error:', e.message));
+
   if (!userBot || !p.seller_chat_id) return;
   const url = `${getMiniAppUrl()}/#product-${p.slug || p.id}`;
   try {
@@ -185,6 +188,67 @@ async function notifySellerApproved(p) {
     );
   } catch(e) {
     console.log('Не удалось уведомить продавца:', e.message);
+  }
+}
+
+// ─────────────────────────────────────────────
+//  Публикация в канал при одобрении
+// ─────────────────────────────────────────────
+async function publishToChannel(p) {
+  const channelId = process.env.CHANNEL_ID;
+  if (!channelId) return;
+
+  const bot    = userBot || adminBot;
+  if (!bot) return;
+
+  const CATS   = { bouquet:'💐 Букет', basket:'🧺 Корзина', bear:'🧸 Мишка', sweets:'🍰 Сладости' };
+  const url    = `${getMiniAppUrl()}/#product-${p.slug || p.id}`;
+  const photos = Array.isArray(p.photos) ? p.photos.filter(Boolean) : [];
+
+  const caption =
+    `${CATS[p.category] || p.category}\n\n` +
+    `<b>${escHtml(p.title)}</b>\n\n` +
+    (p.description ? `${escHtml(p.description.substring(0, 200))}${p.description.length > 200 ? '...' : ''}\n\n` : '') +
+    `💰 <b>${p.price} TJS</b>\n` +
+    `📍 ${escHtml(p.city)}\n` +
+    (p.seller_name ? `👤 ${escHtml(p.seller_name)}\n` : '') +
+    (p.address     ? `🏠 ${escHtml(p.address)}\n`    : '') +
+    (p.pickup_time ? `🕐 ${escHtml(p.pickup_time)}\n` : '');
+
+  const keyboard = { inline_keyboard: [[
+    { text: '🔗 Смотреть объявление', url }
+  ]]};
+
+  try {
+    if (photos.length === 1) {
+      await bot.sendPhoto(channelId, photos[0], {
+        caption,
+        parse_mode: 'HTML',
+        reply_markup: keyboard
+      });
+    } else if (photos.length > 1) {
+      // Отправляем первые 10 фото как медиагруппу, caption только на первом
+      const media = photos.slice(0, 10).map((ph, i) => ({
+        type: 'photo',
+        media: ph,
+        ...(i === 0 ? { caption, parse_mode: 'HTML' } : {})
+      }));
+      await bot.sendMediaGroup(channelId, media);
+      // Кнопка отдельным сообщением т.к. sendMediaGroup не поддерживает reply_markup
+      await bot.sendMessage(channelId,
+        `👆 <b>${escHtml(p.title)}</b> · ${p.price} TJS`,
+        { parse_mode: 'HTML', reply_markup: keyboard }
+      );
+    } else {
+      // Нет фото — просто текст
+      await bot.sendMessage(channelId, caption, {
+        parse_mode: 'HTML',
+        reply_markup: keyboard
+      });
+    }
+    console.log(`📢 Опубликовано в канал: ${p.title}`);
+  } catch(e) {
+    console.log('Ошибка публикации в канал:', e.message);
   }
 }
 
