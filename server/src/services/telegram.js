@@ -205,47 +205,57 @@ async function publishToChannel(p) {
   const url    = `${getMiniAppUrl()}/#product-${p.slug || p.id}`;
   const photos = Array.isArray(p.photos) ? p.photos.filter(Boolean) : [];
 
+  const divider = '─────────────────────';
+  const desc    = p.description ? p.description.substring(0, 300) + (p.description.length > 300 ? '...' : '') : '';
+
   const caption =
-    `${CATS[p.category] || p.category}\n\n` +
-    `<b>${escHtml(p.title)}</b>\n\n` +
-    (p.description ? `${escHtml(p.description.substring(0, 200))}${p.description.length > 200 ? '...' : ''}\n\n` : '') +
-    `💰 <b>${p.price} TJS</b>\n` +
-    `📍 ${escHtml(p.city)}\n` +
-    (p.seller_name ? `👤 ${escHtml(p.seller_name)}\n` : '') +
-    (p.address     ? `🏠 ${escHtml(p.address)}\n`    : '') +
-    (p.pickup_time ? `🕐 ${escHtml(p.pickup_time)}\n` : '');
+    `${CATS[p.category] || p.category}  |  <b>${escHtml(p.title)}</b>\n` +
+    `${divider}\n` +
+    (desc ? `📝 ${escHtml(desc)}\n${divider}\n` : '') +
+    `💰 Цена: <b>${p.price} TJS</b>\n` +
+    `📍 Город: <b>${escHtml(p.city)}</b>\n` +
+    (p.seller_name ? `👤 Продавец: <b>${escHtml(p.seller_name)}</b>\n` : '') +
+    (p.address     ? `🏠 Адрес: ${escHtml(p.address)}\n`               : '') +
+    (p.pickup_time ? `🕐 Время: ${escHtml(p.pickup_time)}\n`            : '') +
+    `${divider}\n` +
+    `🌸 <i>Rebuket — подарки по всему Таджикистану</i>`;
 
   const keyboard = { inline_keyboard: [[
-    { text: '🔗 Смотреть объявление', url }
+    { text: '🔗 Открыть объявление', url }
   ]]};
 
   try {
-    if (photos.length === 1) {
+    if (photos.length === 0) {
+      // Нет фото — текст с кнопкой
+      await bot.sendMessage(channelId, caption, {
+        parse_mode: 'HTML',
+        reply_markup: keyboard
+      });
+
+    } else if (photos.length === 1) {
+      // Одно фото — всё вместе
       await bot.sendPhoto(channelId, photos[0], {
         caption,
         parse_mode: 'HTML',
         reply_markup: keyboard
       });
-    } else if (photos.length > 1) {
-      // Отправляем первые 10 фото как медиагруппу, caption только на первом
-      const media = photos.slice(0, 10).map((ph, i) => ({
-        type: 'photo',
-        media: ph,
-        ...(i === 0 ? { caption, parse_mode: 'HTML' } : {})
-      }));
-      await bot.sendMediaGroup(channelId, media);
-      // Кнопка отдельным сообщением т.к. sendMediaGroup не поддерживает reply_markup
-      await bot.sendMessage(channelId,
-        `👆 <b>${escHtml(p.title)}</b> · ${p.price} TJS`,
-        { parse_mode: 'HTML', reply_markup: keyboard }
-      );
+
     } else {
-      // Нет фото — просто текст
-      await bot.sendMessage(channelId, caption, {
+      // Несколько фото: первое с caption и кнопкой, остальные тихо
+      await bot.sendPhoto(channelId, photos[0], {
+        caption,
         parse_mode: 'HTML',
         reply_markup: keyboard
       });
+      // Остальные фото медиагруппой без текста
+      const rest = photos.slice(1, 10);
+      if (rest.length > 0) {
+        await bot.sendMediaGroup(channelId,
+          rest.map(ph => ({ type: 'photo', media: ph }))
+        );
+      }
     }
+
     console.log(`📢 Опубликовано в канал: ${p.title}`);
   } catch(e) {
     console.log('Ошибка публикации в канал:', e.message);
