@@ -130,7 +130,7 @@ function renderDetail(p, el) {
       <h2>${esc(p.title)}</h2>
       <div class="pd-price">${fmtPrice(priceWithCommission(p.price))}</div>
       <div style="font-size:.82rem;color:var(--gray);margin-top:-6px;margin-bottom:10px">
-        Цена с комиссией площадки 25% · продавец получит ${fmtPrice(p.price)}
+        Цена с комиссией площадки 20% · продавец получит ${fmtPrice(p.price)}
       </div>
       <p class="pd-desc">${esc(p.description||'')}</p>
       <div class="share-row">
