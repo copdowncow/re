@@ -207,25 +207,23 @@ async function publishToChannel(p) {
 
   const EMOJIS    = { bouquet:'💐', basket:'🧺', bear:'🧸', sweets:'🍰' };
   const CAT_NAMES = { bouquet:'Букет', basket:'Корзина', bear:'Мишка', sweets:'Сладости' };
-  const em       = EMOJIS[p.category] || '🌸';
-  const catName  = CAT_NAMES[p.category] || p.category;
-  const desc     = p.description ? p.description.substring(0, 300) + (p.description.length > 300 ? '...' : '') : '';
-  const price    = Number(p.price).toLocaleString('ru-RU');
+  const em      = EMOJIS[p.category] || '🌸';
+  const catName = CAT_NAMES[p.category] || p.category;
+  const desc    = p.description ? p.description.substring(0, 300) + (p.description.length > 300 ? '...' : '') : '';
+  const price   = Number(p.price).toLocaleString('ru-RU');
+  const line    = '─────────────────────';
 
   const caption =
-    `${em} <b>${escHtml(p.title)}</b>\n` +
-    `<i>${catName} · ${escHtml(p.city)}</i>\n` +
-    `\n` +
-    (desc ? `${escHtml(desc)}\n\n` : '') +
-    `┌─────────────────────┐\n` +
-    `│  💰 <b>${price} TJS</b>\n` +
-    `│  📍 ${escHtml(p.city)}\n` +
-    (p.seller_name ? `│  👤 ${escHtml(p.seller_name)}\n` : '') +
-    (p.address     ? `│  🏠 ${escHtml(p.address)}\n`     : '') +
-    (p.pickup_time ? `│  🕐 ${escHtml(p.pickup_time)}\n`  : '') +
-    `└─────────────────────┘\n` +
-    `\n` +
-    `<a href="${url}">✨ Смотреть объявление на ReBuket</a>`;
+    `${em} <b>${catName}</b>  |  <b>${escHtml(p.title)}</b>\n` +
+    `${line}\n` +
+    (desc ? `📝 ${escHtml(desc)}\n${line}\n` : '') +
+    `💰 Цена: <b>${price} TJS</b>\n` +
+    `📍 Город: <b>${escHtml(p.city)}</b>\n` +
+    (p.seller_name ? `👤 Продавец: ${escHtml(p.seller_name)}\n` : '') +
+    (p.address     ? `🏠 Адрес: ${escHtml(p.address)}\n`        : '') +
+    (p.pickup_time ? `🕐 Время: ${escHtml(p.pickup_time)}\n`     : '') +
+    `${line}\n` +
+    `🌸 <a href="${url}">ReBuket</a> — подарки по всему Таджикистану`;
 
   try {
     if (photos.length === 0) {
