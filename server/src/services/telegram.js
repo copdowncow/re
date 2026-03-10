@@ -43,7 +43,7 @@ function initUserBot() {
     const appUrl = getMiniAppUrl();
     await userBot.sendMessage(msg.chat.id,
       `🌸 <b>Привет, ${escHtml(name)}!</b>\n\n` +
-      `Добро пожаловать в <b>Rebuket</b> — маркетплейс букетов и сладостей в Таджикистане.\n\n` +
+      `Добро пожаловать в <b>ReBuket</b> — маркетплейс букетов и сладостей в Таджикистане.\n\n` +
       `💐 <b>Купить</b> — просматривать букеты, корзины, игрушки и сладости\n` +
       `🛍 <b>Продать</b> — разместить своё объявление\n` +
       `📩 <b>Связаться</b> — оставить заявку продавцу\n\n` +
@@ -51,7 +51,7 @@ function initUserBot() {
       {
         parse_mode: 'HTML',
         reply_markup: { inline_keyboard: [[
-          { text: '🌸 Открыть Rebuket', web_app: { url: appUrl } }
+          { text: '🌸 Открыть ReBuket', web_app: { url: appUrl } }
         ]]}
       }
     );
@@ -59,7 +59,7 @@ function initUserBot() {
 
   userBot.onText(/\/catalog/, async (msg) => {
     await userBot.sendMessage(msg.chat.id,
-      `💐 <b>Каталог Rebuket</b>\n\nБукеты, корзины, игрушки и сладости:`,
+      `💐 <b>Каталог ReBuket</b>\n\nБукеты, корзины, игрушки и сладости:`,
       {
         parse_mode: 'HTML',
         reply_markup: { inline_keyboard: [[
@@ -71,7 +71,7 @@ function initUserBot() {
 
   userBot.onText(/\/sell/, async (msg) => {
     await userBot.sendMessage(msg.chat.id,
-      `🛍 <b>Разместить объявление</b>\n\nПродайте букеты или сладости через Rebuket!`,
+      `🛍 <b>Разместить объявление</b>\n\nПродайте букеты или сладости через ReBuket!`,
       {
         parse_mode: 'HTML',
         reply_markup: { inline_keyboard: [[
@@ -83,7 +83,7 @@ function initUserBot() {
 
   userBot.onText(/\/help/, async (msg) => {
     await userBot.sendMessage(msg.chat.id,
-      `🌸 <b>Rebuket — помощь</b>\n\n` +
+      `🌸 <b>ReBuket — помощь</b>\n\n` +
       `/start   — запустить бота\n` +
       `/catalog — каталог\n` +
       `/sell    — разместить объявление\n` +
@@ -91,7 +91,7 @@ function initUserBot() {
       {
         parse_mode: 'HTML',
         reply_markup: { inline_keyboard: [[
-          { text: '🌸 Открыть Rebuket', web_app: { url: getMiniAppUrl() } }
+          { text: '🌸 Открыть ReBuket', web_app: { url: getMiniAppUrl() } }
         ]]}
       }
     );
@@ -100,10 +100,10 @@ function initUserBot() {
   userBot.on('message', async (msg) => {
     if (msg.text?.startsWith('/')) return;
     await userBot.sendMessage(msg.chat.id,
-      `Нажмите кнопку ниже чтобы открыть Rebuket 🌸`,
+      `Нажмите кнопку ниже чтобы открыть ReBuket 🌸`,
       {
         reply_markup: { inline_keyboard: [[
-          { text: '🌸 Открыть Rebuket', web_app: { url: getMiniAppUrl() } }
+          { text: '🌸 Открыть ReBuket', web_app: { url: getMiniAppUrl() } }
         ]]}
       }
     );
@@ -130,7 +130,7 @@ function initAdminBot() {
     const isNew  = !adminChatIds.has(chatId);
     adminChatIds.add(chatId);
     await adminBot.sendMessage(msg.chat.id,
-      `🔐 <b>Rebuket Admin Bot</b>\n\n` +
+      `🔐 <b>ReBuket Admin Bot</b>\n\n` +
       (isNew
         ? `✅ Ваш Chat ID <b>${chatId}</b> добавлен.\nТеперь вы будете получать уведомления.`
         : `Вы уже подключены. Ваш Chat ID: <b>${chatId}</b>`),
@@ -205,55 +205,43 @@ async function publishToChannel(p) {
   const url    = `${getMiniAppUrl()}/#product-${p.slug || p.id}`;
   const photos = Array.isArray(p.photos) ? p.photos.filter(Boolean) : [];
 
-  const divider = '─────────────────────';
-  const desc    = p.description ? p.description.substring(0, 300) + (p.description.length > 300 ? '...' : '') : '';
+  const EMOJIS    = { bouquet:'💐', basket:'🧺', bear:'🧸', sweets:'🍰' };
+  const CAT_NAMES = { bouquet:'Букет', basket:'Корзина', bear:'Мишка', sweets:'Сладости' };
+  const em       = EMOJIS[p.category] || '🌸';
+  const catName  = CAT_NAMES[p.category] || p.category;
+  const desc     = p.description ? p.description.substring(0, 300) + (p.description.length > 300 ? '...' : '') : '';
+  const price    = Number(p.price).toLocaleString('ru-RU');
 
   const caption =
-    `${CATS[p.category] || p.category}  |  <b>${escHtml(p.title)}</b>\n` +
-    `${divider}\n` +
-    (desc ? `📝 ${escHtml(desc)}\n${divider}\n` : '') +
-    `💰 Цена: <b>${p.price} TJS</b>\n` +
-    `📍 Город: <b>${escHtml(p.city)}</b>\n` +
-    (p.seller_name ? `👤 Продавец: <b>${escHtml(p.seller_name)}</b>\n` : '') +
-    (p.address     ? `🏠 Адрес: ${escHtml(p.address)}\n`               : '') +
-    (p.pickup_time ? `🕐 Время: ${escHtml(p.pickup_time)}\n`            : '') +
-    `${divider}\n` +
-    `🌸 <i>Rebuket — подарки по всему Таджикистану</i>`;
-
-  const keyboard = { inline_keyboard: [[
-    { text: '🔗 Открыть объявление', url }
-  ]]};
+    `${em} <b>${escHtml(p.title)}</b>\n` +
+    `<i>${catName} · ${escHtml(p.city)}</i>\n` +
+    `\n` +
+    (desc ? `${escHtml(desc)}\n\n` : '') +
+    `┌─────────────────────┐\n` +
+    `│  💰 <b>${price} TJS</b>\n` +
+    `│  📍 ${escHtml(p.city)}\n` +
+    (p.seller_name ? `│  👤 ${escHtml(p.seller_name)}\n` : '') +
+    (p.address     ? `│  🏠 ${escHtml(p.address)}\n`     : '') +
+    (p.pickup_time ? `│  🕐 ${escHtml(p.pickup_time)}\n`  : '') +
+    `└─────────────────────┘\n` +
+    `\n` +
+    `<a href="${url}">✨ Смотреть объявление на ReBuket</a>`;
 
   try {
     if (photos.length === 0) {
-      // Нет фото — текст с кнопкой
-      await bot.sendMessage(channelId, caption, {
-        parse_mode: 'HTML',
-        reply_markup: keyboard
-      });
+      await bot.sendMessage(channelId, caption, { parse_mode: 'HTML' });
 
     } else if (photos.length === 1) {
-      // Одно фото — всё вместе
-      await bot.sendPhoto(channelId, photos[0], {
-        caption,
-        parse_mode: 'HTML',
-        reply_markup: keyboard
-      });
+      await bot.sendPhoto(channelId, photos[0], { caption, parse_mode: 'HTML' });
 
     } else {
-      // Несколько фото: первое с caption и кнопкой, остальные тихо
-      await bot.sendPhoto(channelId, photos[0], {
-        caption,
-        parse_mode: 'HTML',
-        reply_markup: keyboard
-      });
-      // Остальные фото медиагруппой без текста
-      const rest = photos.slice(1, 10);
-      if (rest.length > 0) {
-        await bot.sendMediaGroup(channelId,
-          rest.map(ph => ({ type: 'photo', media: ph }))
-        );
-      }
+      // Несколько фото: медиагруппа где caption на первом фото
+      const media = photos.slice(0, 10).map((ph, i) => ({
+        type: 'photo',
+        media: ph,
+        ...(i === 0 ? { caption, parse_mode: 'HTML' } : {})
+      }));
+      await bot.sendMediaGroup(channelId, media);
     }
 
     console.log(`📢 Опубликовано в канал: ${p.title}`);
