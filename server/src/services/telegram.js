@@ -223,7 +223,8 @@ async function publishToChannel(p) {
     (p.address     ? `🏠 Адрес: ${escHtml(p.address)}\n`        : '') +
     (p.pickup_time ? `🕐 Время: ${escHtml(p.pickup_time)}\n`     : '') +
     `${line}\n` +
-    `🌸 <a href="${url}">ReBuket</a> — подарки по всему Таджикистану`;
+    `${line}\n` +
+    `🌸 <a href="${url}">Смотреть объявление на ReBuket</a>`;
 
   try {
     if (photos.length === 0) {
