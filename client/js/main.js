@@ -2,42 +2,32 @@
 import { api }  from ‘./api.js’;
 import { esc, fmt, toast, openModal, goPage } from ‘./utils.js’;
 
-// ── Commission ───────────────────────────────────────────
-const COMMISSION = 0.25; // 25%
+const COMMISSION = 0.25;
 function priceWithCommission(p) { return Math.ceil(Number(p) * (1 + COMMISSION)); }
 function fmtPrice(p) { return Number(p).toLocaleString(‘ru-RU’) + ’ TJS’; }
 
-// ── Expiry timer ─────────────────────────────────────────
-const EXPIRY_CATS = [‘bouquet’, ‘basket’]; // категории с таймером
-
+const EXPIRY_CATS = [‘bouquet’, ‘basket’];
 function getTimeLeft(expiresAt) {
 if (!expiresAt) return null;
 const diff = new Date(expiresAt) - Date.now();
 if (diff <= 0) return null;
 const h = Math.floor(diff / 3600000);
 const m = Math.floor((diff % 3600000) / 60000);
-if (h >= 24) {
-const d = Math.floor(h / 24);
-const hr = h % 24;
-return `${d}д ${hr}ч`;
-}
+if (h >= 24) { const d = Math.floor(h / 24); return `${d}д ${h%24}ч`; }
 return h > 0 ? `${h}ч ${m}м` : `${m}м`;
 }
-
 function timerBadge(p) {
 if (!EXPIRY_CATS.includes(p.category) || !p.expires_at) return ‘’;
 const left = getTimeLeft(p.expires_at);
 if (!left) return ‘<span class="timer-badge expired">⏰ Истёк</span>’;
-const urgent = (new Date(p.expires_at) - Date.now()) < 3 * 3600000; // < 3 часов
+const urgent = (new Date(p.expires_at) - Date.now()) < 3 * 3600000;
 return `<span class="timer-badge${urgent ? ' urgent' : ''}">⏰ ${left}</span>`;
 }
 
-// ── Constants ─────────────────────────────────────────────
 const CAT_LABEL = { bouquet:‘Букет’, basket:‘Корзина’, bear:‘Мишка’, sweets:‘Сладости’ };
 const CAT_EM    = { bouquet:‘💐’, basket:‘🧺’, bear:‘🧸’, sweets:‘🍰’ };
 const CAT_CLS   = { bouquet:‘pi-bouquet’, basket:‘pi-basket’, bear:‘pi-bear’, sweets:‘pi-sweets’ };
 
-// Social links from server
 let _cfg = { instagram: ‘https://instagram.com/rebuket’, telegram: ‘https://t.me/rebuket_admin’ };
 export async function loadConfig() {
 try { _cfg = await api.config(); } catch {}
@@ -115,11 +105,12 @@ function renderDetail(p, el) {
 const photos = Array.isArray(p.photos) ? p.photos : [];
 const pUrl = `${location.origin}/#product-${p.slug||p.id}`;
 
+window._lbPhotos = photos;
+window._lbIdx = 0;
+
 const thumbsHtml = photos.length > 1
-? `<div class="pd-thumbs">${photos.map((ph,i) => `<img src="${esc(ph)}" class="${i===0?'active':''}" onclick="switchThumb('${esc(ph)}',this)" loading="lazy">` ).join('')}</div>`
+? `<div class="pd-thumbs">${photos.map((ph,i) => `<img src="${esc(ph)}" class="${i===0?'active':''}" onclick="switchThumb('${esc(ph)}',this,${i})" loading="lazy">` ).join('')}</div>`
 : ‘’;
-// Store photos for lightbox
-window._currentPhotos = photos;
 
 const mainImg = photos[0]
 ? `<img id="pd-main" class="pd-main" src="${esc(photos[0])}" alt="${esc(p.title)}" onclick="openLightbox(0)" style="cursor:zoom-in">`
@@ -155,39 +146,50 @@ el.innerHTML = `
       <p>Хотите купить?</p>
       <div class="pd-contact-btns">
         <button class="btn btn-primary" onclick="openInqModal('${esc(p.id)}','${esc(p.title)}')">📩 Оставить заявку</button>
-        <a class="btn btn-ig"  href="${esc(_cfg.instagram)}" target="_blank">📸 Instagram</a>
-        <a class="btn btn-tg"  href="${esc(_cfg.telegram)}"  target="_blank">✈️ Telegram</a>
+        <a class="btn btn-ig" href="${esc(_cfg.instagram)}" target="_blank">📸 Instagram</a>
+        <a class="btn btn-tg" href="${esc(_cfg.telegram)}"  target="_blank">✈️ Telegram</a>
       </div>
       <p class="pd-contact-note">Ваши данные увидит только администратор. Мы свяжемся с вами.</p>
     </div>
   </div>`;
 }
 
-window.switchThumb = (src, el) => {
+window.switchThumb = (src, el, idx) => {
+window._lbIdx = idx || 0;
 const main = document.getElementById(‘pd-main’);
-if (main) { main.src = src; main.onclick = () => { const idx = (window._currentPhotos||[]).indexOf(src); openLightbox(idx >= 0 ? idx : 0); }; }
+if (main) main.src = src;
 document.querySelectorAll(’.pd-thumbs img’).forEach(i => i.classList.remove(‘active’));
 el.classList.add(‘active’);
 };
-
-// Lightbox
-let _lbIdx = 0;
-window.openLightbox = (idx) => {
-const photos = window._currentPhotos || [];
-if (!photos.length) return;
-_lbIdx = idx;
-const lb = document.getElementById(‘lightbox’);
-document.getElementById(‘lb-img’).src = photos[_lbIdx];
-lb.style.display = ‘flex’;
-};
-window.closeLightbox = () => { document.getElementById(‘lightbox’).style.display = ‘none’; };
-window.lightboxPrev = (e) => { e.stopPropagation(); const p = window._currentPhotos||[]; _lbIdx = (_lbIdx - 1 + p.length) % p.length; document.getElementById(‘lb-img’).src = p[_lbIdx]; };
-window.lightboxNext = (e) => { e.stopPropagation(); const p = window._currentPhotos||[]; _lbIdx = (_lbIdx + 1) % p.length; document.getElementById(‘lb-img’).src = p[_lbIdx]; };
-// Close lightbox on swipe
-document.addEventListener(‘keydown’, e => { if (e.key===‘Escape’) closeLightbox(); if (e.key===‘ArrowLeft’) lightboxPrev(e); if (e.key===‘ArrowRight’) lightboxNext(e); });
 window.copyLink = () => {
 const v = document.getElementById(‘share-inp’)?.value;
 if (v) navigator.clipboard.writeText(v).then(() => toast(‘Ссылка скопирована!’,‘ok’)).catch(()=>{});
+};
+
+// ── LIGHTBOX ──────────────────────────────────────────────
+window.openLightbox = (idx) => {
+const photos = window._lbPhotos || [];
+if (!photos.length) return;
+window._lbIdx = idx || 0;
+document.getElementById(‘lb-img’).src = photos[window._lbIdx];
+document.getElementById(‘lightbox’).style.display = ‘flex’;
+};
+window.closeLightbox = () => {
+document.getElementById(‘lightbox’).style.display = ‘none’;
+};
+window.lightboxPrev = (e) => {
+e.stopPropagation();
+const p = window._lbPhotos || [];
+if (!p.length) return;
+window._lbIdx = (window._lbIdx - 1 + p.length) % p.length;
+document.getElementById(‘lb-img’).src = p[window._lbIdx];
+};
+window.lightboxNext = (e) => {
+e.stopPropagation();
+const p = window._lbPhotos || [];
+if (!p.length) return;
+window._lbIdx = (window._lbIdx + 1) % p.length;
+document.getElementById(‘lb-img’).src = p[window._lbIdx];
 };
 
 // ── INQUIRY MODAL ─────────────────────────────────────────
@@ -203,14 +205,14 @@ const btn = document.getElementById(‘inq-btn’);
 btn.disabled = true; btn.textContent = ‘Отправляем…’;
 try {
 await api.inquiry({
-product_id:       document.getElementById(‘inq-pid’).value || undefined,
-customer_name:    document.getElementById(‘inq-name’).value.trim() || undefined,
-customer_phone:   phone,
-customer_telegram:document.getElementById(‘inq-tg’).value.trim() || undefined,
-note:             document.getElementById(‘inq-note’).value.trim() || undefined,
+product_id:        document.getElementById(‘inq-pid’).value || undefined,
+customer_name:     document.getElementById(‘inq-name’).value.trim() || undefined,
+customer_phone:    phone,
+customer_telegram: document.getElementById(‘inq-tg’).value.trim() || undefined,
+note:              document.getElementById(‘inq-note’).value.trim() || undefined,
 });
 closeModal(‘inq-modal’);
-toast(‘✅ Заявка отправлена! Мы свяжемся с вами.’,‘ok’);
+toast(‘Заявка отправлена! Мы свяжемся с вами.’,‘ok’);
 [‘inq-name’,‘inq-phone’,‘inq-tg’,‘inq-note’].forEach(id => { document.getElementById(id).value=’’; });
 } catch(e) { toast(’Ошибка: ’+e.message,‘err’); }
 finally { btn.disabled=false; btn.textContent=‘📩 Отправить заявку’; }
@@ -249,17 +251,18 @@ sellFiles = […sellFiles, …newFiles];
 renderSellPhotos();
 e.target.value = ‘’;
 };
+
 function renderSellPhotos() {
 const grid = document.getElementById(‘sell-photo-grid’);
 const hint = document.getElementById(‘photo-hint’);
 if (!grid) return;
 grid.innerHTML = sellFiles.map((f, i) => {
 const url = URL.createObjectURL(f);
-return `<div class="photo-thumb"><img src="${url}"><button class="photo-del" onclick="removePhoto(${i})">×</button></div>`;
+return `<div class="photo-thumb"><img src="${url}"><button class="photo-del" onclick="removePhoto(${i})">x</button></div>`;
 }).join(’’);
 if (hint) hint.textContent = sellFiles.length < 3
 ? `Загружено ${sellFiles.length} из 3 (минимум 3 фото)`
-: `✅ Загружено ${sellFiles.length} фото`;
+: `Загружено ${sellFiles.length} фото`;
 }
 window.removePhoto = i => { sellFiles.splice(i,1); renderSellPhotos(); };
 
@@ -272,14 +275,22 @@ document.getElementById(‘sell-cat-val’).value = el.dataset.val;
 window.updatePricePreview = () => {
 const val = Number(document.getElementById(‘sell-price’).value);
 const preview = document.getElementById(‘price-preview’);
-if (!val || val <= 0) { preview.style.display = ‘none’; return; }
+if (!val || val <= 0) { if(preview) preview.style.display = ‘none’; return; }
 const commission = Math.ceil(val * COMMISSION);
-const total      = val + commission;
+const total = val + commission;
 document.getElementById(‘price-seller’).textContent     = fmtPrice(val);
 document.getElementById(‘price-commission’).textContent = fmtPrice(commission);
 document.getElementById(‘price-total’).textContent      = fmtPrice(total);
-preview.style.display = ‘block’;
+if(preview) preview.style.display = ‘block’;
 };
+
+function getTelegramUserId() {
+try {
+const tg = window.Telegram?.WebApp;
+if (tg?.initDataUnsafe?.user?.id) return String(tg.initDataUnsafe.user.id);
+} catch {}
+return null;
+}
 
 window.submitListing = async () => {
 const title    = document.getElementById(‘sell-title’).value.trim();
@@ -292,30 +303,32 @@ if (!title||!price||!city||!phone||!category) { toast(‘Заполните вс
 if (sellFiles.length < 3) { toast(‘Загрузите минимум 3 фотографии!’,‘err’); return; }
 
 const fd = new FormData();
-fd.append(‘title’,    title);
-fd.append(‘description’, document.getElementById(‘sell-desc’).value.trim());
-fd.append(‘category’, category);
-fd.append(‘price’,    price);
-fd.append(‘city’,     city);
+fd.append(‘title’,           title);
+fd.append(‘description’,     document.getElementById(‘sell-desc’).value.trim());
+fd.append(‘category’,        category);
+fd.append(‘price’,           price);
+fd.append(‘city’,            city);
 fd.append(‘seller_name’,     document.getElementById(‘sell-name’).value.trim());
 fd.append(‘seller_phone’,    phone);
 fd.append(‘seller_telegram’, document.getElementById(‘sell-tg’).value.trim());
 fd.append(‘address’,         document.getElementById(‘sell-address’).value.trim());
 fd.append(‘pickup_time’,     document.getElementById(‘sell-time’).value.trim());
 sellFiles.forEach(f => fd.append(‘photos’, f));
+const tgId = getTelegramUserId();
+if (tgId) fd.append(‘seller_chat_id’, tgId);
 
 const btn = document.getElementById(‘sell-btn’);
 btn.disabled = true; btn.textContent = ‘Отправляем…’;
 try {
 await api.addProduct(fd);
-toast(‘✅ Объявление подано! Ждёт проверки.’,‘ok’);
+toast(‘Объявление подано! Ждет проверки.’,‘ok’);
 [‘sell-title’,‘sell-desc’,‘sell-price’,‘sell-phone’,‘sell-name’,‘sell-tg’,‘sell-address’,‘sell-time’]
 .forEach(id => { const el=document.getElementById(id); if(el) el.value=’’; });
 document.getElementById(‘sell-city’).value = ‘’;
 sellFiles = []; renderSellPhotos();
 setTimeout(() => goPage(‘catalog’), 1600);
 } catch(e) { toast(’Ошибка: ’+e.message,‘err’); }
-finally { btn.disabled=false; btn.textContent=‘✅ Разместить объявление’; }
+finally { btn.disabled=false; btn.textContent=‘Разместить объявление’; }
 };
 
 // ── HOME COUNTS ───────────────────────────────────────────
@@ -336,7 +349,8 @@ set(‘cnt-bear’,    c.total); set(‘cnt-sweets’, d.total);
 export async function loadCities(selId) {
 try {
 const cities = await api.cities();
-const all = […new Set([‘Душанбе’,‘Худжанд’,‘Куляб’,‘Бохтар’,‘Курган-Тюбе’,‘Вахдат’,‘Турсунзода’,‘Исфара’,‘Шахринав’,‘Дангара’,‘Регар’,‘Чкаловск’,…cities])].sort();
+const base = [‘Душанбе’,‘Худжанд’,‘Куляб’,‘Бохтар’,‘Курган-Тюбе’,‘Вахдат’,‘Турсунзода’,‘Исфара’,‘Шахринав’,‘Дангара’,‘Регар’,‘Чкаловск’];
+const all = […new Set([…base, …cities])].sort();
 const sel = document.getElementById(selId);
 if (!sel) return;
 sel.innerHTML = ‘<option value="">Все города</option>’ + all.map(c=>`<option>${esc(c)}</option>`).join(’’);
