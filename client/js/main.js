@@ -1,123 +1,123 @@
-‘use strict’;
-import { api }  from ‘./api.js’;
-import { esc, fmt, toast, openModal, goPage } from ‘./utils.js’;
+'use strict';
+import { api }  from './api.js';
+import { esc, fmt, toast, openModal, goPage } from './utils.js';
 
 const COMMISSION = 0.25;
 function priceWithCommission(p) { return Math.ceil(Number(p) * (1 + COMMISSION)); }
-function fmtPrice(p) { return Number(p).toLocaleString(‘ru-RU’) + ’ TJS’; }
+function fmtPrice(p) { return Number(p).toLocaleString('ru-RU') + ' TJS'; }
 
-const EXPIRY_CATS = [‘bouquet’, ‘basket’];
+const EXPIRY_CATS = ['bouquet', 'basket'];
 function getTimeLeft(expiresAt) {
-if (!expiresAt) return null;
-const diff = new Date(expiresAt) - Date.now();
-if (diff <= 0) return null;
-const h = Math.floor(diff / 3600000);
-const m = Math.floor((diff % 3600000) / 60000);
-if (h >= 24) { const d = Math.floor(h / 24); return `${d}д ${h%24}ч`; }
-return h > 0 ? `${h}ч ${m}м` : `${m}м`;
+  if (!expiresAt) return null;
+  const diff = new Date(expiresAt) - Date.now();
+  if (diff <= 0) return null;
+  const h = Math.floor(diff / 3600000);
+  const m = Math.floor((diff % 3600000) / 60000);
+  if (h >= 24) { const d = Math.floor(h / 24); return `${d}д ${h%24}ч`; }
+  return h > 0 ? `${h}ч ${m}м` : `${m}м`;
 }
 function timerBadge(p) {
-if (!EXPIRY_CATS.includes(p.category) || !p.expires_at) return ‘’;
-const left = getTimeLeft(p.expires_at);
-if (!left) return ‘<span class="timer-badge expired">⏰ Истёк</span>’;
-const urgent = (new Date(p.expires_at) - Date.now()) < 3 * 3600000;
-return `<span class="timer-badge${urgent ? ' urgent' : ''}">⏰ ${left}</span>`;
+  if (!EXPIRY_CATS.includes(p.category) || !p.expires_at) return '';
+  const left = getTimeLeft(p.expires_at);
+  if (!left) return '<span class="timer-badge expired">⏰ Истёк</span>';
+  const urgent = (new Date(p.expires_at) - Date.now()) < 3 * 3600000;
+  return `<span class="timer-badge${urgent ? ' urgent' : ''}">⏰ ${left}</span>`;
 }
 
-const CAT_LABEL = { bouquet:‘Букет’, basket:‘Корзина’, bear:‘Мишка’, sweets:‘Сладости’ };
-const CAT_EM    = { bouquet:‘💐’, basket:‘🧺’, bear:‘🧸’, sweets:‘🍰’ };
-const CAT_CLS   = { bouquet:‘pi-bouquet’, basket:‘pi-basket’, bear:‘pi-bear’, sweets:‘pi-sweets’ };
+const CAT_LABEL = { bouquet:'Букет', basket:'Корзина', bear:'Мишка', sweets:'Сладости' };
+const CAT_EM    = { bouquet:'💐', basket:'🧺', bear:'🧸', sweets:'🍰' };
+const CAT_CLS   = { bouquet:'pi-bouquet', basket:'pi-basket', bear:'pi-bear', sweets:'pi-sweets' };
 
-let _cfg = { instagram: ‘https://instagram.com/rebuket’, telegram: ‘https://t.me/rebuket_admin’ };
+let _cfg = { instagram: 'https://instagram.com/rebuket', telegram: 'https://t.me/rebuket_admin' };
 export async function loadConfig() {
-try { _cfg = await api.config(); } catch {}
+  try { _cfg = await api.config(); } catch {}
 }
 
 // ── CATALOG ───────────────────────────────────────────────
-let filters = { category:’’, city:’’, max_price:’’, search:’’, page:1 };
+let filters = { category:'', city:'', max_price:'', search:'', page:1 };
 
 export async function loadCatalog(extra = {}) {
-Object.assign(filters, extra, { page:1 });
-await renderGrid();
+  Object.assign(filters, extra, { page:1 });
+  await renderGrid();
 }
 
 async function renderGrid() {
-const grid = document.getElementById(‘pgrid’);
-const pgn  = document.getElementById(‘pgn’);
-grid.innerHTML = ‘<div class="loader">🌸 Загружаем…</div>’;
-try {
-const r = await api.products(filters);
-if (!r.data?.length) {
-grid.innerHTML = ‘<div class="empty"><span>🔍</span><h3>Ничего не найдено</h3><p>Попробуйте изменить фильтры</p></div>’;
-pgn.innerHTML = ‘’; return;
-}
-grid.innerHTML = r.data.map(pCard).join(’’);
-renderPgn(r.total_pages, r.page, pgn);
-} catch(e) {
-grid.innerHTML = `<div class="empty"><span>❌</span><h3>${e.message}</h3></div>`;
-}
+  const grid = document.getElementById('pgrid');
+  const pgn  = document.getElementById('pgn');
+  grid.innerHTML = '<div class="loader">🌸 Загружаем...</div>';
+  try {
+    const r = await api.products(filters);
+    if (!r.data?.length) {
+      grid.innerHTML = '<div class="empty"><span>🔍</span><h3>Ничего не найдено</h3><p>Попробуйте изменить фильтры</p></div>';
+      pgn.innerHTML = ''; return;
+    }
+    grid.innerHTML = r.data.map(pCard).join('');
+    renderPgn(r.total_pages, r.page, pgn);
+  } catch(e) {
+    grid.innerHTML = `<div class="empty"><span>❌</span><h3>${e.message}</h3></div>`;
+  }
 }
 
 function pCard(p) {
-const photos = Array.isArray(p.photos) ? p.photos : [];
-const img = photos[0]
-? `<img src="${esc(photos[0])}" alt="${esc(p.title)}" loading="lazy">`
-: `<div class="pcard-ph ${CAT_CLS[p.category]||''}">${CAT_EM[p.category]||'🌸'}</div>`;
-return `<div class="pcard" onclick="openProduct('${esc(p.slug||p.id)}')">
-<div class="pcard-img">${img}<span class="pbadge">${CAT_LABEL[p.category]||p.category}</span>${timerBadge(p)}</div>
-<div class="pcard-body">
-<h4>${esc(p.title)}</h4>
-<p>${esc((p.description||’’).substring(0,65))}…</p>
-<div class="pmeta">
-<div>
-<span class="pprice">${fmtPrice(priceWithCommission(p.price))}</span>
-<span style="font-size:.75rem;color:var(--gray);display:block">продавец получит ${fmtPrice(p.price)}</span>
-</div>
-<span class="pcity">📍${esc(p.city)}</span>
-</div>
-</div>
-
+  const photos = Array.isArray(p.photos) ? p.photos : [];
+  const img = photos[0]
+    ? `<img src="${esc(photos[0])}" alt="${esc(p.title)}" loading="lazy">`
+    : `<div class="pcard-ph ${CAT_CLS[p.category]||''}">${CAT_EM[p.category]||'🌸'}</div>`;
+  return `<div class="pcard" onclick="openProduct('${esc(p.slug||p.id)}')">
+    <div class="pcard-img">${img}<span class="pbadge">${CAT_LABEL[p.category]||p.category}</span>${timerBadge(p)}</div>
+    <div class="pcard-body">
+      <h4>${esc(p.title)}</h4>
+      <p>${esc((p.description||'').substring(0,65))}...</p>
+      <div class="pmeta">
+        <div>
+          <span class="pprice">${fmtPrice(priceWithCommission(p.price))}</span>
+          <span style="font-size:.75rem;color:var(--gray);display:block">продавец получит ${fmtPrice(p.price)}</span>
+        </div>
+        <span class="pcity">📍${esc(p.city)}</span>
+      </div>
+    </div>
   </div>`;
 }
 
 function renderPgn(total, cur, el) {
-if (total <= 1) { el.innerHTML = ‘’; return; }
-el.innerHTML = Array.from({length:total},(_,i)=>i+1)
-.map(n => `<button class="pgn-btn${n===cur?' active':''}" onclick="changePage(${n})">${n}</button>`).join(’’);
+  if (total <= 1) { el.innerHTML = ''; return; }
+  el.innerHTML = Array.from({length:total},(_,i)=>i+1)
+    .map(n => `<button class="pgn-btn${n===cur?' active':''}" onclick="changePage(${n})">${n}</button>`).join('');
 }
 window.changePage = async n => { filters.page=n; await renderGrid(); window.scrollTo({top:0}); };
 
 // ── PRODUCT DETAIL ────────────────────────────────────────
 window.openProduct = async (slugOrId) => {
-history.pushState(null, ‘’, ‘#product-’ + slugOrId);
-goPage(‘product’, false);
-const el = document.getElementById(‘pd-content’);
-el.innerHTML = ‘<div class="loader" style="padding:60px">🌸 Загружаем…</div>’;
-try {
-const p = await api.product(slugOrId);
-renderDetail(p, el);
-} catch(e) {
-el.innerHTML = `<div class="empty"><span>❌</span><h3>${e.message}</h3></div>`;
-}
+  history.pushState(null, '', '#product-' + slugOrId);
+  goPage('product', false);
+  const el = document.getElementById('pd-content');
+  el.innerHTML = '<div class="loader" style="padding:60px">🌸 Загружаем...</div>';
+  try {
+    const p = await api.product(slugOrId);
+    renderDetail(p, el);
+  } catch(e) {
+    el.innerHTML = `<div class="empty"><span>❌</span><h3>${e.message}</h3></div>`;
+  }
 };
 
 function renderDetail(p, el) {
-const photos = Array.isArray(p.photos) ? p.photos : [];
-const pUrl = `${location.origin}/#product-${p.slug||p.id}`;
+  const photos = Array.isArray(p.photos) ? p.photos : [];
+  const pUrl = `${location.origin}/#product-${p.slug||p.id}`;
 
-window._lbPhotos = photos;
-window._lbIdx = 0;
+  window._lbPhotos = photos;
+  window._lbIdx = 0;
 
-const thumbsHtml = photos.length > 1
-? `<div class="pd-thumbs">${photos.map((ph,i) => `<img src="${esc(ph)}" class="${i===0?'active':''}" onclick="switchThumb('${esc(ph)}',this,${i})" loading="lazy">` ).join('')}</div>`
-: ‘’;
+  const thumbsHtml = photos.length > 1
+    ? `<div class="pd-thumbs">${photos.map((ph,i) =>
+        `<img src="${esc(ph)}" class="${i===0?'active':''}" onclick="switchThumb('${esc(ph)}',this,${i})" loading="lazy">`
+      ).join('')}</div>`
+    : '';
 
-const mainImg = photos[0]
-? `<img id="pd-main" class="pd-main" src="${esc(photos[0])}" alt="${esc(p.title)}" onclick="openLightbox(0)" style="cursor:zoom-in">`
-: `<div class="pd-main-ph ${CAT_CLS[p.category]||''}">${CAT_EM[p.category]||'🌸'}</div>`;
+  const mainImg = photos[0]
+    ? `<img id="pd-main" class="pd-main" src="${esc(photos[0])}" alt="${esc(p.title)}" onclick="openLightbox(0)" style="cursor:zoom-in">`
+    : `<div class="pd-main-ph ${CAT_CLS[p.category]||''}">${CAT_EM[p.category]||'🌸'}</div>`;
 
-el.innerHTML = `
-
+  el.innerHTML = `
   <div class="pd-wrap">
     <div class="pd-gallery">${mainImg}${thumbsHtml}</div>
     <div class="pd-body">
@@ -155,217 +155,217 @@ el.innerHTML = `
 }
 
 window.switchThumb = (src, el, idx) => {
-window._lbIdx = idx || 0;
-const main = document.getElementById(‘pd-main’);
-if (main) main.src = src;
-document.querySelectorAll(’.pd-thumbs img’).forEach(i => i.classList.remove(‘active’));
-el.classList.add(‘active’);
+  window._lbIdx = idx || 0;
+  const main = document.getElementById('pd-main');
+  if (main) main.src = src;
+  document.querySelectorAll('.pd-thumbs img').forEach(i => i.classList.remove('active'));
+  el.classList.add('active');
 };
 window.copyLink = () => {
-const v = document.getElementById(‘share-inp’)?.value;
-if (v) navigator.clipboard.writeText(v).then(() => toast(‘Ссылка скопирована!’,‘ok’)).catch(()=>{});
+  const v = document.getElementById('share-inp')?.value;
+  if (v) navigator.clipboard.writeText(v).then(() => toast('Ссылка скопирована!','ok')).catch(()=>{});
 };
 
 // ── LIGHTBOX ──────────────────────────────────────────────
 window.openLightbox = (idx) => {
-const photos = window._lbPhotos || [];
-if (!photos.length) return;
-window._lbIdx = idx || 0;
-document.getElementById(‘lb-img’).src = photos[window._lbIdx];
-document.getElementById(‘lightbox’).style.display = ‘flex’;
+  const photos = window._lbPhotos || [];
+  if (!photos.length) return;
+  window._lbIdx = idx || 0;
+  document.getElementById('lb-img').src = photos[window._lbIdx];
+  document.getElementById('lightbox').style.display = 'flex';
 };
 window.closeLightbox = () => {
-document.getElementById(‘lightbox’).style.display = ‘none’;
+  document.getElementById('lightbox').style.display = 'none';
 };
 window.lightboxPrev = (e) => {
-e.stopPropagation();
-const p = window._lbPhotos || [];
-if (!p.length) return;
-window._lbIdx = (window._lbIdx - 1 + p.length) % p.length;
-document.getElementById(‘lb-img’).src = p[window._lbIdx];
+  e.stopPropagation();
+  const p = window._lbPhotos || [];
+  if (!p.length) return;
+  window._lbIdx = (window._lbIdx - 1 + p.length) % p.length;
+  document.getElementById('lb-img').src = p[window._lbIdx];
 };
 window.lightboxNext = (e) => {
-e.stopPropagation();
-const p = window._lbPhotos || [];
-if (!p.length) return;
-window._lbIdx = (window._lbIdx + 1) % p.length;
-document.getElementById(‘lb-img’).src = p[window._lbIdx];
+  e.stopPropagation();
+  const p = window._lbPhotos || [];
+  if (!p.length) return;
+  window._lbIdx = (window._lbIdx + 1) % p.length;
+  document.getElementById('lb-img').src = p[window._lbIdx];
 };
 
 // ── INQUIRY MODAL ─────────────────────────────────────────
 window.openInqModal = (pid, title) => {
-document.getElementById(‘inq-pid’).value = pid || ‘’;
-document.getElementById(‘inq-title’).textContent = ‘Заявка: ’ + title;
-openModal(‘inq-modal’);
+  document.getElementById('inq-pid').value = pid || '';
+  document.getElementById('inq-title').textContent = 'Заявка: ' + title;
+  openModal('inq-modal');
 };
 window.submitInquiry = async () => {
-const phone = document.getElementById(‘inq-phone’).value.trim();
-if (!phone) { toast(‘Введите телефон!’,‘err’); return; }
-const btn = document.getElementById(‘inq-btn’);
-btn.disabled = true; btn.textContent = ‘Отправляем…’;
-try {
-await api.inquiry({
-product_id:        document.getElementById(‘inq-pid’).value || undefined,
-customer_name:     document.getElementById(‘inq-name’).value.trim() || undefined,
-customer_phone:    phone,
-customer_telegram: document.getElementById(‘inq-tg’).value.trim() || undefined,
-note:              document.getElementById(‘inq-note’).value.trim() || undefined,
-});
-closeModal(‘inq-modal’);
-toast(‘Заявка отправлена! Мы свяжемся с вами.’,‘ok’);
-[‘inq-name’,‘inq-phone’,‘inq-tg’,‘inq-note’].forEach(id => { document.getElementById(id).value=’’; });
-} catch(e) { toast(’Ошибка: ’+e.message,‘err’); }
-finally { btn.disabled=false; btn.textContent=‘📩 Отправить заявку’; }
+  const phone = document.getElementById('inq-phone').value.trim();
+  if (!phone) { toast('Введите телефон!','err'); return; }
+  const btn = document.getElementById('inq-btn');
+  btn.disabled = true; btn.textContent = 'Отправляем...';
+  try {
+    await api.inquiry({
+      product_id:        document.getElementById('inq-pid').value || undefined,
+      customer_name:     document.getElementById('inq-name').value.trim() || undefined,
+      customer_phone:    phone,
+      customer_telegram: document.getElementById('inq-tg').value.trim() || undefined,
+      note:              document.getElementById('inq-note').value.trim() || undefined,
+    });
+    closeModal('inq-modal');
+    toast('Заявка отправлена! Мы свяжемся с вами.','ok');
+    ['inq-name','inq-phone','inq-tg','inq-note'].forEach(id => { document.getElementById(id).value=''; });
+  } catch(e) { toast('Ошибка: '+e.message,'err'); }
+  finally { btn.disabled=false; btn.textContent='📩 Отправить заявку'; }
 };
 
 // ── FILTERS ───────────────────────────────────────────────
 export function filterAndGo(cat) {
-const map = { Букет:‘bouquet’, Корзина:‘basket’, Мишка:‘bear’, Сладости:‘sweets’ };
-filters.category = map[cat] || ‘’;
-goPage(‘catalog’);
-loadCatalog();
+  const map = { Букет:'bouquet', Корзина:'basket', Мишка:'bear', Сладости:'sweets' };
+  filters.category = map[cat] || '';
+  goPage('catalog');
+  loadCatalog();
 }
 window.filterAndGo = filterAndGo;
 
 window.setCat = (cat, el) => {
-document.querySelectorAll(’#cat-chips .chip’).forEach(b => b.classList.remove(‘active’));
-el.classList.add(‘active’);
-const map = { Все:’’, Букеты:‘bouquet’, Корзины:‘basket’, Мишки:‘bear’, Сладости:‘sweets’ };
-filters.category = map[cat] || ‘’;
-loadCatalog();
+  document.querySelectorAll('#cat-chips .chip').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  const map = { Все:'', Букеты:'bouquet', Корзины:'basket', Мишки:'bear', Сладости:'sweets' };
+  filters.category = map[cat] || '';
+  loadCatalog();
 };
 window.applyFilters = () => {
-filters.city      = document.getElementById(‘f-city’)?.value   || ‘’;
-filters.max_price = document.getElementById(‘f-price’)?.value  || ‘’;
-filters.search    = document.getElementById(‘f-search’)?.value || ‘’;
-loadCatalog();
+  filters.city      = document.getElementById('f-city')?.value   || '';
+  filters.max_price = document.getElementById('f-price')?.value  || '';
+  filters.search    = document.getElementById('f-search')?.value || '';
+  loadCatalog();
 };
 
 // ── SELL FORM ─────────────────────────────────────────────
 let sellFiles = [];
 
 window.handlePhotos = e => {
-const newFiles = Array.from(e.target.files);
-if (!newFiles.length) return;
-sellFiles = […sellFiles, …newFiles];
-renderSellPhotos();
-e.target.value = ‘’;
+  const newFiles = Array.from(e.target.files);
+  if (!newFiles.length) return;
+  sellFiles = [...sellFiles, ...newFiles];
+  renderSellPhotos();
+  e.target.value = '';
 };
 
 function renderSellPhotos() {
-const grid = document.getElementById(‘sell-photo-grid’);
-const hint = document.getElementById(‘photo-hint’);
-if (!grid) return;
-grid.innerHTML = sellFiles.map((f, i) => {
-const url = URL.createObjectURL(f);
-return `<div class="photo-thumb"><img src="${url}"><button class="photo-del" onclick="removePhoto(${i})">x</button></div>`;
-}).join(’’);
-if (hint) hint.textContent = sellFiles.length < 3
-? `Загружено ${sellFiles.length} из 3 (минимум 3 фото)`
-: `Загружено ${sellFiles.length} фото`;
+  const grid = document.getElementById('sell-photo-grid');
+  const hint = document.getElementById('photo-hint');
+  if (!grid) return;
+  grid.innerHTML = sellFiles.map((f, i) => {
+    const url = URL.createObjectURL(f);
+    return `<div class="photo-thumb"><img src="${url}"><button class="photo-del" onclick="removePhoto(${i})">x</button></div>`;
+  }).join('');
+  if (hint) hint.textContent = sellFiles.length < 3
+    ? `Загружено ${sellFiles.length} из 3 (минимум 3 фото)`
+    : `Загружено ${sellFiles.length} фото`;
 }
 window.removePhoto = i => { sellFiles.splice(i,1); renderSellPhotos(); };
 
 window.selectCat = (el) => {
-document.querySelectorAll(’.cat-sel’).forEach(e => e.classList.remove(‘active’));
-el.classList.add(‘active’);
-document.getElementById(‘sell-cat-val’).value = el.dataset.val;
+  document.querySelectorAll('.cat-sel').forEach(e => e.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('sell-cat-val').value = el.dataset.val;
 };
 
 window.updatePricePreview = () => {
-const val = Number(document.getElementById(‘sell-price’).value);
-const preview = document.getElementById(‘price-preview’);
-if (!val || val <= 0) { if(preview) preview.style.display = ‘none’; return; }
-const commission = Math.ceil(val * COMMISSION);
-const total = val + commission;
-document.getElementById(‘price-seller’).textContent     = fmtPrice(val);
-document.getElementById(‘price-commission’).textContent = fmtPrice(commission);
-document.getElementById(‘price-total’).textContent      = fmtPrice(total);
-if(preview) preview.style.display = ‘block’;
+  const val = Number(document.getElementById('sell-price').value);
+  const preview = document.getElementById('price-preview');
+  if (!val || val <= 0) { if(preview) preview.style.display = 'none'; return; }
+  const commission = Math.ceil(val * COMMISSION);
+  const total = val + commission;
+  document.getElementById('price-seller').textContent     = fmtPrice(val);
+  document.getElementById('price-commission').textContent = fmtPrice(commission);
+  document.getElementById('price-total').textContent      = fmtPrice(total);
+  if(preview) preview.style.display = 'block';
 };
 
 function getTelegramUserId() {
-try {
-const tg = window.Telegram?.WebApp;
-if (tg?.initDataUnsafe?.user?.id) return String(tg.initDataUnsafe.user.id);
-} catch {}
-return null;
+  try {
+    const tg = window.Telegram?.WebApp;
+    if (tg?.initDataUnsafe?.user?.id) return String(tg.initDataUnsafe.user.id);
+  } catch {}
+  return null;
 }
 
 window.submitListing = async () => {
-const title    = document.getElementById(‘sell-title’).value.trim();
-const price    = document.getElementById(‘sell-price’).value;
-const city     = document.getElementById(‘sell-city’).value;
-const phone    = document.getElementById(‘sell-phone’).value.trim();
-const category = document.getElementById(‘sell-cat-val’)?.value;
+  const title    = document.getElementById('sell-title').value.trim();
+  const price    = document.getElementById('sell-price').value;
+  const city     = document.getElementById('sell-city').value;
+  const phone    = document.getElementById('sell-phone').value.trim();
+  const category = document.getElementById('sell-cat-val')?.value;
 
-if (!title||!price||!city||!phone||!category) { toast(‘Заполните все обязательные поля!’,‘err’); return; }
-if (sellFiles.length < 3) { toast(‘Загрузите минимум 3 фотографии!’,‘err’); return; }
+  if (!title||!price||!city||!phone||!category) { toast('Заполните все обязательные поля!','err'); return; }
+  if (sellFiles.length < 3) { toast('Загрузите минимум 3 фотографии!','err'); return; }
 
-const fd = new FormData();
-fd.append(‘title’,           title);
-fd.append(‘description’,     document.getElementById(‘sell-desc’).value.trim());
-fd.append(‘category’,        category);
-fd.append(‘price’,           price);
-fd.append(‘city’,            city);
-fd.append(‘seller_name’,     document.getElementById(‘sell-name’).value.trim());
-fd.append(‘seller_phone’,    phone);
-fd.append(‘seller_telegram’, document.getElementById(‘sell-tg’).value.trim());
-fd.append(‘address’,         document.getElementById(‘sell-address’).value.trim());
-fd.append(‘pickup_time’,     document.getElementById(‘sell-time’).value.trim());
-sellFiles.forEach(f => fd.append(‘photos’, f));
-const tgId = getTelegramUserId();
-if (tgId) fd.append(‘seller_chat_id’, tgId);
+  const fd = new FormData();
+  fd.append('title',           title);
+  fd.append('description',     document.getElementById('sell-desc').value.trim());
+  fd.append('category',        category);
+  fd.append('price',           price);
+  fd.append('city',            city);
+  fd.append('seller_name',     document.getElementById('sell-name').value.trim());
+  fd.append('seller_phone',    phone);
+  fd.append('seller_telegram', document.getElementById('sell-tg').value.trim());
+  fd.append('address',         document.getElementById('sell-address').value.trim());
+  fd.append('pickup_time',     document.getElementById('sell-time').value.trim());
+  sellFiles.forEach(f => fd.append('photos', f));
+  const tgId = getTelegramUserId();
+  if (tgId) fd.append('seller_chat_id', tgId);
 
-const btn = document.getElementById(‘sell-btn’);
-btn.disabled = true; btn.textContent = ‘Отправляем…’;
-try {
-await api.addProduct(fd);
-toast(‘Объявление подано! Ждет проверки.’,‘ok’);
-[‘sell-title’,‘sell-desc’,‘sell-price’,‘sell-phone’,‘sell-name’,‘sell-tg’,‘sell-address’,‘sell-time’]
-.forEach(id => { const el=document.getElementById(id); if(el) el.value=’’; });
-document.getElementById(‘sell-city’).value = ‘’;
-sellFiles = []; renderSellPhotos();
-setTimeout(() => goPage(‘catalog’), 1600);
-} catch(e) { toast(’Ошибка: ’+e.message,‘err’); }
-finally { btn.disabled=false; btn.textContent=‘Разместить объявление’; }
+  const btn = document.getElementById('sell-btn');
+  btn.disabled = true; btn.textContent = 'Отправляем...';
+  try {
+    await api.addProduct(fd);
+    toast('Объявление подано! Ждет проверки.','ok');
+    ['sell-title','sell-desc','sell-price','sell-phone','sell-name','sell-tg','sell-address','sell-time']
+      .forEach(id => { const el=document.getElementById(id); if(el) el.value=''; });
+    document.getElementById('sell-city').value = '';
+    sellFiles = []; renderSellPhotos();
+    setTimeout(() => goPage('catalog'), 1600);
+  } catch(e) { toast('Ошибка: '+e.message,'err'); }
+  finally { btn.disabled=false; btn.textContent='Разместить объявление'; }
 };
 
 // ── HOME COUNTS ───────────────────────────────────────────
 export async function loadCounts() {
-try {
-const [a,b,c,d] = await Promise.all([
-api.products({category:‘bouquet’,limit:1}),
-api.products({category:‘basket’, limit:1}),
-api.products({category:‘bear’,   limit:1}),
-api.products({category:‘sweets’, limit:1}),
-]);
-const set = (id,v) => { const el=document.getElementById(id); if(el) el.textContent=v+’ предложений’; };
-set(‘cnt-bouquet’, a.total); set(‘cnt-basket’, b.total);
-set(‘cnt-bear’,    c.total); set(‘cnt-sweets’, d.total);
-} catch {}
+  try {
+    const [a,b,c,d] = await Promise.all([
+      api.products({category:'bouquet',limit:1}),
+      api.products({category:'basket', limit:1}),
+      api.products({category:'bear',   limit:1}),
+      api.products({category:'sweets', limit:1}),
+    ]);
+    const set = (id,v) => { const el=document.getElementById(id); if(el) el.textContent=v+' предложений'; };
+    set('cnt-bouquet', a.total); set('cnt-basket', b.total);
+    set('cnt-bear',    c.total); set('cnt-sweets', d.total);
+  } catch {}
 }
 
 export async function loadCities(selId) {
-try {
-const cities = await api.cities();
-const base = [‘Душанбе’,‘Худжанд’,‘Куляб’,‘Бохтар’,‘Курган-Тюбе’,‘Вахдат’,‘Турсунзода’,‘Исфара’,‘Шахринав’,‘Дангара’,‘Регар’,‘Чкаловск’];
-const all = […new Set([…base, …cities])].sort();
-const sel = document.getElementById(selId);
-if (!sel) return;
-sel.innerHTML = ‘<option value="">Все города</option>’ + all.map(c=>`<option>${esc(c)}</option>`).join(’’);
-} catch {}
+  try {
+    const cities = await api.cities();
+    const base = ['Душанбе','Худжанд','Куляб','Бохтар','Курган-Тюбе','Вахдат','Турсунзода','Исфара','Шахринав','Дангара','Регар','Чкаловск'];
+    const all = [...new Set([...base, ...cities])].sort();
+    const sel = document.getElementById(selId);
+    if (!sel) return;
+    sel.innerHTML = '<option value="">Все города</option>' + all.map(c=>`<option>${esc(c)}</option>`).join('');
+  } catch {}
 }
 
 // ── HASH ROUTER ───────────────────────────────────────────
 export function handleRoute() {
-const hash = location.hash || ‘#home’;
-if (hash.startsWith(’#product-’)) {
-window.openProduct(hash.replace(’#product-’,’’));
-} else {
-const page = hash.replace(’#’,’’) || ‘home’;
-const valid = [‘home’,‘catalog’,‘sell’,‘admin’,‘product’];
-goPage(valid.includes(page) ? page : ‘home’, false);
-if (page === ‘catalog’) loadCatalog();
-}
+  const hash = location.hash || '#home';
+  if (hash.startsWith('#product-')) {
+    window.openProduct(hash.replace('#product-',''));
+  } else {
+    const page = hash.replace('#','') || 'home';
+    const valid = ['home','catalog','sell','admin','product'];
+    goPage(valid.includes(page) ? page : 'home', false);
+    if (page === 'catalog') loadCatalog();
+  }
 }
