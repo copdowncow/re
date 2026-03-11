@@ -1,4 +1,4 @@
-'use strict';
+use strict';
 import { api }  from './api.js';
 import { esc, fmt, toast, openModal, goPage } from './utils.js';
 
@@ -25,11 +25,13 @@ return null;
 }
 
 function timerBadge(p) {
-  if (!EXPIRY_CATS.includes(p.category) || !p.expires_at) return '';
-  const left = getTimeLeft(p.expires_at);
+  if (!EXPIRY_CATS.includes(p.category)) return '';
+  const ea = getExpiresAt(p);
+  if (!ea) return '';
+  const left = getTimeLeft(ea);
   if (!left) return '<span class="timer-badge expired">⏰ Истёк</span>';
-  const urgent = (new Date(p.expires_at) - Date.now()) < 3 * 3600000;
-  return `<span class="timer-badge${urgent ? ' urgent' : ''}">⏰ ${left}</span>`;
+  const urgent = (new Date(ea) - Date.now()) < 3 * 3600000;
+  return '<span class="timer-badge' + (urgent ? ' urgent' : '') + '">⏰ ' + left + '</span>';
 }
 
 const CAT_LABEL = { bouquet:'Букет', basket:'Корзина', bear:'Мишка', sweets:'Сладости' };
