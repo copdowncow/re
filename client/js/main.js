@@ -1,4 +1,4 @@
-'use strict';
+use strict';
 import { api }  from './api.js';
 import { esc, fmt, toast, openModal, goPage } from './utils.js';
 
@@ -124,7 +124,7 @@ function renderDetail(p, el) {
         <span class="pd-chip rose">${CAT_LABEL[p.category]||p.category}</span>
         <span class="pd-chip">📍 ${esc(p.city)}</span>
         <span class="pd-chip">👁 ${p.view_count||0} просмотров</span>
-        ${EXPIRY_CATS.includes(p.category) && p.expires_at ? `<span class="pd-chip" style="background:#fff3cd;color:#856404">⏰ Активно ещё: ${getTimeLeft(p.expires_at) || 'истёк'}</span>` : ''}
+        ${EXPIRY_CATS.includes(p.category) ? (() => { const ea = getExpiresAt(p); if (!ea) return ''; const l = getTimeLeft(ea); return `<span class="pd-chip" style="background:#fff3cd;color:#856404">⏰ Активно ещё: ${l || 'истёк'}</span>`; })() : ''}
       </div>
       <h2>${esc(p.title)}</h2>
       <div class="pd-price">${fmtPrice(priceWithCommission(p.price))}</div>
