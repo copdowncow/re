@@ -223,7 +223,7 @@ window.openEditModal = (id) => {
         <div>
           <label style="display:block;font-size:.82rem;font-weight:600;margin-bottom:5px;color:var(--gray)">Город</label>
           <select id="em-city" style="width:100%;padding:10px 12px;border:1.5px solid #e8d8d0;border-radius:9px;font-size:.95rem">
-            ${['Душанбе','Худжанд','Куляб','Бохтар','Вахдат','Турсунзода','Исфара','Шахринав','Дангара','Регар','Чкаловск']
+            ${['Душанбе','Худжанд','Куляб','Бохтар','Вахдат','Турсунзода','Исфара','Шахринав','Дангара','Регар','Бустон']
               .map(c=>`<option ${p.city===c?'selected':''}>${c}</option>`).join('')}
           </select>
         </div>
