@@ -353,7 +353,43 @@ nav {
 .s-card em { font-size:1.8rem; font-style:normal; display:block; margin-bottom:3px; }
 .s-card b  { font-size:1.35rem; color:var(--rose-d); display:block; }
 .s-card small { color:var(--gray); font-size:.72rem; }
-.atabs { display:flex; gap:5px; flex-wrap:wrap; background:#fff; padding:8px; border-radius:12px; box-shadow:0 2px 12px rgba(0,0,0,.05); margin-bottom:16px; }
+.atabs {
+  display: flex; gap: 5px; flex-wrap: wrap;
+  background: #fff; padding: 8px; border-radius: 12px;
+  box-shadow: 0 2px 12px rgba(0,0,0,.05); margin-bottom: 16px;
+  position: sticky; top: 60px; z-index: 100;
+  border-bottom: 2px solid var(--rose-l);
+}
+
+/* Admin layout — stats + tabs sticky, content scrolls */
+#page-admin .section { padding-top: 16px; }
+.a-hdr {
+  position: sticky; top: 60px; z-index: 101;
+  border-radius: 0 0 15px 15px; margin: -1px -1px 0;
+}
+.admin-sticky-top {
+  position: sticky; top: 60px; z-index: 100;
+  background: var(--cream); padding-bottom: 4px;
+}
+
+/* Better table on mobile */
+@media (max-width: 700px) {
+  .atable-wrap { padding: 8px; }
+  .atable { font-size: .78rem; min-width: 480px; }
+  .atable td, .atable th { padding: 7px 5px; }
+  .admin-photos img { width: 40px; height: 34px; }
+  .abtn { padding: 3px 7px; font-size: .68rem; }
+}
+
+/* Scroll indicator on table */
+.atable-wrap {
+  background:#fff; border-radius:13px; padding:16px;
+  box-shadow:0 4px 20px rgba(0,0,0,.06);
+  overflow-x:auto; -webkit-overflow-scrolling:touch;
+  scrollbar-width: thin; scrollbar-color: var(--rose-l) transparent;
+}
+.atable-wrap::-webkit-scrollbar { height: 4px; }
+.atable-wrap::-webkit-scrollbar-thumb { background: var(--rose-l); border-radius: 4px; }
 .atab {
   padding:8px 14px; border-radius:9px; border:none; background:transparent;
   font-size:.84rem; font-weight:600; color:var(--gray); transition:.2s; white-space:nowrap;
