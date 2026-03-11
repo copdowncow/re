@@ -229,6 +229,18 @@ exports.adminList = async (req, res) => {
 
     if (error) throw error;
 
+    // Автоудаляем просроченные букеты и корзины
+    const now = new Date();
+    const expired = (data || []).filter(p =>
+      ['bouquet','basket'].includes(p.category) &&
+      p.expires_at && new Date(p.expires_at) < now
+    );
+    if (expired.length) {
+      await Promise.all(expired.map(p =>
+        getClient().from('products').delete().eq('id', p.id)
+      ));
+    }
+
     res.json({
       data: data || [],
       total: count || 0,
