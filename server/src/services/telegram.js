@@ -31,7 +31,9 @@ async function getNextSerial(channel) {
     const { createClient } = require('@supabase/supabase-js');
     const db   = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
     const { data } = await db.from('channel_counters').select('value').eq('channel', channel).single();
-    const next = (data?.value || 0) + 1;
+    const STARTS = { dushanbe: 845, khujand: 23 };
+    const current = data?.value ?? STARTS[channel] ?? 0;
+    const next = current + 1;
     await db.from('channel_counters').upsert({ channel, value: next });
     return next;
   } catch(e) {
@@ -149,7 +151,9 @@ async function publishToChannel(p) {
   const EMOJIS = { bouquet:'💐', basket:'🧺', bear:'🧸', sweets:'🍰' };
   const em     = EMOJIS[p.category] || '🌸';
   const desc   = p.description ? p.description.substring(0, 200) + (p.description.length > 200 ? '...' : '') : '';
-  const price  = Number(p.price).toLocaleString('ru-RU');
+  const COMMISSION = 0.20;
+  const priceWithComm = Math.ceil(Number(p.price) * (1 + COMMISSION));
+  const price  = priceWithComm.toLocaleString('ru-RU');
   const admin  = process.env.ADMIN_TELEGRAM
     ? process.env.ADMIN_TELEGRAM.replace('https://t.me/', '@')
     : '@rebuket_admin';
@@ -217,7 +221,9 @@ async function markExpiredInChannel(p) {
 
   const EMOJIS = { bouquet:'💐', basket:'🧺', bear:'🧸', sweets:'🍰' };
   const em     = EMOJIS[p.category] || '🌸';
-  const price  = Number(p.price).toLocaleString('ru-RU');
+  const COMMISSION = 0.20;
+  const priceWithComm = Math.ceil(Number(p.price) * (1 + COMMISSION));
+  const price  = priceWithComm.toLocaleString('ru-RU');
   const admin  = process.env.ADMIN_TELEGRAM
     ? process.env.ADMIN_TELEGRAM.replace('https://t.me/', '@')
     : '@rebuket_admin';
