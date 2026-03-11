@@ -223,7 +223,9 @@ async function publishToChannel(p) {
   const catName = CAT_NAMES[p.category] || p.category;
   const desc    = p.description ? p.description.substring(0, 200) + (p.description.length > 200 ? '...' : '') : '';
   const price   = Number(p.price).toLocaleString('ru-RU');
-  const code    = getProductCode(p.serial_id);
+  // Получаем следующий порядковый номер для этого канала
+  const serialNum = await getNextSerial(isKhujand ? 'khujand' : 'dushanbe');
+  const code = getProductCode(serialNum);
   const admin   = process.env.ADMIN_TELEGRAM ? process.env.ADMIN_TELEGRAM.replace('https://t.me/','@') : '@rebuket_admin';
   const url     = `${getMiniAppUrl()}/#product-${p.slug || p.id}`;
   const photos  = Array.isArray(p.photos) ? p.photos.filter(Boolean) : [];
