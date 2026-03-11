@@ -109,32 +109,50 @@ async function renderProducts() {
     }
     if (!rows.length) { t.innerHTML='<div class="empty"><span>📭</span><h3>Нет объявлений</h3></div>'; return; }
     const CAT = { bouquet:'💐 Букет', basket:'🧺 Корзина', bear:'🧸 Игрушки', sweets:'🍰 Сладости' };
-    const BD  = { active:`<span class="bd-g">✅ Активно</span>`, pending:`<span class="bd-y">⏳ Проверка</span>`, hidden:`<span class="bd-r">🙈 Скрыто</span>` };
-    t.innerHTML=`<div class="atable-wrap"><table class="atable">
-      <thead><tr><th>Тип</th><th>Название</th><th>Цена</th><th>Город</th><th>Продавец</th><th>Телефон</th><th>Telegram</th><th>Статус</th><th>Действия</th></tr></thead>
-      <tbody>${rows.map(p=>`<tr>
-        <td>${CAT[p.category]||p.category}</td>
-        <td>
-          <b>${esc(p.title)}</b><br>
-          <small style="color:var(--gray)">${fmtD(p.created_at)}</small>
-          ${(p.photos||[]).length?`<div class="admin-photos">${(p.photos||[]).slice(0,3).map(ph=>`<img src="${esc(ph)}" onclick="window.open('${esc(ph)}','_blank')" title="Открыть фото">`).join('')}</div>`:''}
-        </td>
-        <td><b>${fmt(p.price)}</b></td>
-        <td>📍${esc(p.city)}</td>
-        <td>${esc(p.seller_name||'—')}</td>
-        <td><a href="tel:${esc(p.seller_phone)}">${esc(p.seller_phone)}</a></td>
-        <td>${p.seller_telegram?`<a href="https://t.me/${esc(p.seller_telegram.replace('@',''))}" target="_blank">${esc(p.seller_telegram)}</a>`:'—'}</td>
-        <td>${BD[p.status]||p.status}</td>
-        <td><div style="display:flex;gap:5px;flex-wrap:wrap">
-          ${p.status==='pending'?`<button class="abtn g" onclick="pAct('${p.id}','active')">✅</button><button class="abtn r" onclick="pAct('${p.id}','hidden')">❌</button>`:''}
-          ${p.status==='active' ?`<button class="abtn"   onclick="pAct('${p.id}','hidden')">🙈</button>`:''}
-          ${p.status==='hidden' ?`<button class="abtn g" onclick="pAct('${p.id}','active')">👁</button>`:''}
-          <button class="abtn b" onclick="openEditModal('${esc(p.id)}')">✏️</button>
-          <a class="abtn b" href="/#product-${esc(p.slug||p.id)}" target="_blank">🔗</a>
-          <button class="abtn r" onclick="pDel('${p.id}')">🗑</button>
-        </div></td>
-      </tr>`).join('')}</tbody>
-    </table></div>`;
+    const BD  = { active:'bd-g', pending:'bd-y', hidden:'bd-r' };
+    const BL  = { active:'✅ Активно', pending:'⏳ Проверка', hidden:'🙈 Скрыто' };
+
+    t.innerHTML = rows.map(p => {
+      const photos = (p.photos||[]).slice(0,4);
+      const statusDot = `<span class="${BD[p.status]||'bd-y'}" style="font-size:.72rem">${BL[p.status]||p.status}</span>`;
+
+      return `<div class="acard">
+        <div class="acard-top">
+          <div class="acard-info">
+            <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:4px">
+              <span style="font-size:.75rem;color:var(--gray)">${CAT[p.category]||p.category}</span>
+              ${statusDot}
+            </div>
+            <div class="acard-title">${esc(p.title)}</div>
+            <div style="font-size:.78rem;color:var(--gray);margin-top:2px">${fmtD(p.created_at)}</div>
+          </div>
+          <div class="acard-price">${fmt(p.price)}<span style="font-size:.7rem;font-weight:400"> TJS</span></div>
+        </div>
+
+        ${photos.length ? `<div class="acard-photos">${photos.map(ph =>
+          `<img src="${esc(ph)}" onclick="window.open('${esc(ph)}','_blank')">`
+        ).join('')}</div>` : ''}
+
+        <div class="acard-meta">
+          <span>📍 ${esc(p.city)}</span>
+          ${p.seller_name ? `<span>👤 ${esc(p.seller_name)}</span>` : ''}
+          <a href="tel:${esc(p.seller_phone)}" style="color:var(--rose-d);font-weight:700">📞 ${esc(p.seller_phone)}</a>
+          ${p.seller_telegram ? `<a href="https://t.me/${esc(p.seller_telegram.replace('@',''))}" target="_blank">✈️ ${esc(p.seller_telegram)}</a>` : ''}
+        </div>
+
+        <div class="acard-actions">
+          ${p.status==='pending' ? `
+            <button class="aact-btn aact-g" onclick="pAct('${p.id}','active')">✅ Одобрить</button>
+            <button class="aact-btn aact-r" onclick="pAct('${p.id}','hidden')">❌ Отклонить</button>
+          ` : ''}
+          ${p.status==='active'  ? `<button class="aact-btn aact-gray" onclick="pAct('${p.id}','hidden')">🙈 Скрыть</button>` : ''}
+          ${p.status==='hidden'  ? `<button class="aact-btn aact-g"    onclick="pAct('${p.id}','active')">👁 Показать</button>` : ''}
+          <button class="aact-btn aact-b" onclick="openEditModal('${esc(p.id)}')">✏️ Изменить</button>
+          <a class="aact-btn aact-b" href="/#product-${esc(p.slug||p.id)}" target="_blank">🔗 Открыть</a>
+          <button class="aact-btn aact-r" onclick="pDel('${p.id}')">🗑 Удалить</button>
+        </div>
+      </div>`;
+    }).join('');
   } catch(e) { document.getElementById('p-table').innerHTML=`<div class="empty"><h3>${e.message}</h3></div>`; }
 }
 
