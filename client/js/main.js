@@ -3,6 +3,16 @@ import { api }  from './api.js';
 import { esc, fmt, toast, openModal, goPage } from './utils.js';
 
 const COMMISSION = 0.25;
+
+// Оптимизация фото через Supabase трансформацию
+function imgUrl(url, w = 400) {
+  if (!url) return url;
+  // Supabase storage transform: добавляем ?width=N&quality=75
+  if (url.includes('/storage/v1/object/public/')) {
+    return url + (url.includes('?') ? '&' : '?') + 'width=' + w + '&quality=75';
+  }
+  return url;
+}
 function priceWithCommission(p) { return Math.ceil(Number(p) * (1 + COMMISSION)); }
 function fmtPrice(p) { return Number(p).toLocaleString('ru-RU') + ' TJS'; }
 
@@ -71,7 +81,7 @@ async function renderGrid() {
 function pCard(p) {
   const photos = Array.isArray(p.photos) ? p.photos : [];
   const img = photos[0]
-    ? `<img src="${esc(photos[0])}" alt="${esc(p.title)}" loading="lazy">`
+    ? `<img src="${esc(imgUrl(photos[0], 400))}" alt="${esc(p.title)}" loading="lazy" decoding="async">`
     : `<div class="pcard-ph ${CAT_CLS[p.category]||''}">${CAT_EM[p.category]||'🌸'}</div>`;
   return `<div class="pcard" onclick="openProduct('${esc(p.slug||p.id)}')">
     <div class="pcard-img">${img}<span class="pbadge">${CAT_LABEL[p.category]||p.category}</span>${timerBadge(p)}</div>
@@ -126,12 +136,12 @@ function renderDetail(p, el) {
 
   const thumbsHtml = photos.length > 1
     ? `<div class="pd-thumbs">${photos.map((ph,i) =>
-        `<img src="${esc(ph)}" class="${i===0?'active':''}" onclick="switchThumb('${esc(ph)}',this,${i})" loading="lazy">`
+        `<img src="${esc(imgUrl(ph, 120))}" class="${i===0?'active':''}" onclick="switchThumb('${esc(ph)}',this,${i})" loading="lazy" decoding="async">`
       ).join('')}</div>`
     : '';
 
   const mainImg = photos[0]
-    ? `<img id="pd-main" class="pd-main" src="${esc(photos[0])}" alt="${esc(p.title)}" onclick="openLightbox(0)" style="cursor:zoom-in">`
+    ? `<img id="pd-main" class="pd-main" src="${esc(imgUrl(photos[0], 800))}" alt="${esc(p.title)}" onclick="openLightbox(0)" style="cursor:zoom-in" loading="eager" decoding="async">`
     : `<div class="pd-main-ph ${CAT_CLS[p.category]||''}">${CAT_EM[p.category]||'🌸'}</div>`;
 
   el.innerHTML = `
