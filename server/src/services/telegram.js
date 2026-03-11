@@ -204,7 +204,14 @@ function getProductCode(serialId) {
 }
 
 async function publishToChannel(p) {
-  const channelId = process.env.CHANNEL_ID;
+  // Выбираем канал по городу
+  const city = (p.city || '').toLowerCase().trim();
+  let channelId;
+  if (city === 'худжанд') {
+    channelId = process.env.CHANNEL_ID_KHUJAND || '-1003818624807';
+  } else {
+    channelId = process.env.CHANNEL_ID;
+  }
   if (!channelId) return;
 
   const bot    = userBot || adminBot;
