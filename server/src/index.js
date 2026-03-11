@@ -44,8 +44,7 @@ async function removeExpiredProducts() {
     const now = new Date().toISOString();
     const { data, error } = await getClient()
       .from('products')
-      .update({ status: 'hidden' })
-      .eq('status', 'active')
+      .delete()
       .in('category', ['bouquet', 'basket'])
       .lt('expires_at', now)
       .not('expires_at', 'is', null)
@@ -53,7 +52,7 @@ async function removeExpiredProducts() {
 
     if (error) { console.log('Expire check error:', error.message); return; }
     if (data?.length) {
-      console.log(`🗑  Скрыто просроченных объявлений: ${data.length}`);
+      console.log(`🗑  Удалено просроченных объявлений: ${data.length}`);
     }
   } catch(e) {
     console.log('Expire check error:', e.message);
