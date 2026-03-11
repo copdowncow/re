@@ -7,6 +7,9 @@ let adminBot = null;
 
 const adminChatIds = new Set();
 
+// Города которые публикуются в канал Худжанда
+const KHUJAND_CITIES = ['худжанд', 'чкаловск', 'исфара'];
+
 function getMiniAppUrl() {
   return (process.env.MINI_APP_URL || process.env.SITE_URL || '').replace(/\/$/, '');
 }
@@ -18,9 +21,25 @@ function escHtml(s) {
     .replace(/>/g, '&gt;');
 }
 
-// ─────────────────────────────────────────────
-//  Инициализация
-// ─────────────────────────────────────────────
+function getProductCode(num, prefix) {
+  if (!num) return null;
+  return prefix + '-' + String(Number(num)).padStart(4, '0');
+}
+
+async function getNextSerial(channel) {
+  try {
+    const { createClient } = require('@supabase/supabase-js');
+    const db   = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
+    const { data } = await db.from('channel_counters').select('value').eq('channel', channel).single();
+    const next = (data?.value || 0) + 1;
+    await db.from('channel_counters').upsert({ channel, value: next });
+    return next;
+  } catch(e) {
+    console.log('Serial counter error:', e.message);
+    return null;
+  }
+}
+
 function initBots() {
   if (process.env.ADMIN_CHAT_ID_1) adminChatIds.add(process.env.ADMIN_CHAT_ID_1);
   if (process.env.ADMIN_CHAT_ID_2) adminChatIds.add(process.env.ADMIN_CHAT_ID_2);
@@ -29,83 +48,43 @@ function initBots() {
   initAdminBot();
 }
 
-// ─────────────────────────────────────────────
-//  USER BOT
-// ─────────────────────────────────────────────
 function initUserBot() {
   const token = process.env.BOT_TOKEN_USER;
-  if (!token) { console.log('ℹ️  BOT_TOKEN_USER не задан — user bot отключён'); return; }
-
+  if (!token) { console.log('BOT_TOKEN_USER не задан'); return; }
   userBot = new TG(token, { polling: true });
 
   userBot.onText(/\/start/, async (msg) => {
     const name   = msg.from?.first_name || 'друг';
     const appUrl = getMiniAppUrl();
     await userBot.sendMessage(msg.chat.id,
-      `🌸 <b>Привет, ${escHtml(name)}!</b>\n\n` +
-      `Добро пожаловать в <b>ReBuket</b> — маркетплейс букетов и сладостей в Таджикистане.\n\n` +
-      `💐 <b>Купить</b> — просматривать букеты, корзины, игрушки и сладости\n` +
-      `🛍 <b>Продать</b> — разместить своё объявление\n` +
-      `📩 <b>Связаться</b> — оставить заявку продавцу\n\n` +
-      `👇 Нажмите кнопку ниже чтобы открыть каталог:`,
-      {
-        parse_mode: 'HTML',
-        reply_markup: { inline_keyboard: [[
-          { text: '🌸 Открыть ReBuket', web_app: { url: appUrl } }
-        ]]}
-      }
+      `🌸 <b>Привет, ${escHtml(name)}!</b>\n\nДобро пожаловать в <b>ReBuket</b> — маркетплейс букетов и сладостей в Таджикистане.\n\n💐 <b>Купить</b> — просматривать букеты, корзины, игрушки и сладости\n🛍 <b>Продать</b> — разместить своё объявление\n📩 <b>Связаться</b> — оставить заявку продавцу\n\n👇 Нажмите кнопку ниже чтобы открыть каталог:`,
+      { parse_mode: 'HTML', reply_markup: { inline_keyboard: [[{ text: '🌸 Открыть ReBuket', web_app: { url: appUrl } }]] } }
     );
   });
 
   userBot.onText(/\/catalog/, async (msg) => {
-    await userBot.sendMessage(msg.chat.id,
-      `💐 <b>Каталог ReBuket</b>\n\nБукеты, корзины, игрушки и сладости:`,
-      {
-        parse_mode: 'HTML',
-        reply_markup: { inline_keyboard: [[
-          { text: '💐 Смотреть каталог', web_app: { url: getMiniAppUrl() + '#catalog' } }
-        ]]}
-      }
+    await userBot.sendMessage(msg.chat.id, `💐 <b>Каталог ReBuket</b>\n\nБукеты, корзины, игрушки и сладости:`,
+      { parse_mode: 'HTML', reply_markup: { inline_keyboard: [[{ text: '💐 Смотреть каталог', web_app: { url: getMiniAppUrl() + '#catalog' } }]] } }
     );
   });
 
   userBot.onText(/\/sell/, async (msg) => {
-    await userBot.sendMessage(msg.chat.id,
-      `🛍 <b>Разместить объявление</b>\n\nПродайте букеты или сладости через ReBuket!`,
-      {
-        parse_mode: 'HTML',
-        reply_markup: { inline_keyboard: [[
-          { text: '➕ Разместить объявление', web_app: { url: getMiniAppUrl() + '#sell' } }
-        ]]}
-      }
+    await userBot.sendMessage(msg.chat.id, `🛍 <b>Разместить объявление</b>\n\nПродайте букеты или сладости через ReBuket!`,
+      { parse_mode: 'HTML', reply_markup: { inline_keyboard: [[{ text: '➕ Разместить объявление', web_app: { url: getMiniAppUrl() + '#sell' } }]] } }
     );
   });
 
   userBot.onText(/\/help/, async (msg) => {
     await userBot.sendMessage(msg.chat.id,
-      `🌸 <b>ReBuket — помощь</b>\n\n` +
-      `/start   — запустить бота\n` +
-      `/catalog — каталог\n` +
-      `/sell    — разместить объявление\n` +
-      `/help    — эта справка`,
-      {
-        parse_mode: 'HTML',
-        reply_markup: { inline_keyboard: [[
-          { text: '🌸 Открыть ReBuket', web_app: { url: getMiniAppUrl() } }
-        ]]}
-      }
+      `🌸 <b>ReBuket — помощь</b>\n\n/start   — запустить бота\n/catalog — каталог\n/sell    — разместить объявление\n/help    — эта справка`,
+      { parse_mode: 'HTML', reply_markup: { inline_keyboard: [[{ text: '🌸 Открыть ReBuket', web_app: { url: getMiniAppUrl() } }]] } }
     );
   });
 
   userBot.on('message', async (msg) => {
     if (msg.text?.startsWith('/')) return;
-    await userBot.sendMessage(msg.chat.id,
-      `Нажмите кнопку ниже чтобы открыть ReBuket 🌸`,
-      {
-        reply_markup: { inline_keyboard: [[
-          { text: '🌸 Открыть ReBuket', web_app: { url: getMiniAppUrl() } }
-        ]]}
-      }
+    await userBot.sendMessage(msg.chat.id, `Нажмите кнопку ниже чтобы открыть ReBuket 🌸`,
+      { reply_markup: { inline_keyboard: [[{ text: '🌸 Открыть ReBuket', web_app: { url: getMiniAppUrl() } }]] } }
     );
   });
 
@@ -116,13 +95,9 @@ function initUserBot() {
   console.log('🤖 USER BOT запущен | Mini App:', getMiniAppUrl());
 }
 
-// ─────────────────────────────────────────────
-//  ADMIN BOT
-// ─────────────────────────────────────────────
 function initAdminBot() {
   const token = process.env.BOT_TOKEN_ADMIN;
-  if (!token) { console.log('ℹ️  BOT_TOKEN_ADMIN не задан — admin bot отключён'); return; }
-
+  if (!token) { console.log('BOT_TOKEN_ADMIN не задан'); return; }
   adminBot = new TG(token, { polling: true });
 
   adminBot.onText(/\/start/, async (msg) => {
@@ -131,12 +106,11 @@ function initAdminBot() {
     adminChatIds.add(chatId);
     await adminBot.sendMessage(msg.chat.id,
       `🔐 <b>ReBuket Admin Bot</b>\n\n` +
-      (isNew
-        ? `✅ Ваш Chat ID <b>${chatId}</b> добавлен.\nТеперь вы будете получать уведомления.`
-        : `Вы уже подключены. Ваш Chat ID: <b>${chatId}</b>`),
+      (isNew ? `✅ Ваш Chat ID <b>${chatId}</b> добавлен.\nТеперь вы будете получать уведомления.`
+             : `Вы уже подключены. Ваш Chat ID: <b>${chatId}</b>`),
       { parse_mode: 'HTML' }
     );
-    if (isNew) console.log(`✅ Новый админ. Добавьте в .env: ADMIN_CHAT_ID_1=${chatId}`);
+    if (isNew) console.log(`✅ Новый админ: ADMIN_CHAT_ID_1=${chatId}`);
   });
 
   adminBot.on('polling_error', (err) => {
@@ -146,86 +120,44 @@ function initAdminBot() {
   console.log('🛠  ADMIN BOT запущен');
 }
 
-// ─────────────────────────────────────────────
-//  Отправка всем админам
-// ─────────────────────────────────────────────
 async function sendToAdmins(text, opts = {}) {
   if (!adminBot) return;
-  if (!adminChatIds.size) {
-    console.log('⚠️  Нет админов. Напишите /start вашему admin боту.');
-    return;
-  }
+  if (!adminChatIds.size) { console.log('⚠️ Нет админов'); return; }
   for (const chatId of adminChatIds) {
     try {
       await adminBot.sendMessage(chatId, text, { parse_mode: 'HTML', ...opts });
     } catch(e) {
-      console.log(`ADMIN BOT send error (chat ${chatId}):`, e.message);
+      console.log(`ADMIN BOT send error (${chatId}):`, e.message);
     }
-  }
-}
-
-// ─────────────────────────────────────────────
-//  Уведомление продавцу — объявление одобрено
-// ─────────────────────────────────────────────
-async function notifySellerApproved(p) {
-  // Всегда публикуем в канал
-  publishToChannel(p).catch(e => console.log('Channel publish error:', e.message));
-
-  if (!userBot || !p.seller_chat_id) return;
-  const url = `${getMiniAppUrl()}/#product-${p.slug || p.id}`;
-  try {
-    await userBot.sendMessage(p.seller_chat_id,
-      `🎉 <b>Ваше объявление одобрено!</b>\n\n` +
-      `📦 <b>${escHtml(p.title)}</b>\n` +
-      `💰 ${p.price} TJS · 📍 ${escHtml(p.city)}\n\n` +
-      `Теперь его видят все покупатели. Удачных продаж! 🌸`,
-      {
-        parse_mode: 'HTML',
-        reply_markup: { inline_keyboard: [[
-          { text: '🔗 Открыть моё объявление', web_app: { url } }
-        ]]}
-      }
-    );
-  } catch(e) {
-    console.log('Не удалось уведомить продавца:', e.message);
   }
 }
 
 // ─────────────────────────────────────────────
 //  Публикация в канал при одобрении
 // ─────────────────────────────────────────────
-function getProductCode(serialId, prefix) {
-  if (!serialId) return null;
-  const num = Number(serialId);
-  return prefix + '-' + String(num).padStart(4, '0');
-}
-
 async function publishToChannel(p) {
-  // Выбираем канал по городу
-  const city = (p.city || '').toLowerCase().trim();
-  let channelId;
-  if (city === 'худжанд') {
-    channelId = process.env.CHANNEL_ID_KHUJAND || '-1003818624807';
-  } else {
-    channelId = process.env.CHANNEL_ID;
-  }
+  const city      = (p.city || '').toLowerCase().trim();
+  const isKhujand = KHUJAND_CITIES.includes(city);
+  const channelId = isKhujand
+    ? (process.env.CHANNEL_ID_KHUJAND || '-1003818624807')
+    : process.env.CHANNEL_ID;
   if (!channelId) return;
 
-  const bot    = userBot || adminBot;
+  const bot = userBot || adminBot;
   if (!bot) return;
 
-  const EMOJIS    = { bouquet:'💐', basket:'🧺', bear:'🧸', sweets:'🍰' };
-  const CAT_NAMES = { bouquet:'Букет', basket:'Корзина', bear:'Мишка', sweets:'Сладости' };
-  const em      = EMOJIS[p.category] || '🌸';
-  const catName = CAT_NAMES[p.category] || p.category;
-  const desc    = p.description ? p.description.substring(0, 200) + (p.description.length > 200 ? '...' : '') : '';
-  const price   = Number(p.price).toLocaleString('ru-RU');
-  // Получаем следующий порядковый номер для этого канала
+  const EMOJIS = { bouquet:'💐', basket:'🧺', bear:'🧸', sweets:'🍰' };
+  const em     = EMOJIS[p.category] || '🌸';
+  const desc   = p.description ? p.description.substring(0, 200) + (p.description.length > 200 ? '...' : '') : '';
+  const price  = Number(p.price).toLocaleString('ru-RU');
+  const admin  = process.env.ADMIN_TELEGRAM
+    ? process.env.ADMIN_TELEGRAM.replace('https://t.me/', '@')
+    : '@rebuket_admin';
+  const url    = `${getMiniAppUrl()}/#product-${p.slug || p.id}`;
+  const photos = Array.isArray(p.photos) ? p.photos.filter(Boolean) : [];
+
   const serialNum = await getNextSerial(isKhujand ? 'khujand' : 'dushanbe');
-  const code = getProductCode(serialNum, isKhujand ? 'AK' : 'AB');
-  const admin   = process.env.ADMIN_TELEGRAM ? process.env.ADMIN_TELEGRAM.replace('https://t.me/','@') : '@rebuket_admin';
-  const url     = `${getMiniAppUrl()}/#product-${p.slug || p.id}`;
-  const photos  = Array.isArray(p.photos) ? p.photos.filter(Boolean) : [];
+  const code      = getProductCode(serialNum, isKhujand ? 'AK' : 'AB');
 
   const caption =
     `${em} <b>${escHtml(p.title)}</b>\n` +
@@ -253,11 +185,10 @@ async function publishToChannel(p) {
       const results = await bot.sendMediaGroup(channelId, media);
       sent = Array.isArray(results) ? results[0] : results;
     }
-    // Сохраняем message_id для последующего редактирования
+
     try {
       const { createClient } = require('@supabase/supabase-js');
       const db = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
-      // sent — результат отправки (первое фото или сообщение)
       if (sent?.message_id) {
         await db.from('products').update({
           channel_message_id: sent.message_id,
@@ -267,6 +198,7 @@ async function publishToChannel(p) {
     } catch(e) {
       console.log('Не удалось сохранить message_id:', e.message);
     }
+
     console.log(`📢 Опубликовано в канал: ${p.title} [${code}]`);
   } catch(e) {
     console.log('Ошибка публикации в канал:', e.message);
@@ -278,19 +210,19 @@ async function publishToChannel(p) {
 // ─────────────────────────────────────────────
 async function markExpiredInChannel(p) {
   const bot = userBot || adminBot;
-  if (!bot) return;
-  if (!p.channel_message_id || !p.channel_name) return;
+  if (!bot || !p.channel_message_id || !p.channel_name) return;
 
   const channelId = p.channel_name === 'khujand'
     ? (process.env.CHANNEL_ID_KHUJAND || '-1003818624807')
     : process.env.CHANNEL_ID;
   if (!channelId) return;
 
-  const EMOJIS    = { bouquet:'💐', basket:'🧺', bear:'🧸', sweets:'🍰' };
-  const CAT_NAMES = { bouquet:'Букет', basket:'Корзина', bear:'Мишка', sweets:'Сладости' };
-  const em      = EMOJIS[p.category] || '🌸';
-  const price   = Number(p.price).toLocaleString('ru-RU');
-  const admin   = process.env.ADMIN_TELEGRAM ? process.env.ADMIN_TELEGRAM.replace('https://t.me/','@') : '@rebuket_admin';
+  const EMOJIS = { bouquet:'💐', basket:'🧺', bear:'🧸', sweets:'🍰' };
+  const em     = EMOJIS[p.category] || '🌸';
+  const price  = Number(p.price).toLocaleString('ru-RU');
+  const admin  = process.env.ADMIN_TELEGRAM
+    ? process.env.ADMIN_TELEGRAM.replace('https://t.me/', '@')
+    : '@rebuket_admin';
 
   const newCaption =
     `🔴 <b>СНЯТО С ПРОДАЖИ</b>\n\n` +
@@ -312,22 +244,31 @@ async function markExpiredInChannel(p) {
 }
 
 // ─────────────────────────────────────────────
-//  Уведомление продавцу — объявление отклонено
+//  Уведомление продавцу — одобрено
+// ─────────────────────────────────────────────
+async function notifySellerApproved(p) {
+  publishToChannel(p).catch(e => console.log('Channel publish error:', e.message));
+  if (!userBot || !p.seller_chat_id) return;
+  const url = `${getMiniAppUrl()}/#product-${p.slug || p.id}`;
+  try {
+    await userBot.sendMessage(p.seller_chat_id,
+      `🎉 <b>Ваше объявление одобрено!</b>\n\n📦 <b>${escHtml(p.title)}</b>\n💰 ${p.price} TJS · 📍 ${escHtml(p.city)}\n\nТеперь его видят все покупатели. Удачных продаж! 🌸`,
+      { parse_mode: 'HTML', reply_markup: { inline_keyboard: [[{ text: '🔗 Открыть моё объявление', web_app: { url } }]] } }
+    );
+  } catch(e) {
+    console.log('Не удалось уведомить продавца:', e.message);
+  }
+}
+
+// ─────────────────────────────────────────────
+//  Уведомление продавцу — отклонено
 // ─────────────────────────────────────────────
 async function notifySellerRejected(p) {
   if (!userBot || !p.seller_chat_id) return;
   try {
     await userBot.sendMessage(p.seller_chat_id,
-      `❌ <b>Ваше объявление отклонено</b>\n\n` +
-      `📦 <b>${escHtml(p.title)}</b>\n\n` +
-      `К сожалению, объявление не прошло модерацию.\n` +
-      `Вы можете разместить новое объявление:`,
-      {
-        parse_mode: 'HTML',
-        reply_markup: { inline_keyboard: [[
-          { text: '➕ Разместить новое', web_app: { url: getMiniAppUrl() + '#sell' } }
-        ]]}
-      }
+      `❌ <b>Ваше объявление отклонено</b>\n\n📦 <b>${escHtml(p.title)}</b>\n\nК сожалению, объявление не прошло модерацию.\nВы можете разместить новое объявление:`,
+      { parse_mode: 'HTML', reply_markup: { inline_keyboard: [[{ text: '➕ Разместить новое', web_app: { url: getMiniAppUrl() + '#sell' } }]] } }
     );
   } catch(e) {
     console.log('Не удалось уведомить продавца:', e.message);
@@ -350,10 +291,7 @@ async function notifyProduct(p) {
     `🔗 <a href="${url}">Открыть объявление</a>`,
     {
       reply_markup: { inline_keyboard: [
-        [
-          { text: '✅ Одобрить',  callback_data: `approve:${p.id}` },
-          { text: '❌ Отклонить', callback_data: `reject:${p.id}`  }
-        ],
+        [{ text: '✅ Одобрить', callback_data: `approve:${p.id}` }, { text: '❌ Отклонить', callback_data: `reject:${p.id}` }],
         [{ text: '🔗 Открыть объявление', url }]
       ]}
     }
@@ -367,7 +305,6 @@ async function notifyInquiry(inq, productTitle, productSlug, productId) {
   const url = (productSlug || productId)
     ? `${getMiniAppUrl()}/#product-${productSlug || productId}`
     : null;
-
   await sendToAdmins(
     `🛒 <b>Новая заявка!</b>\n─────────────────\n` +
     `📦 ${escHtml(productTitle || '—')}\n` +
@@ -385,10 +322,8 @@ async function notifyInquiry(inq, productTitle, productSlug, productId) {
 // ─────────────────────────────────────────────
 function setupCallbacks(onApprove, onReject) {
   if (!adminBot) return;
-
   adminBot.on('callback_query', async (q) => {
     const [action, id] = (q.data || '').split(':');
-
     if (action === 'approve') {
       await onApprove(id);
       await adminBot.answerCallbackQuery(q.id, { text: '✅ Одобрено!' });
@@ -397,7 +332,6 @@ function setupCallbacks(onApprove, onReject) {
         { chat_id: q.message.chat.id, message_id: q.message.message_id }
       ).catch(() => {});
     }
-
     if (action === 'reject') {
       await onReject(id);
       await adminBot.answerCallbackQuery(q.id, { text: '❌ Отклонено' });
