@@ -8,7 +8,7 @@ let adminBot = null;
 const adminChatIds = new Set();
 
 // Города которые публикуются в канал Худжанда
-const KHUJAND_CITIES = ['худжанд', 'чкаловск', 'исфара'];
+const KHUJAND_CITIES = ['худжанд', 'бустон', 'исфара'];
 
 function getMiniAppUrl() {
   return (process.env.MINI_APP_URL || process.env.SITE_URL || '').replace(/\/$/, '');
@@ -162,10 +162,8 @@ async function publishToChannel(p) {
   const caption =
     `${em} <b>${escHtml(p.title)}</b>\n` +
     `📍 ${escHtml(p.city)}\n` +
-    (desc ? `🕒 ${escHtml(desc)}\n` : '') +
+    (desc ? `🌸 ${escHtml(desc)}\n` : '') +
     `💰 Наша цена: <b>${price} сомони</b>\n` +
-    (p.address     ? `🏠 ${escHtml(p.address)}\n`     : '') +
-    (p.pickup_time ? `⏰ ${escHtml(p.pickup_time)}\n`  : '') +
     `❓ По вопросам: ${admin}\n` +
     (code ? `🆔 ${code}` : '') +
     `\n\n<a href="${url}">Смотреть объявление на ReBuket</a>`;
