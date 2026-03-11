@@ -6,7 +6,7 @@ const helmet    = require('helmet');
 const rateLimit = require('express-rate-limit');
 const path      = require('path');
 const { getClient }                = require('./db/supabase');
-const { initBots, setupCallbacks, notifySellerApproved, notifySellerRejected } = require('./services/telegram');
+const { initBots, setupCallbacks, notifySellerApproved, notifySellerRejected, markExpiredInChannel } = require('./services/telegram');
 const routes = require('./routes/index');
 
 const app  = express();
@@ -42,17 +42,31 @@ app.get('*', (req, res) => res.sendFile(path.join(CLIENT_DIR, 'index.html')));
 async function removeExpiredProducts() {
   try {
     const now = new Date().toISOString();
-    const { data, error } = await getClient()
+    // Сначала получаем просроченные чтобы отредактировать посты в канале
+    const { data: expired, error: fetchErr } = await getClient()
       .from('products')
-      .delete()
+      .select('*')
       .in('category', ['bouquet', 'basket'])
       .lt('expires_at', now)
-      .not('expires_at', 'is', null)
-      .select('id, title');
+      .not('expires_at', 'is', null);
 
-    if (error) { console.log('Expire check error:', error.message); return; }
-    if (data?.length) {
-      console.log(`🗑  Удалено просроченных объявлений: ${data.length}`);
+    if (fetchErr) { console.log('Expire check error:', fetchErr.message); return; }
+
+    if (expired?.length) {
+      // Редактируем посты в канале — меняем текст на "Снято с продажи"
+      for (const p of expired) {
+        await markExpiredInChannel(p).catch(() => {});
+      }
+
+      // Удаляем из БД
+      const ids = expired.map(p => p.id);
+      const { error: delErr } = await getClient()
+        .from('products')
+        .delete()
+        .in('id', ids);
+
+      if (delErr) { console.log('Delete error:', delErr.message); return; }
+      console.log(`🗑  Удалено просроченных объявлений: ${expired.length}`);
     }
   } catch(e) {
     console.log('Expire check error:', e.message);
