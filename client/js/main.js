@@ -3,6 +3,14 @@ import { api }  from './api.js';
 import { esc, fmt, toast, openModal, goPage } from './utils.js';
 
 const COMMISSION = 0.25;
+const _cache = new Map();
+const CACHE_TTL = 30000; // 30 sec
+
+function cached(key, fn) {
+  const hit = _cache.get(key);
+  if (hit && Date.now() - hit.ts < CACHE_TTL) return Promise.resolve(hit.data);
+  return fn().then(d => { _cache.set(key, { data: d, ts: Date.now() }); return d; });
+}
 
 // Оптимизация фото через Supabase трансформацию
 function imgUrl(url, w = 400) {
@@ -66,7 +74,8 @@ async function renderGrid() {
   const pgn  = document.getElementById('pgn');
   grid.innerHTML = '<div class="loader">🌸 Загружаем...</div>';
   try {
-    const r = await api.products(filters);
+    const cKey = JSON.stringify(filters);
+const r = await cached(cKey, () => api.products(filters));
     if (!r.data?.length) {
       grid.innerHTML = '<div class="empty"><span>🔍</span><h3>Ничего не найдено</h3><p>Попробуйте изменить фильтры</p></div>';
       pgn.innerHTML = ''; return;
@@ -346,6 +355,7 @@ window.submitListing = async () => {
   btn.disabled = true; btn.textContent = 'Отправляем...';
   try {
     await api.addProduct(fd);
+_cache.clear();
     toast('Объявление подано! Ждет проверки.','ok');
     ['sell-title','sell-desc','sell-price','sell-phone','sell-name','sell-tg','sell-address','sell-time']
       .forEach(id => { const el=document.getElementById(id); if(el) el.value=''; });
