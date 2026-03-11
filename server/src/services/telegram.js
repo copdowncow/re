@@ -194,12 +194,9 @@ async function notifySellerApproved(p) {
 // ─────────────────────────────────────────────
 //  Публикация в канал при одобрении
 // ─────────────────────────────────────────────
-function getProductCode(serialId) {
+function getProductCode(serialId, prefix) {
   if (!serialId) return null;
-  const letters = ['AB','AC','AD','AE','AF','AG','AH','AK','AM','AN','AP','AR','AS','AT','AU','AV','AW','AX','AY','AZ'];
-  const sid     = Number(serialId);
-  const prefix  = letters[Math.floor((sid - 1) / 9999) % letters.length];
-  const num     = ((sid - 1) % 9999) + 1;
+  const num = Number(serialId);
   return prefix + '-' + String(num).padStart(4, '0');
 }
 
@@ -225,7 +222,7 @@ async function publishToChannel(p) {
   const price   = Number(p.price).toLocaleString('ru-RU');
   // Получаем следующий порядковый номер для этого канала
   const serialNum = await getNextSerial(isKhujand ? 'khujand' : 'dushanbe');
-  const code = getProductCode(serialNum);
+  const code = getProductCode(serialNum, isKhujand ? 'AK' : 'AB');
   const admin   = process.env.ADMIN_TELEGRAM ? process.env.ADMIN_TELEGRAM.replace('https://t.me/','@') : '@rebuket_admin';
   const url     = `${getMiniAppUrl()}/#product-${p.slug || p.id}`;
   const photos  = Array.isArray(p.photos) ? p.photos.filter(Boolean) : [];
