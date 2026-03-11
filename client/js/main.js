@@ -16,6 +16,14 @@ function getTimeLeft(expiresAt) {
   if (h >= 24) { const d = Math.floor(h / 24); return `${d}д ${h%24}ч`; }
   return h > 0 ? `${h}ч ${m}м` : `${m}м`;
 }
+function getExpiresAt(p) {
+if (p.expires_at) return p.expires_at;
+if (EXPIRY_CATS.includes(p.category) && p.created_at) {
+return new Date(new Date(p.created_at).getTime() + 2 * 24 * 3600000).toISOString();
+}
+return null;
+}
+
 function timerBadge(p) {
   if (!EXPIRY_CATS.includes(p.category) || !p.expires_at) return '';
   const left = getTimeLeft(p.expires_at);
@@ -99,6 +107,14 @@ window.openProduct = async (slugOrId) => {
   }
 };
 
+function expiryChip(p) {
+if (!EXPIRY_CATS.includes(p.category)) return '';
+const ea = getExpiresAt(p);
+if (!ea) return '';
+const l = getTimeLeft(ea);
+return '<span class="pd-chip" style="background:#fff3cd;color:#856404">⏰ Активно ещё: ' + (l || 'истёк') + '</span>';
+}
+
 function renderDetail(p, el) {
   const photos = Array.isArray(p.photos) ? p.photos : [];
   const pUrl = `${location.origin}/#product-${p.slug||p.id}`;
@@ -124,7 +140,7 @@ function renderDetail(p, el) {
         <span class="pd-chip rose">${CAT_LABEL[p.category]||p.category}</span>
         <span class="pd-chip">📍 ${esc(p.city)}</span>
         <span class="pd-chip">👁 ${p.view_count||0} просмотров</span>
-        ${EXPIRY_CATS.includes(p.category) ? (() => { const ea = getExpiresAt(p); if (!ea) return ''; const l = getTimeLeft(ea); return `<span class="pd-chip" style="background:#fff3cd;color:#856404">⏰ Активно ещё: ${l || 'истёк'}</span>`; })() : ''}
+        ${expiryChip(p)}
       </div>
       <h2>${esc(p.title)}</h2>
       <div class="pd-price">${fmtPrice(priceWithCommission(p.price))}</div>
