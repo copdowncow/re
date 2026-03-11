@@ -85,14 +85,20 @@ async function start() {
 
   setupCallbacks(
     async (id) => {
-      await getClient().from('products').update({ status: 'active' }).eq('id', id);
+      // Устанавливаем expires_at для букетов и корзин
+      const { data: existing } = await getClient().from('products').select('*').eq('id', id).single();
+      const updates = { status: 'active' };
+      if (existing && ['bouquet','basket'].includes(existing.category)) {
+        updates.expires_at = new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString();
+      }
+      await getClient().from('products').update(updates).eq('id', id);
       const { data } = await getClient().from('products').select('*').eq('id', id).single();
-      if (data) notifySellerApproved(data).catch(() => {});
+      if (data) notifySellerApproved(data).catch(e => console.log('notifySellerApproved error:', e.message));
     },
     async (id) => {
       await getClient().from('products').update({ status: 'hidden' }).eq('id', id);
       const { data } = await getClient().from('products').select('*').eq('id', id).single();
-      if (data) notifySellerRejected(data).catch(() => {});
+      if (data) notifySellerRejected(data).catch(e => console.log('notifySellerRejected error:', e.message));
     }
   );
 
