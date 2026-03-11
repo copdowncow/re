@@ -63,6 +63,15 @@ window.switchTab = async name => {
 };
 
 let pFilter = '';
+let pSearch = '';
+let _searchTimer = null;
+
+window.setPSearch = (val) => {
+  pSearch = val;
+  clearTimeout(_searchTimer);
+  _searchTimer = setTimeout(() => renderProducts(), 400);
+};
+
 window.setPFilter = (s,el) => {
   pFilter = s;
   document.querySelectorAll('#p-filter-chips .chip').forEach(b=>b.classList.remove('active'));
@@ -73,6 +82,11 @@ window.setPFilter = (s,el) => {
 async function renderProducts() {
   const el = document.getElementById('tab-products');
   el.innerHTML = `
+    <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap">
+      <input id="p-search" type="text" placeholder="🔍 Поиск по названию..." value="${pSearch}"
+        oninput="setPSearch(this.value)"
+        style="flex:1;min-width:180px;padding:8px 12px;border:2px solid #eee;border-radius:10px;font-size:.88rem;outline:none;font-family:'Jost',sans-serif">
+    </div>
     <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px" id="p-filter-chips">
       ${[['','Все'],['pending','⏳ На проверке'],['active','✅ Активные'],['hidden','🙈 Скрытые']]
         .map(([v,l])=>`<button class="chip${pFilter===v?' active':''}" onclick="setPFilter('${v}',this)">${l}</button>`).join('')}
@@ -83,12 +97,22 @@ async function renderProducts() {
     const r = await api.adminProducts({ status:pFilter, limit:100 });
     _productsCache = r.data || [];
     const t = document.getElementById('p-table');
-    if (!r.data?.length) { t.innerHTML='<div class="empty"><span>📭</span><h3>Нет объявлений</h3></div>'; return; }
+    let rows = r.data || [];
+    if (pSearch.trim()) {
+      const q = pSearch.trim().toLowerCase();
+      rows = rows.filter(p =>
+        (p.title||'').toLowerCase().includes(q) ||
+        (p.seller_name||'').toLowerCase().includes(q) ||
+        (p.seller_phone||'').toLowerCase().includes(q) ||
+        (p.city||'').toLowerCase().includes(q)
+      );
+    }
+    if (!rows.length) { t.innerHTML='<div class="empty"><span>📭</span><h3>Нет объявлений</h3></div>'; return; }
     const CAT = { bouquet:'💐 Букет', basket:'🧺 Корзина', bear:'🧸 Игрушки', sweets:'🍰 Сладости' };
     const BD  = { active:`<span class="bd-g">✅ Активно</span>`, pending:`<span class="bd-y">⏳ Проверка</span>`, hidden:`<span class="bd-r">🙈 Скрыто</span>` };
     t.innerHTML=`<div class="atable-wrap"><table class="atable">
       <thead><tr><th>Тип</th><th>Название</th><th>Цена</th><th>Город</th><th>Продавец</th><th>Телефон</th><th>Telegram</th><th>Статус</th><th>Действия</th></tr></thead>
-      <tbody>${r.data.map(p=>`<tr>
+      <tbody>${rows.map(p=>`<tr>
         <td>${CAT[p.category]||p.category}</td>
         <td>
           <b>${esc(p.title)}</b><br>
@@ -181,7 +205,7 @@ window.openEditModal = (id) => {
         <div>
           <label style="display:block;font-size:.82rem;font-weight:600;margin-bottom:5px;color:var(--gray)">Город</label>
           <select id="em-city" style="width:100%;padding:10px 12px;border:1.5px solid #e8d8d0;border-radius:9px;font-size:.95rem">
-            ${['Душанбе','Худжанд','Куляб','Бохтар','Курган-Тюбе','Вахдат','Турсунзода','Исфара','Шахринав','Дангара','Регар','Чкаловск','Канибадам']
+            ${['Душанбе','Худжанд','Куляб','Бохтар','Курган-Тюбе','Вахдат','Турсунзода','Исфара','Шахринав','Дангара','Регар','Чкаловск']
               .map(c=>`<option ${p.city===c?'selected':''}>${c}</option>`).join('')}
           </select>
         </div>
