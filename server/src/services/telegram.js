@@ -239,21 +239,75 @@ async function publishToChannel(p) {
     `\n\n<a href="${url}">Смотреть объявление на ReBuket</a>`;
 
   try {
+    let sent = null;
     if (photos.length === 0) {
-      await bot.sendMessage(channelId, caption, { parse_mode: 'HTML' });
+      sent = await bot.sendMessage(channelId, caption, { parse_mode: 'HTML' });
     } else if (photos.length === 1) {
-      await bot.sendPhoto(channelId, photos[0], { caption, parse_mode: 'HTML' });
+      sent = await bot.sendPhoto(channelId, photos[0], { caption, parse_mode: 'HTML' });
     } else {
       const media = photos.slice(0, 10).map((ph, i) => ({
         type: 'photo',
         media: ph,
         ...(i === 0 ? { caption, parse_mode: 'HTML' } : {})
       }));
-      await bot.sendMediaGroup(channelId, media);
+      const results = await bot.sendMediaGroup(channelId, media);
+      sent = Array.isArray(results) ? results[0] : results;
+    }
+    // Сохраняем message_id для последующего редактирования
+    try {
+      const { createClient } = require('@supabase/supabase-js');
+      const db = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
+      // sent — результат отправки (первое фото или сообщение)
+      if (sent?.message_id) {
+        await db.from('products').update({
+          channel_message_id: sent.message_id,
+          channel_name: isKhujand ? 'khujand' : 'dushanbe'
+        }).eq('id', p.id);
+      }
+    } catch(e) {
+      console.log('Не удалось сохранить message_id:', e.message);
     }
     console.log(`📢 Опубликовано в канал: ${p.title} [${code}]`);
   } catch(e) {
     console.log('Ошибка публикации в канал:', e.message);
+  }
+}
+
+// ─────────────────────────────────────────────
+//  Пометить истёкшие посты в канале
+// ─────────────────────────────────────────────
+async function markExpiredInChannel(p) {
+  const bot = userBot || adminBot;
+  if (!bot) return;
+  if (!p.channel_message_id || !p.channel_name) return;
+
+  const channelId = p.channel_name === 'khujand'
+    ? (process.env.CHANNEL_ID_KHUJAND || '-1003818624807')
+    : process.env.CHANNEL_ID;
+  if (!channelId) return;
+
+  const EMOJIS    = { bouquet:'💐', basket:'🧺', bear:'🧸', sweets:'🍰' };
+  const CAT_NAMES = { bouquet:'Букет', basket:'Корзина', bear:'Мишка', sweets:'Сладости' };
+  const em      = EMOJIS[p.category] || '🌸';
+  const price   = Number(p.price).toLocaleString('ru-RU');
+  const admin   = process.env.ADMIN_TELEGRAM ? process.env.ADMIN_TELEGRAM.replace('https://t.me/','@') : '@rebuket_admin';
+
+  const newCaption =
+    `🔴 <b>СНЯТО С ПРОДАЖИ</b>\n\n` +
+    `${em} <b>${escHtml(p.title)}</b>\n` +
+    `📍 ${escHtml(p.city)}\n` +
+    `💰 Цена была: <b>${price} сомони</b>\n\n` +
+    `❓ По вопросам: ${admin}`;
+
+  try {
+    await bot.editMessageCaption(newCaption, {
+      chat_id:    channelId,
+      message_id: p.channel_message_id,
+      parse_mode: 'HTML'
+    });
+    console.log(`🔴 Пост помечен как снято: ${p.title}`);
+  } catch(e) {
+    console.log('Ошибка редактирования поста:', e.message);
   }
 }
 
@@ -361,5 +415,6 @@ module.exports = {
   notifyInquiry,
   notifySellerApproved,
   notifySellerRejected,
+  markExpiredInChannel,
   setupCallbacks
 };
