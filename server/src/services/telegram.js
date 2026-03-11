@@ -194,6 +194,15 @@ async function notifySellerApproved(p) {
 // ─────────────────────────────────────────────
 //  Публикация в канал при одобрении
 // ─────────────────────────────────────────────
+function getProductCode(serialId) {
+  if (!serialId) return null;
+  const letters = ['AB','AC','AD','AE','AF','AG','AH','AK','AM','AN','AP','AR','AS','AT','AU','AV','AW','AX','AY','AZ'];
+  const sid     = Number(serialId);
+  const prefix  = letters[Math.floor((sid - 1) / 9999) % letters.length];
+  const num     = ((sid - 1) % 9999) + 1;
+  return prefix + '-' + String(num).padStart(4, '0');
+}
+
 async function publishToChannel(p) {
   const channelId = process.env.CHANNEL_ID;
   if (!channelId) return;
@@ -201,40 +210,34 @@ async function publishToChannel(p) {
   const bot    = userBot || adminBot;
   if (!bot) return;
 
-  const CATS   = { bouquet:'💐 Букет', basket:'🧺 Корзина', bear:'🧸 Мишка', sweets:'🍰 Сладости' };
-  const url    = `${getMiniAppUrl()}/#product-${p.slug || p.id}`;
-  const photos = Array.isArray(p.photos) ? p.photos.filter(Boolean) : [];
-
   const EMOJIS    = { bouquet:'💐', basket:'🧺', bear:'🧸', sweets:'🍰' };
   const CAT_NAMES = { bouquet:'Букет', basket:'Корзина', bear:'Мишка', sweets:'Сладости' };
   const em      = EMOJIS[p.category] || '🌸';
   const catName = CAT_NAMES[p.category] || p.category;
-  const desc    = p.description ? p.description.substring(0, 300) + (p.description.length > 300 ? '...' : '') : '';
+  const desc    = p.description ? p.description.substring(0, 200) + (p.description.length > 200 ? '...' : '') : '';
   const price   = Number(p.price).toLocaleString('ru-RU');
-  const line    = '─────────────────────';
+  const code    = getProductCode(p.serial_id);
+  const admin   = process.env.ADMIN_TELEGRAM ? process.env.ADMIN_TELEGRAM.replace('https://t.me/','@') : '@rebuket_admin';
+  const url     = `${getMiniAppUrl()}/#product-${p.slug || p.id}`;
+  const photos  = Array.isArray(p.photos) ? p.photos.filter(Boolean) : [];
 
   const caption =
-    `${em} <b>${catName}</b>  |  <b>${escHtml(p.title)}</b>\n` +
-    `${line}\n` +
-    (desc ? `📝 ${escHtml(desc)}\n${line}\n` : '') +
-    `💰 Цена: <b>${price} TJS</b>\n` +
-    `📍 Город: <b>${escHtml(p.city)}</b>\n` +
-    (p.seller_name ? `👤 Продавец: ${escHtml(p.seller_name)}\n` : '') +
-    (p.address     ? `🏠 Адрес: ${escHtml(p.address)}\n`        : '') +
-    (p.pickup_time ? `🕐 Время: ${escHtml(p.pickup_time)}\n`     : '') +
-    `${line}\n` +
-    `${line}\n` +
-    `🌸 <a href="${url}">Смотреть объявление на ReBuket</a>`;
+    `${em} <b>${escHtml(p.title)}</b>\n` +
+    `📍 ${escHtml(p.city)}\n` +
+    (desc ? `🕒 ${escHtml(desc)}\n` : '') +
+    `💰 Наша цена: <b>${price} сомони</b>\n` +
+    (p.address     ? `🏠 ${escHtml(p.address)}\n`     : '') +
+    (p.pickup_time ? `⏰ ${escHtml(p.pickup_time)}\n`  : '') +
+    `❓ По вопросам: ${admin}\n` +
+    (code ? `🆔 ${code}` : '') +
+    `\n\n<a href="${url}">Смотреть объявление на ReBuket</a>`;
 
   try {
     if (photos.length === 0) {
       await bot.sendMessage(channelId, caption, { parse_mode: 'HTML' });
-
     } else if (photos.length === 1) {
       await bot.sendPhoto(channelId, photos[0], { caption, parse_mode: 'HTML' });
-
     } else {
-      // Несколько фото: медиагруппа где caption на первом фото
       const media = photos.slice(0, 10).map((ph, i) => ({
         type: 'photo',
         media: ph,
@@ -242,8 +245,7 @@ async function publishToChannel(p) {
       }));
       await bot.sendMediaGroup(channelId, media);
     }
-
-    console.log(`📢 Опубликовано в канал: ${p.title}`);
+    console.log(`📢 Опубликовано в канал: ${p.title} [${code}]`);
   } catch(e) {
     console.log('Ошибка публикации в канал:', e.message);
   }
