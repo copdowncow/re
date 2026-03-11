@@ -485,3 +485,109 @@ footer p { font-size:.78rem; }
 .timer-badge.urgent { background: #dc3545; animation: pulse 1.2s infinite; }
 .timer-badge.expired { background: #6c757d; }
 @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:.6; } }
+
+/* ── Admin Cards (mobile-first) ─────────────────────── */
+.acard {
+  background: #fff;
+  border-radius: 16px;
+  padding: 16px;
+  margin-bottom: 12px;
+  box-shadow: 0 2px 12px rgba(0,0,0,.06);
+  border: 1.5px solid #f5f0ee;
+}
+.acard-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 10px;
+  gap: 10px;
+}
+.acard-info { flex: 1; min-width: 0; }
+.acard-title {
+  font-size: .95rem;
+  font-weight: 700;
+  color: var(--dark);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.acard-price {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: var(--rose-d);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.acard-photos {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+.acard-photos img {
+  width: 72px;
+  height: 62px;
+  object-fit: cover;
+  border-radius: 9px;
+  cursor: pointer;
+  border: 1.5px solid #eee;
+  transition: .2s;
+}
+.acard-photos img:hover { border-color: var(--rose); transform: scale(1.04); }
+.acard-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+  font-size: .8rem;
+  color: var(--mid);
+  margin-bottom: 12px;
+  padding: 8px 10px;
+  background: var(--warm);
+  border-radius: 9px;
+}
+.acard-meta a { color: var(--rose-d); font-weight: 700; }
+.acard-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.aact-btn {
+  padding: 7px 14px;
+  border-radius: 9px;
+  border: none;
+  font-size: .8rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: .2s;
+  font-family: 'Jost', sans-serif;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.aact-g    { background: #d4ead9; color: #2d6a3f; }
+.aact-g:hover { background: #4a7c59; color: #fff; }
+.aact-r    { background: #ffe8e8; color: #c0392b; }
+.aact-r:hover { background: #c0392b; color: #fff; }
+.aact-b    { background: #dbeafe; color: #1d4ed8; }
+.aact-b:hover { background: #2563eb; color: #fff; }
+.aact-gray { background: #f0f0f0; color: var(--mid); }
+.aact-gray:hover { background: #ddd; }
+
+/* ── Admin header improvement ───────────────────────── */
+.a-hdr {
+  background: var(--dark);
+  color: #fff;
+  padding: 14px 18px;
+  border-radius: 15px;
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  position: sticky;
+  top: 60px;
+  z-index: 101;
+}
+.a-hdr h2 { font-size: 1.1rem; }
