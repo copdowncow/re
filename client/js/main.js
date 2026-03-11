@@ -346,7 +346,7 @@ export async function loadCounts() {
 export async function loadCities(selId) {
   try {
     const cities = await api.cities();
-    const base = ['Душанбе','Худжанд','Куляб','Бохтар','Курган-Тюбе','Вахдат','Турсунзода','Исфара','Шахринав','Дангара','Регар','Чкаловск'];
+    const base = ['Душанбе','Худжанд','Куляб','Бохтар','Вахдат','Турсунзода','Исфара','Шахринав','Дангара','Регар','Чкаловск'];
     const all = [...new Set([...base, ...cities])].sort();
     const sel = document.getElementById(selId);
     if (!sel) return;
