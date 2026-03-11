@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=Jost:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,600;0,700;1,400&family=Jost:wght@400;600;700&display=swap');
 
 :root {
   --rose:     #C8536A;
@@ -54,7 +54,7 @@ nav {
 }
 .nav-links a {
   font-size: .86rem; font-weight: 600; padding: 7px 13px;
-  border-radius: 24px; cursor: pointer; transition: .2s; color: var(--mid);
+  border-radius: 24px; cursor: pointer; transition: .15s; color: var(--mid);
   white-space: nowrap; display: block;
 }
 .nav-links a:hover, .nav-links a.active { background: var(--rose-l); color: var(--rose-d); }
@@ -88,7 +88,7 @@ nav {
 .nav-drawer a {
   font-size: .97rem; font-weight: 600;
   padding: 13px 14px; border-radius: 11px;
-  cursor: pointer; color: var(--mid); transition: .2s;
+  cursor: pointer; color: var(--mid); transition: .15s;
   display: flex; align-items: center; gap: 10px;
 }
 .nav-drawer a:hover, .nav-drawer a.active { background: var(--rose-l); color: var(--rose-d); }
@@ -124,7 +124,7 @@ nav {
 .btn {
   padding: 11px 24px; border-radius: 50px;
   font-size: .9rem; font-weight: 600; border: none;
-  transition: .2s; display: inline-flex; align-items: center; gap: 6px;
+  transition: .15s; display: inline-flex; align-items: center; gap: 6px;
 }
 .btn:disabled { opacity: .55; cursor: not-allowed; }
 .btn-white   { background: #fff; color: var(--rose-d); }
@@ -213,7 +213,7 @@ nav {
 .pcard-img { height:190px; overflow:hidden; position:relative; }
 @media (max-width:500px) { .pcard-img { height:155px; } }
 .pcard-img img {
-  width:100%; height:100%; object-fit:cover; transition:.4s;
+  width:100%; height:100%; object-fit:cover; transition:.2s;
   background: #f5f0ee;
 }
 /* Skeleton loader while image loads */
@@ -325,7 +325,7 @@ nav {
   padding: 10px 4px;
   text-align: center;
   cursor: pointer;
-  transition: .2s;
+  transition: .15s;
   background: #fafafa;
   display: flex;
   flex-direction: column;
@@ -544,7 +544,7 @@ footer p { font-size:.78rem; }
   border-radius: 9px;
   cursor: pointer;
   border: 1.5px solid #eee;
-  transition: .2s;
+  transition: .15s;
 }
 .acard-photos img:hover { border-color: var(--rose); transform: scale(1.04); }
 .acard-meta {
@@ -571,7 +571,7 @@ footer p { font-size:.78rem; }
   font-size: .8rem;
   font-weight: 700;
   cursor: pointer;
-  transition: .2s;
+  transition: .15s;
   font-family: 'Jost', sans-serif;
   text-decoration: none;
   display: inline-flex;
