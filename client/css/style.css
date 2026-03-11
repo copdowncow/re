@@ -212,7 +212,20 @@ nav {
 .pcard:hover { transform: translateY(-4px); box-shadow: var(--shadow); }
 .pcard-img { height:190px; overflow:hidden; position:relative; }
 @media (max-width:500px) { .pcard-img { height:155px; } }
-.pcard-img img { width:100%; height:100%; object-fit:cover; transition:.4s; }
+.pcard-img img {
+  width:100%; height:100%; object-fit:cover; transition:.4s;
+  background: #f5f0ee;
+}
+/* Skeleton loader while image loads */
+.pcard-img img:not([src]) {
+  background: linear-gradient(90deg, #f5f0ee 25%, #ede8e5 50%, #f5f0ee 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.2s infinite;
+}
+@keyframes shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
 .pcard:hover .pcard-img img { transform: scale(1.06); }
 .pcard-ph { width:100%; height:100%; display:flex; align-items:center; justify-content:center; font-size:3.8rem; }
 .pi-bouquet { background:linear-gradient(135deg,#FFE4E8,#FFB3C1); }
