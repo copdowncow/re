@@ -2,7 +2,7 @@
 import { api }  from './api.js';
 import { esc, fmt, toast, openModal, goPage } from './utils.js';
 
-const COMMISSION = 0.25;
+const COMMISSION = 0.20;
 const _cache = new Map();
 const CACHE_TTL = 30000; // 30 sec
 
