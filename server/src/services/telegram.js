@@ -25,32 +25,37 @@ function getProductCode(num, prefix) {
   return prefix + '-' + String(Number(num)).padStart(4, '0');
 }
 
-async function getNextSerial(channel) {
+// Счётчики в файле — надёжно и без зависимости от БД
+const fs   = require('fs');
+const path = require('path');
+const COUNTER_FILE = path.join(__dirname, 'counters.json');
+
+function readCounters() {
   try {
-    const { createClient } = require('@supabase/supabase-js');
-    const db = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
+    if (fs.existsSync(COUNTER_FILE)) {
+      return JSON.parse(fs.readFileSync(COUNTER_FILE, 'utf8'));
+    }
+  } catch(e) {}
+  return { dushanbe: 853, khujand: 23 };
+}
 
-    const { data, error } = await db
-      .from('channel_counters')
-      .select('value')
-      .eq('channel', channel)
-      .single();
-
-    console.log(`[getNextSerial] channel=${channel} raw data=${JSON.stringify(data)} error=${error?.message}`);
-
-    const STARTS = { dushanbe: 853, khujand: 23 };
-    const current = (data && typeof data.value === 'number') ? data.value : STARTS[channel] || 0;
-    const next = current + 1;
-
-    console.log(`[getNextSerial] current=${current} next=${next}`);
-
-    // Явный UPDATE вместо upsert
-    await db.from('channel_counters').update({ value: next }).eq('channel', channel);
-    return next;
+function writeCounters(data) {
+  try {
+    fs.writeFileSync(COUNTER_FILE, JSON.stringify(data), 'utf8');
   } catch(e) {
-    console.log('[getNextSerial] Error:', e.message);
-    return channel === 'khujand' ? 24 : 854;
+    console.log('Ошибка записи счётчиков:', e.message);
   }
+}
+
+function getNextSerial(channel) {
+  const counters = readCounters();
+  if (counters[channel] === undefined) {
+    counters[channel] = channel === 'khujand' ? 23 : 853;
+  }
+  counters[channel] += 1;
+  writeCounters(counters);
+  console.log(`[getNextSerial] channel=${channel} next=${counters[channel]}`);
+  return counters[channel];
 }
 
 function initBots() {
