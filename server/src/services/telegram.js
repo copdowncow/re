@@ -36,18 +36,16 @@ async function getNextSerial(channel) {
       .eq('channel', channel)
       .single();
 
-    if (error) {
-      console.log('[getNextSerial] DB error:', error.message);
-    }
+    console.log(`[getNextSerial] channel=${channel} raw data=${JSON.stringify(data)} error=${error?.message}`);
 
-    // Жёсткие стартовые значения если БД не вернула данные
     const STARTS = { dushanbe: 853, khujand: 23 };
     const current = (data && typeof data.value === 'number') ? data.value : STARTS[channel] || 0;
     const next = current + 1;
 
-    console.log(`[getNextSerial] channel=${channel} current=${current} next=${next}`);
+    console.log(`[getNextSerial] current=${current} next=${next}`);
 
-    await db.from('channel_counters').upsert({ channel, value: next }, { onConflict: 'channel' });
+    // Явный UPDATE вместо upsert
+    await db.from('channel_counters').update({ value: next }).eq('channel', channel);
     return next;
   } catch(e) {
     console.log('[getNextSerial] Error:', e.message);
