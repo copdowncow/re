@@ -38,7 +38,7 @@ async function getNextSerial(channel) {
       .eq('channel', channel)
       .single();
 
-    const current = (!error && data?.value) ? data.value : STARTS[channel];
+    const current = (!error && data?.value !== undefined && data?.value !== null) ? data.value : STARTS[channel];
     const next = current + 1;
 
     await db.from('channel_counters').upsert({ channel, value: next }, { onConflict: 'channel' });
