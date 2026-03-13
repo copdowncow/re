@@ -7,7 +7,6 @@ let adminBot = null;
 
 const adminChatIds = new Set();
 
-// Города которые публикуются в канал Худжанда
 const KHUJAND_CITIES = ['худжанд', 'бустон', 'исфара'];
 
 function getMiniAppUrl() {
@@ -30,7 +29,6 @@ async function getNextSerial(channel) {
   try {
     const { createClient } = require('@supabase/supabase-js');
     const db = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
-    const STARTS = { dushanbe: 853, khujand: 23 };
 
     const { data, error } = await db
       .from('channel_counters')
@@ -38,14 +36,22 @@ async function getNextSerial(channel) {
       .eq('channel', channel)
       .single();
 
-    const current = (!error && data?.value !== undefined && data?.value !== null) ? data.value : STARTS[channel];
+    if (error) {
+      console.log('[getNextSerial] DB error:', error.message);
+    }
+
+    // Жёсткие стартовые значения если БД не вернула данные
+    const STARTS = { dushanbe: 853, khujand: 23 };
+    const current = (data && typeof data.value === 'number') ? data.value : STARTS[channel] || 0;
     const next = current + 1;
+
+    console.log(`[getNextSerial] channel=${channel} current=${current} next=${next}`);
 
     await db.from('channel_counters').upsert({ channel, value: next }, { onConflict: 'channel' });
     return next;
   } catch(e) {
-    console.log('Serial counter error:', e.message);
-    return 1;
+    console.log('[getNextSerial] Error:', e.message);
+    return channel === 'khujand' ? 24 : 854;
   }
 }
 
@@ -151,7 +157,7 @@ async function publishToChannel(p) {
     ? (process.env.CHANNEL_ID_KHUJAND || '-1003818624807')
     : process.env.CHANNEL_ID;
 
-  console.log('[publishToChannel] city:', city, '| isKhujand:', isKhujand, '| channelId:', channelId);
+  console.log(`[publishToChannel] city="${city}" isKhujand=${isKhujand} channelId=${channelId}`);
 
   if (!channelId) {
     console.log('[publishToChannel] CHANNEL_ID не задан в .env');
@@ -167,14 +173,11 @@ async function publishToChannel(p) {
   const EMOJIS = { bouquet:'💐', basket:'🧺', bear:'🧸', sweets:'🍰' };
   const em     = EMOJIS[p.category] || '🌸';
   const desc   = p.description ? p.description.substring(0, 200) + (p.description.length > 200 ? '...' : '') : '';
-  const COMMISSION = 0.20;
-  const priceWithComm = Math.ceil(Number(p.price) * (1 + COMMISSION));
-  const price  = priceWithComm.toLocaleString('ru-RU');
+  const price  = Math.ceil(Number(p.price) * 1.20).toLocaleString('ru-RU');
   const admin  = process.env.ADMIN_TELEGRAM
     ? process.env.ADMIN_TELEGRAM.replace('https://t.me/', '@')
     : '@rebuket_admin';
   const url    = `${getMiniAppUrl()}/#product-${p.slug || p.id}`;
-  // Оригинальные URL без трансформаций - Telegram требует прямые ссылки
   const photos = Array.isArray(p.photos) ? p.photos.filter(Boolean).map(ph => ph.split('?')[0]) : [];
 
   const serialNum = await getNextSerial(isKhujand ? 'khujand' : 'dushanbe');
@@ -220,7 +223,7 @@ async function publishToChannel(p) {
 
     console.log(`📢 Опубликовано в канал: ${p.title} [${code}]`);
   } catch(e) {
-    console.log('[publishToChannel] Ошибка:', e.message, e.stack);
+    console.log('[publishToChannel] Ошибка:', e.message);
   }
 }
 
@@ -238,9 +241,7 @@ async function markExpiredInChannel(p) {
 
   const EMOJIS = { bouquet:'💐', basket:'🧺', bear:'🧸', sweets:'🍰' };
   const em     = EMOJIS[p.category] || '🌸';
-  const COMMISSION = 0.20;
-  const priceWithComm = Math.ceil(Number(p.price) * (1 + COMMISSION));
-  const price  = priceWithComm.toLocaleString('ru-RU');
+  const price  = Math.ceil(Number(p.price) * 1.20).toLocaleString('ru-RU');
   const admin  = process.env.ADMIN_TELEGRAM
     ? process.env.ADMIN_TELEGRAM.replace('https://t.me/', '@')
     : '@rebuket_admin';
