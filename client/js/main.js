@@ -294,9 +294,20 @@ function renderSellPhotos() {
     const url = URL.createObjectURL(f);
     return `<div class="photo-thumb"><img src="${url}"><button class="photo-del" onclick="removePhoto(${i})">x</button></div>`;
   }).join('');
-  if (hint) hint.textContent = sellFiles.length < 3
-    ? `Загружено ${sellFiles.length} из 3 (минимум 3 фото)`
-    : `Загружено ${sellFiles.length} фото`;
+  if (hint) {
+    if (sellFiles.length === 0) {
+      hint.textContent = 'Минимум 3 фото';
+      hint.style.color = 'var(--gray)';
+    } else if (sellFiles.length < 3) {
+      hint.textContent = `Загружено ${sellFiles.length} из 3 — нужно ещё ${3 - sellFiles.length}`;
+      hint.style.color = '#e67e22';
+      hint.style.fontWeight = '700';
+    } else {
+      hint.textContent = `✅ Загружено ${sellFiles.length} фото — готово!`;
+      hint.style.color = '#27ae60';
+      hint.style.fontWeight = '700';
+    }
+  }
 }
 window.removePhoto = i => { sellFiles.splice(i,1); renderSellPhotos(); };
 
