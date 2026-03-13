@@ -29,16 +29,23 @@ function getProductCode(num, prefix) {
 async function getNextSerial(channel) {
   try {
     const { createClient } = require('@supabase/supabase-js');
-    const db   = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
-    const { data } = await db.from('channel_counters').select('value').eq('channel', channel).single();
-    const STARTS = { dushanbe: 845, khujand: 23 };
-    const current = data?.value ?? STARTS[channel] ?? 0;
+    const db = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
+    const STARTS = { dushanbe: 853, khujand: 23 };
+
+    const { data, error } = await db
+      .from('channel_counters')
+      .select('value')
+      .eq('channel', channel)
+      .single();
+
+    const current = (!error && data?.value) ? data.value : STARTS[channel];
     const next = current + 1;
-    await db.from('channel_counters').upsert({ channel, value: next });
+
+    await db.from('channel_counters').upsert({ channel, value: next }, { onConflict: 'channel' });
     return next;
   } catch(e) {
     console.log('Serial counter error:', e.message);
-    return null;
+    return 1;
   }
 }
 
@@ -143,10 +150,19 @@ async function publishToChannel(p) {
   const channelId = isKhujand
     ? (process.env.CHANNEL_ID_KHUJAND || '-1003818624807')
     : process.env.CHANNEL_ID;
-  if (!channelId) return;
+
+  console.log('[publishToChannel] city:', city, '| isKhujand:', isKhujand, '| channelId:', channelId);
+
+  if (!channelId) {
+    console.log('[publishToChannel] CHANNEL_ID не задан в .env');
+    return;
+  }
 
   const bot = userBot || adminBot;
-  if (!bot) return;
+  if (!bot) {
+    console.log('[publishToChannel] Нет активного бота');
+    return;
+  }
 
   const EMOJIS = { bouquet:'💐', basket:'🧺', bear:'🧸', sweets:'🍰' };
   const em     = EMOJIS[p.category] || '🌸';
@@ -158,7 +174,8 @@ async function publishToChannel(p) {
     ? process.env.ADMIN_TELEGRAM.replace('https://t.me/', '@')
     : '@rebuket_admin';
   const url    = `${getMiniAppUrl()}/#product-${p.slug || p.id}`;
-  const photos = Array.isArray(p.photos) ? p.photos.filter(Boolean) : [];
+  // Оригинальные URL без трансформаций - Telegram требует прямые ссылки
+  const photos = Array.isArray(p.photos) ? p.photos.filter(Boolean).map(ph => ph.split('?')[0]) : [];
 
   const serialNum = await getNextSerial(isKhujand ? 'khujand' : 'dushanbe');
   const code      = getProductCode(serialNum, isKhujand ? 'AK' : 'AB');
@@ -203,7 +220,7 @@ async function publishToChannel(p) {
 
     console.log(`📢 Опубликовано в канал: ${p.title} [${code}]`);
   } catch(e) {
-    console.log('Ошибка публикации в канал:', e.message);
+    console.log('[publishToChannel] Ошибка:', e.message, e.stack);
   }
 }
 
