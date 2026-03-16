@@ -2,7 +2,7 @@
 import { api }  from './api.js';
 import { esc, fmt, toast, openModal, goPage } from './utils.js';
 
-const COMMISSION = 0.20;
+const COMMISSION = 0.25;
 const _cache = new Map();
 const CACHE_TTL = 30000; // 30 sec
 
@@ -311,6 +311,12 @@ function renderSellPhotos() {
 }
 window.removePhoto = i => { sellFiles.splice(i,1); renderSellPhotos(); };
 
+// Сбрасываем подсветку при вводе
+['sell-title','sell-price','sell-city','sell-phone'].forEach(id => {
+  const el = document.getElementById(id);
+  if (el) el.addEventListener('input', () => markField(id, true));
+});
+
 window.selectCat = (el) => {
   document.querySelectorAll('.cat-sel').forEach(e => e.classList.remove('active'));
   el.classList.add('active');
@@ -337,6 +343,24 @@ function getTelegramUserId() {
   return null;
 }
 
+function markField(id, valid) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.style.borderColor = valid ? '' : '#dc3545';
+  el.style.boxShadow   = valid ? '' : '0 0 0 3px rgba(220,53,69,.15)';
+}
+
+function scrollToFirst(ids) {
+  for (const id of ids) {
+    const el = document.getElementById(id);
+    if (el && !el.value?.trim() || (el && el.tagName === 'SELECT' && !el.value)) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      el.focus();
+      return;
+    }
+  }
+}
+
 window.submitListing = async () => {
   const title    = document.getElementById('sell-title').value.trim();
   const price    = document.getElementById('sell-price').value;
@@ -344,8 +368,26 @@ window.submitListing = async () => {
   const phone    = document.getElementById('sell-phone').value.trim();
   const category = document.getElementById('sell-cat-val')?.value;
 
-  if (!title||!price||!city||!phone||!category) { toast('Заполните все обязательные поля!','err'); return; }
-  if (sellFiles.length < 3) { toast('Загрузите минимум 3 фотографии!','err'); return; }
+  // Подсвечиваем незаполненные поля
+  markField('sell-title', !!title);
+  markField('sell-price', !!price);
+  markField('sell-city',  !!city);
+  markField('sell-phone', !!phone);
+
+  // Подсвечиваем категорию
+  const catEl = document.querySelector('.cat-sel-wrap');
+  if (catEl) catEl.style.outline = category ? '' : '2px solid #dc3545';
+
+  if (!title||!price||!city||!phone||!category) {
+    toast('Заполните все обязательные поля!','err');
+    scrollToFirst(['sell-title','sell-price','sell-city','sell-phone']);
+    return;
+  }
+  if (sellFiles.length < 3) {
+    document.getElementById('photo-hint')?.scrollIntoView({ behavior:'smooth', block:'center' });
+    toast('Загрузите минимум 3 фотографии!','err');
+    return;
+  }
 
   const fd = new FormData();
   fd.append('title',           title);
