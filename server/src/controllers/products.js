@@ -167,12 +167,9 @@ exports.createProduct = async (req, res) => {
       return res.status(400).json({ error: 'Загрузите минимум 3 фотографии' });
     }
 
-    const photos = await Promise.all(
-      files.map(f => uploadPhoto(f.buffer, f.originalname, f.mimetype))
-    );
-
     const slug = await uniqueSlug(toSlug(title));
 
+    // Сначала создаём объявление с пустыми фото — отвечаем клиенту быстро
     const { data, error } = await getClient()
       .from('products')
       .insert({
@@ -187,7 +184,7 @@ exports.createProduct = async (req, res) => {
         address:         address         || null,
         pickup_time:     pickup_time     || null,
         seller_chat_id:  seller_chat_id  || null,
-        photos,
+        photos: [],
         slug,
         status: 'pending'
       })
@@ -196,8 +193,7 @@ exports.createProduct = async (req, res) => {
 
     if (error) throw error;
 
-    notifyProduct(data).catch(err => console.error('Telegram notify error:', err));
-
+    // Отвечаем клиенту сразу не ожидая загрузки фото
     res.status(201).json({
       id: data.id,
       slug: data.slug,
@@ -205,6 +201,12 @@ exports.createProduct = async (req, res) => {
       message: 'Объявление подано! Ждёт проверки.',
       previewUrl: `/products/${data.slug}`
     });
+
+    // Загружаем фото в фоне
+    Promise.all(files.map(f => uploadPhoto(f.buffer, f.originalname, f.mimetype)))
+      .then(photos => getClient().from('products').update({ photos }).eq('id', data.id))
+      .then(() => notifyProduct({ ...data }))
+      .catch(err => console.error('Фото/уведомление ошибка:', err));
   } catch (e) {
     console.error('[createProduct]', e);
     res.status(500).json({ error: e.message || 'Ошибка при создании объявления' });
