@@ -43,12 +43,14 @@ async function removeExpiredProducts() {
   try {
     const now = new Date().toISOString();
     // Сначала получаем просроченные чтобы отредактировать посты в канале
+    const twoDaysAgo = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString();
+
+    // Удаляем: у кого expires_at истёк ИЛИ у кого expires_at null но created_at > 2 дней назад
     const { data: expired, error: fetchErr } = await getClient()
       .from('products')
       .select('*')
       .in('category', ['bouquet', 'basket'])
-      .lt('expires_at', now)
-      .not('expires_at', 'is', null);
+      .or(`expires_at.lt.${now},and(expires_at.is.null,created_at.lt.${twoDaysAgo})`);
 
     if (fetchErr) { console.log('Expire check error:', fetchErr.message); return; }
 
