@@ -1,4 +1,4 @@
-'use strict';
+use strict';
 
 const TG = require('node-telegram-bot-api');
 
@@ -36,21 +36,29 @@ function readCounters() {
       return JSON.parse(fs.readFileSync(COUNTER_FILE, 'utf8'));
     }
   } catch(e) {}
-  return { dushanbe: 869, khujand: 23 };
+  // Читаем стартовые значения из env переменных
+  return {
+    dushanbe: Number(process.env.COUNTER_DUSHANBE) || 872,
+    khujand:  Number(process.env.COUNTER_KHUJAND)  || 23
+  };
 }
 
 function writeCounters(data) {
   try {
     fs.writeFileSync(COUNTER_FILE, JSON.stringify(data), 'utf8');
   } catch(e) {
-    console.log('Ошибка записи счётчиков:', e.message);
+    // В Railway нет доступа к файловой системе — игнорируем
   }
 }
 
 function getNextSerial(channel) {
   const counters = readCounters();
+  const DEFAULTS = {
+    dushanbe: Number(process.env.COUNTER_DUSHANBE) || 872,
+    khujand:  Number(process.env.COUNTER_KHUJAND)  || 23
+  };
   if (counters[channel] === undefined) {
-    counters[channel] = channel === 'khujand' ? 23 : 869;
+    counters[channel] = DEFAULTS[channel];
   }
   counters[channel] += 1;
   writeCounters(counters);
