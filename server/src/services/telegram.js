@@ -1,359 +1,379 @@
 'use strict';
-const { q, uploadPhoto, getClient } = require('../db/supabase');
-const { notifyProduct, notifySellerApproved, notifySellerRejected } = require('../services/telegram'); // ← добавлено
-const { v4: uuid } = require('uuid');
 
-function toSlug(str) {
-  if (!str) return '';
-  const map = {
-    а: 'a', б: 'b', в: 'v', г: 'g', д: 'd', е: 'e', ё: 'yo',
-    ж: 'zh', з: 'z', и: 'i', й: 'y', к: 'k', л: 'l', м: 'm',
-    н: 'n', о: 'o', п: 'p', р: 'r', с: 's', т: 't', у: 'u',
-    ф: 'f', х: 'h', ц: 'ts', ч: 'ch', ш: 'sh', щ: 'sch',
-    ы: 'y', э: 'e', ю: 'yu', я: 'ya'
-  };
-  return str
-    .toLowerCase()
-    .split('')
-    .map(c => map[c] || c)
-    .join('')
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-|-$/g, '')
-    .slice(0, 80);
+const TG = require('node-telegram-bot-api');
+
+let userBot  = null;
+let adminBot = null;
+
+const adminChatIds = new Set();
+
+const KHUJAND_CITIES = ['худжанд', 'бустон', 'исфара'];
+
+function getMiniAppUrl() {
+  return (process.env.MINI_APP_URL || process.env.SITE_URL || '').replace(/\/$/, '');
 }
 
-async function uniqueSlug(base) {
-  if (!base) return `product-${Date.now()}`;
-  let slug = base;
-  let i = 1;
-  while (true) {
-    const rows = await q(sb =>
-      sb.from('products').select('id').eq('slug', slug).limit(1)
+function escHtml(s) {
+  return String(s || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+}
+
+function getProductCode(num, prefix) {
+  if (!num) return null;
+  return prefix + '-' + String(Number(num)).padStart(4, '0');
+}
+
+// Счётчики в файле — надёжно и без зависимости от БД
+const fs   = require('fs');
+const path = require('path');
+const COUNTER_FILE = path.join(__dirname, 'counters.json');
+
+function readCounters() {
+  try {
+    if (fs.existsSync(COUNTER_FILE)) {
+      return JSON.parse(fs.readFileSync(COUNTER_FILE, 'utf8'));
+    }
+  } catch(e) {}
+  return { dushanbe: 869, khujand: 23 };
+}
+
+function writeCounters(data) {
+  try {
+    fs.writeFileSync(COUNTER_FILE, JSON.stringify(data), 'utf8');
+  } catch(e) {
+    console.log('Ошибка записи счётчиков:', e.message);
+  }
+}
+
+function getNextSerial(channel) {
+  const counters = readCounters();
+  if (counters[channel] === undefined) {
+    counters[channel] = channel === 'khujand' ? 23 : 869;
+  }
+  counters[channel] += 1;
+  writeCounters(counters);
+  console.log(`[getNextSerial] channel=${channel} next=${counters[channel]}`);
+  return counters[channel];
+}
+
+function initBots() {
+  if (process.env.ADMIN_CHAT_ID_1) adminChatIds.add(process.env.ADMIN_CHAT_ID_1);
+  if (process.env.ADMIN_CHAT_ID_2) adminChatIds.add(process.env.ADMIN_CHAT_ID_2);
+  if (process.env.ADMIN_CHAT_ID)   adminChatIds.add(process.env.ADMIN_CHAT_ID);
+  initUserBot();
+  initAdminBot();
+}
+
+function initUserBot() {
+  const token = process.env.BOT_TOKEN_USER;
+  if (!token) { console.log('BOT_TOKEN_USER не задан'); return; }
+  userBot = new TG(token, { polling: true });
+
+  userBot.onText(/\/start/, async (msg) => {
+    const name   = msg.from?.first_name || 'друг';
+    const appUrl = getMiniAppUrl();
+    await userBot.sendMessage(msg.chat.id,
+      `🌸 <b>Привет, ${escHtml(name)}!</b>\n\nДобро пожаловать в <b>ReBuket</b> — маркетплейс букетов и сладостей в Таджикистане.\n\n💐 <b>Купить</b> — просматривать букеты, корзины, игрушки и сладости\n🛍 <b>Продать</b> — разместить своё объявление\n📩 <b>Связаться</b> — оставить заявку продавцу\n\n👇 Нажмите кнопку ниже чтобы открыть каталог:`,
+      { parse_mode: 'HTML', reply_markup: { inline_keyboard: [[{ text: '🌸 Открыть ReBuket', web_app: { url: appUrl } }]] } }
     );
-    if (!rows?.length) return slug;
-    slug = `${base}-${i++}`;
-    if (i > 100) throw new Error('Не удалось сгенерировать уникальный slug');
-  }
-}
+  });
 
-function publicProduct(p) {
-  if (!p) return null;
-  const { seller_phone, seller_telegram, seller_name, seller_chat_id, ...pub } = p; // ← seller_chat_id тоже скрываем
-  return {
-    ...pub,
-    status: p.status || 'unknown'
-  };
-}
-
-exports.getProducts = async (req, res) => {
-  try {
-    const { category, city, max_price, search, page = 1, limit = 20 } = req.query;
-    const lim = Math.min(Number(limit) || 20, 100);
-    const off = (Number(page) - 1) * lim;
-
-    const now = new Date().toISOString();
-    let query = getClient()
-      .from('products')
-      .select('*', { count: 'exact' })
-      .eq('status', 'active')
-      .or(`expires_at.is.null,expires_at.gt.${now}`);
-
-    if (category)  query = query.eq('category', category);
-    if (city)      query = query.eq('city', city);
-    if (max_price) query = query.lte('price', Number(max_price));
-    if (search)    query = query.or(`title.ilike.%${search}%,description.ilike.%${search}%`);
-
-    const { data, error, count } = await query
-      .order('created_at', { ascending: false })
-      .range(off, off + lim - 1);
-
-    if (error) throw error;
-
-    res.json({
-      data: (data || []).map(publicProduct),
-      total: count || 0,
-      page: Number(page),
-      limit: lim,
-      total_pages: Math.ceil((count || 0) / lim)
-    });
-  } catch (e) {
-    console.error('[getProducts]', e);
-    res.status(500).json({ error: e.message || 'Ошибка сервера' });
-  }
-};
-
-// Кеш просмотров: ip+productId -> timestamp последнего просмотра
-const _viewCache = new Map();
-const VIEW_TTL   = 30 * 60 * 1000; // 30 минут
-
-exports.getProduct = async (req, res) => {
-  try {
-    const param  = req.params.id;
-    const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(param);
-
-    const { data, error } = await getClient()
-      .from('products')
-      .select('*')
-      .eq(isUUID ? 'id' : 'slug', param)
-      .eq('status', 'active')
-      .single();
-
-    if (error || !data) {
-      console.log(`[getProduct] не найден: param=${param}`);
-      return res.status(404).json({ error: 'Товар не найден, не активен или на модерации' });
-    }
-
-    // Считаем просмотр только раз в 30 минут с одного IP
-    const ip      = req.headers['x-forwarded-for']?.split(',')[0] || req.socket.remoteAddress || 'unknown';
-    const cacheKey = ip + ':' + data.id;
-    const lastView = _viewCache.get(cacheKey);
-    const now      = Date.now();
-
-    let newCount = data.view_count || 0;
-    if (!lastView || now - lastView > VIEW_TTL) {
-      _viewCache.set(cacheKey, now);
-      newCount += 1;
-      getClient()
-        .from('products')
-        .update({ view_count: newCount })
-        .eq('id', data.id)
-        .then(() => {})
-        .catch(e => console.log('view_count update error:', e.message));
-    }
-
-    res.json(publicProduct({ ...data, view_count: newCount }));
-  } catch (e) {
-    console.error('[getProduct]', e);
-    res.status(500).json({ error: e.message || 'Ошибка сервера' });
-  }
-};
-
-exports.getCities = async (req, res) => {
-  try {
-    const { data, error } = await getClient()
-      .from('products')
-      .select('city')
-      .eq('status', 'active')
-      .not('city', 'is', null);
-
-    if (error) throw error;
-
-    const cities = [...new Set(data?.map(r => r.city) || [])]
-      .filter(Boolean)
-      .sort();
-
-    res.json(cities);
-  } catch (e) {
-    console.error('[getCities]', e);
-    res.status(500).json({ error: e.message || 'Ошибка сервера' });
-  }
-};
-
-exports.createProduct = async (req, res) => {
-  try {
-    const {
-      title, description, category, price, city,
-      seller_name, seller_phone, seller_telegram,
-      address, pickup_time,
-      seller_chat_id  // ← добавлено: chat_id продавца из Telegram
-    } = req.body;
-
-    if (!title || !category || !price || !city || !seller_phone) {
-      return res.status(400).json({ error: 'Заполните все обязательные поля' });
-    }
-
-    const files = req.files || [];
-    if (files.length < 3) {
-      return res.status(400).json({ error: 'Загрузите минимум 3 фотографии' });
-    }
-
-    const slug = await uniqueSlug(toSlug(title));
-
-    // Сначала создаём объявление с пустыми фото — отвечаем клиенту быстро
-    const { data, error } = await getClient()
-      .from('products')
-      .insert({
-        title,
-        description: description || null,
-        category,
-        price: Number(price),
-        city,
-        seller_name:     seller_name     || null,
-        seller_phone,
-        seller_telegram: seller_telegram || null,
-        address:         address         || null,
-        pickup_time:     pickup_time     || null,
-        seller_chat_id:  seller_chat_id  || null,
-        photos: [],
-        slug,
-        status: 'pending'
-      })
-      .select()
-      .single();
-
-    if (error) throw error;
-
-    // Отвечаем клиенту сразу не ожидая загрузки фото
-    res.status(201).json({
-      id: data.id,
-      slug: data.slug,
-      status: data.status,
-      message: 'Объявление подано! Ждёт проверки.',
-      previewUrl: `/products/${data.slug}`
-    });
-
-    // Загружаем фото в фоне
-    Promise.all(files.map(f => uploadPhoto(f.buffer, f.originalname, f.mimetype)))
-      .then(photos => getClient().from('products').update({ photos }).eq('id', data.id))
-      .then(() => notifyProduct({ ...data }))
-      .catch(err => console.error('Фото/уведомление ошибка:', err));
-  } catch (e) {
-    console.error('[createProduct]', e);
-    res.status(500).json({ error: e.message || 'Ошибка при создании объявления' });
-  }
-};
-
-exports.adminList = async (req, res) => {
-  try {
-    const { status, page = 1, limit = 50 } = req.query;
-    const lim = Math.min(Number(limit) || 50, 200);
-    const off = (Number(page) - 1) * lim;
-
-    let query = getClient()
-      .from('products')
-      .select('*', { count: 'exact' });
-
-    if (status) query = query.eq('status', status);
-
-    const { data, error, count } = await query
-      .order('created_at', { ascending: false })
-      .range(off, off + lim - 1);
-
-    if (error) throw error;
-
-    // Автоудаляем просроченные букеты и корзины
-    const now = new Date();
-    const expired = (data || []).filter(p =>
-      ['bouquet','basket'].includes(p.category) &&
-      p.expires_at && new Date(p.expires_at) < now
+  userBot.onText(/\/catalog/, async (msg) => {
+    await userBot.sendMessage(msg.chat.id, `💐 <b>Каталог ReBuket</b>\n\nБукеты, корзины, игрушки и сладости:`,
+      { parse_mode: 'HTML', reply_markup: { inline_keyboard: [[{ text: '💐 Смотреть каталог', web_app: { url: getMiniAppUrl() + '#catalog' } }]] } }
     );
-    if (expired.length) {
-      await Promise.all(expired.map(p =>
-        getClient().from('products').delete().eq('id', p.id)
-      ));
-    }
+  });
 
-    res.json({
-      data: data || [],
-      total: count || 0,
-      page: Number(page),
-      limit: lim,
-      total_pages: Math.ceil((count || 0) / lim)
-    });
-  } catch (e) {
-    console.error('[adminList]', e);
-    res.status(500).json({ error: e.message || 'Ошибка сервера' });
+  userBot.onText(/\/sell/, async (msg) => {
+    await userBot.sendMessage(msg.chat.id, `🛍 <b>Разместить объявление</b>\n\nПродайте букеты или сладости через ReBuket!`,
+      { parse_mode: 'HTML', reply_markup: { inline_keyboard: [[{ text: '➕ Разместить объявление', web_app: { url: getMiniAppUrl() + '#sell' } }]] } }
+    );
+  });
+
+  userBot.onText(/\/help/, async (msg) => {
+    await userBot.sendMessage(msg.chat.id,
+      `🌸 <b>ReBuket — помощь</b>\n\n/start   — запустить бота\n/catalog — каталог\n/sell    — разместить объявление\n/help    — эта справка`,
+      { parse_mode: 'HTML', reply_markup: { inline_keyboard: [[{ text: '🌸 Открыть ReBuket', web_app: { url: getMiniAppUrl() } }]] } }
+    );
+  });
+
+  userBot.on('message', async (msg) => {
+    if (msg.text?.startsWith('/')) return;
+    await userBot.sendMessage(msg.chat.id, `Нажмите кнопку ниже чтобы открыть ReBuket 🌸`,
+      { reply_markup: { inline_keyboard: [[{ text: '🌸 Открыть ReBuket', web_app: { url: getMiniAppUrl() } }]] } }
+    );
+  });
+
+  userBot.on('polling_error', (err) => {
+    if (!err.message?.includes('409')) console.log('USER BOT error:', err.message);
+  });
+
+  console.log('🤖 USER BOT запущен | Mini App:', getMiniAppUrl());
+}
+
+function initAdminBot() {
+  const token = process.env.BOT_TOKEN_ADMIN;
+  if (!token) { console.log('BOT_TOKEN_ADMIN не задан'); return; }
+  adminBot = new TG(token, { polling: true });
+
+  adminBot.onText(/\/start/, async (msg) => {
+    const chatId = String(msg.chat.id);
+    const isNew  = !adminChatIds.has(chatId);
+    adminChatIds.add(chatId);
+    await adminBot.sendMessage(msg.chat.id,
+      `🔐 <b>ReBuket Admin Bot</b>\n\n` +
+      (isNew ? `✅ Ваш Chat ID <b>${chatId}</b> добавлен.\nТеперь вы будете получать уведомления.`
+             : `Вы уже подключены. Ваш Chat ID: <b>${chatId}</b>`),
+      { parse_mode: 'HTML' }
+    );
+    if (isNew) console.log(`✅ Новый админ: ADMIN_CHAT_ID_1=${chatId}`);
+  });
+
+  adminBot.on('polling_error', (err) => {
+    if (!err.message?.includes('409')) console.log('ADMIN BOT error:', err.message);
+  });
+
+  console.log('🛠  ADMIN BOT запущен');
+}
+
+async function sendToAdmins(text, opts = {}) {
+  if (!adminBot) return;
+  if (!adminChatIds.size) { console.log('⚠️ Нет админов'); return; }
+  for (const chatId of adminChatIds) {
+    try {
+      await adminBot.sendMessage(chatId, text, { parse_mode: 'HTML', ...opts });
+    } catch(e) {
+      console.log(`ADMIN BOT send error (${chatId}):`, e.message);
+    }
   }
-};
+}
 
-exports.adminGet = async (req, res) => {
-  try {
-    const { data, error } = await getClient()
-      .from('products')
-      .select('*')
-      .eq('id', req.params.id)
-      .single();
+// ─────────────────────────────────────────────
+//  Публикация в канал при одобрении
+// ─────────────────────────────────────────────
+async function publishToChannel(p) {
+  const city      = (p.city || '').toLowerCase().trim();
+  const isKhujand = KHUJAND_CITIES.includes(city);
+  const channelId = isKhujand
+    ? (process.env.CHANNEL_ID_KHUJAND || '-1003818624807')
+    : process.env.CHANNEL_ID;
 
-    if (error || !data) {
-      return res.status(404).json({ error: 'Товар не найден' });
-    }
+  console.log(`[publishToChannel] city="${city}" isKhujand=${isKhujand} channelId=${channelId}`);
 
-    res.json(data);
-  } catch (e) {
-    console.error('[adminGet]', e);
-    res.status(500).json({ error: e.message || 'Ошибка сервера' });
+  if (!channelId) {
+    console.log('[publishToChannel] CHANNEL_ID не задан в .env');
+    return;
   }
-};
 
-exports.adminUpdate = async (req, res) => {
+  const bot = userBot || adminBot;
+  if (!bot) {
+    console.log('[publishToChannel] Нет активного бота');
+    return;
+  }
+
+  const EMOJIS = { bouquet:'💐', basket:'🧺', bear:'🧸', sweets:'🍰' };
+  const em     = EMOJIS[p.category] || '🌸';
+  const desc   = p.description ? p.description.substring(0, 200) + (p.description.length > 200 ? '...' : '') : '';
+  const price  = Math.ceil(Number(p.price) * 1.20).toLocaleString('ru-RU');
+  const admin  = process.env.ADMIN_TELEGRAM
+    ? process.env.ADMIN_TELEGRAM.replace('https://t.me/', '@')
+    : '@rebuket_admin';
+  const url    = `${getMiniAppUrl()}/#product-${p.slug || p.id}`;
+  const photos = Array.isArray(p.photos) ? p.photos.filter(Boolean).map(ph => ph.split('?')[0]) : [];
+
+  const serialNum = await getNextSerial(isKhujand ? 'khujand' : 'dushanbe');
+  const code      = getProductCode(serialNum, isKhujand ? 'AK' : 'AB');
+
+  const caption =
+    `${em} <b>${escHtml(p.title)}</b>\n` +
+    `📍 ${escHtml(p.city)}\n` +
+    (desc ? `🌸 ${escHtml(desc)}\n` : '') +
+    `💰 Наша цена: <b>${price} сомони</b>\n` +
+    `❓ По вопросам: ${admin}\n` +
+    (code ? `🆔 ${code}` : '') +
+    `\n\n<a href="${url}">Смотреть объявление на ReBuket</a>`;
+
   try {
-    const id = req.params.id;
-
-    const { data: existing, error: fetchErr } = await getClient()
-      .from('products')
-      .select('*')
-      .eq('id', id)
-      .single();
-
-    if (fetchErr || !existing) {
-      return res.status(404).json({ error: 'Товар не найден' });
+    let sent = null;
+    if (photos.length === 0) {
+      sent = await bot.sendMessage(channelId, caption, { parse_mode: 'HTML' });
+    } else if (photos.length === 1) {
+      sent = await bot.sendPhoto(channelId, photos[0], { caption, parse_mode: 'HTML' });
+    } else {
+      const media = photos.slice(0, 10).map((ph, i) => ({
+        type: 'photo',
+        media: ph,
+        ...(i === 0 ? { caption, parse_mode: 'HTML' } : {})
+      }));
+      const results = await bot.sendMediaGroup(channelId, media);
+      sent = Array.isArray(results) ? results[0] : results;
     }
 
-    const updates = {};
-    const fields = [
-      'title', 'description', 'category', 'price', 'city',
-      'seller_name', 'seller_phone', 'seller_telegram',
-      'address', 'pickup_time', 'status'
-    ];
-
-    for (const f of fields) {
-      if (req.body[f] !== undefined) updates[f] = req.body[f];
-    }
-
-    if (updates.price !== undefined) {
-      updates.price = Number(updates.price);
-    }
-
-    if (req.files?.length) {
-      const newUrls = await Promise.all(
-        req.files.map(f => uploadPhoto(f.buffer, f.originalname, f.mimetype))
-      );
-      updates.photos = [...(existing.photos || []), ...newUrls];
-    }
-
-    const { data, error } = await getClient()
-      .from('products')
-      .update(updates)
-      .eq('id', id)
-      .select()
-      .single();
-
-    if (error) throw error;
-
-    // ── Уведомляем продавца при смене статуса ──────────────
-    if (updates.status === 'active' && existing.status !== 'active') {
-      // Букеты и корзины — срок 2 дня
-      if (['bouquet', 'basket'].includes(data.category)) {
-        const expiresAt = new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString();
-        await getClient().from('products').update({ expires_at: expiresAt }).eq('id', data.id);
-        data.expires_at = expiresAt;
+    try {
+      const { createClient } = require('@supabase/supabase-js');
+      const db = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
+      if (sent?.message_id) {
+        await db.from('products').update({
+          channel_message_id: sent.message_id,
+          channel_name: isKhujand ? 'khujand' : 'dushanbe'
+        }).eq('id', p.id);
       }
-      notifySellerApproved(data).catch(() => {});
+    } catch(e) {
+      console.log('Не удалось сохранить message_id:', e.message);
     }
-    if (updates.status === 'hidden' && existing.status === 'pending') {
-      notifySellerRejected(data).catch(() => {});
-    }
-    // ───────────────────────────────────────────────────────
 
-    res.json(data);
-  } catch (e) {
-    console.error('[adminUpdate]', e);
-    res.status(500).json({ error: e.message || 'Ошибка обновления' });
+    console.log(`📢 Опубликовано в канал: ${p.title} [${code}]`);
+  } catch(e) {
+    console.log('[publishToChannel] Ошибка:', e.message);
   }
-};
+}
 
-exports.adminDelete = async (req, res) => {
+// ─────────────────────────────────────────────
+//  Пометить истёкшие посты в канале
+// ─────────────────────────────────────────────
+async function markExpiredInChannel(p) {
+  const bot = userBot || adminBot;
+  if (!bot || !p.channel_message_id || !p.channel_name) return;
+
+  const channelId = p.channel_name === 'khujand'
+    ? (process.env.CHANNEL_ID_KHUJAND || '-1003818624807')
+    : process.env.CHANNEL_ID;
+  if (!channelId) return;
+
+  const EMOJIS = { bouquet:'💐', basket:'🧺', bear:'🧸', sweets:'🍰' };
+  const em     = EMOJIS[p.category] || '🌸';
+  const price  = Math.ceil(Number(p.price) * 1.20).toLocaleString('ru-RU');
+  const admin  = process.env.ADMIN_TELEGRAM
+    ? process.env.ADMIN_TELEGRAM.replace('https://t.me/', '@')
+    : '@rebuket_admin';
+
+  const newCaption =
+    `🔴 <b>СНЯТО С ПРОДАЖИ</b>\n\n` +
+    `${em} <b>${escHtml(p.title)}</b>\n` +
+    `📍 ${escHtml(p.city)}\n` +
+    `💰 Цена была: <b>${price} сомони</b>\n\n` +
+    `❓ По вопросам: ${admin}`;
+
   try {
-    const { error } = await getClient()
-      .from('products')
-      .delete()
-      .eq('id', req.params.id);
-
-    if (error) throw error;
-
-    res.json({ message: 'Товар удалён' });
-  } catch (e) {
-    console.error('[adminDelete]', e);
-    res.status(500).json({ error: e.message || 'Ошибка удаления' });
+    await bot.editMessageCaption(newCaption, {
+      chat_id:    channelId,
+      message_id: p.channel_message_id,
+      parse_mode: 'HTML'
+    });
+    console.log(`🔴 Пост помечен как снято: ${p.title}`);
+  } catch(e) {
+    console.log('Ошибка редактирования поста:', e.message);
   }
+}
+
+// ─────────────────────────────────────────────
+//  Уведомление продавцу — одобрено
+// ─────────────────────────────────────────────
+async function notifySellerApproved(p) {
+  publishToChannel(p).catch(e => console.log('Channel publish error:', e.message));
+  if (!userBot || !p.seller_chat_id) return;
+  const url = `${getMiniAppUrl()}/#product-${p.slug || p.id}`;
+  try {
+    await userBot.sendMessage(p.seller_chat_id,
+      `🎉 <b>Ваше объявление одобрено!</b>\n\n📦 <b>${escHtml(p.title)}</b>\n💰 ${p.price} TJS · 📍 ${escHtml(p.city)}\n\nТеперь его видят все покупатели. Удачных продаж! 🌸`,
+      { parse_mode: 'HTML', reply_markup: { inline_keyboard: [[{ text: '🔗 Открыть моё объявление', web_app: { url } }]] } }
+    );
+  } catch(e) {
+    console.log('Не удалось уведомить продавца:', e.message);
+  }
+}
+
+// ─────────────────────────────────────────────
+//  Уведомление продавцу — отклонено
+// ─────────────────────────────────────────────
+async function notifySellerRejected(p) {
+  if (!userBot || !p.seller_chat_id) return;
+  try {
+    await userBot.sendMessage(p.seller_chat_id,
+      `❌ <b>Ваше объявление отклонено</b>\n\n📦 <b>${escHtml(p.title)}</b>\n\nК сожалению, объявление не прошло модерацию.\nВы можете разместить новое объявление:`,
+      { parse_mode: 'HTML', reply_markup: { inline_keyboard: [[{ text: '➕ Разместить новое', web_app: { url: getMiniAppUrl() + '#sell' } }]] } }
+    );
+  } catch(e) {
+    console.log('Не удалось уведомить продавца:', e.message);
+  }
+}
+
+// ─────────────────────────────────────────────
+//  Уведомление — новое объявление (для админов)
+// ─────────────────────────────────────────────
+const CATS = { bouquet:'💐 Букет', basket:'🧺 Корзина', bear:'🧸 Игрушки', sweets:'🍰 Сладости' };
+
+async function notifyProduct(p) {
+  const url = `${getMiniAppUrl()}/#product-${p.slug || p.id}`;
+  await sendToAdmins(
+    `📦 <b>Новое объявление на проверке!</b>\n─────────────────\n` +
+    `${CATS[p.category] || p.category}: <b>${escHtml(p.title)}</b>\n` +
+    `💰 ${p.price} TJS · 📍 ${escHtml(p.city)}\n` +
+    `👤 ${escHtml(p.seller_name || '—')} · 📞 ${escHtml(p.seller_phone)}\n` +
+    `✈️ ${escHtml(p.seller_telegram || '—')}\n` +
+    `🔗 <a href="${url}">Открыть объявление</a>`,
+    {
+      reply_markup: { inline_keyboard: [
+        [{ text: '✅ Одобрить', callback_data: `approve:${p.id}` }, { text: '❌ Отклонить', callback_data: `reject:${p.id}` }],
+        [{ text: '🔗 Открыть объявление', url }]
+      ]}
+    }
+  );
+}
+
+// ─────────────────────────────────────────────
+//  Уведомление — новая заявка (для админов)
+// ─────────────────────────────────────────────
+async function notifyInquiry(inq, productTitle, productSlug, productId) {
+  const url = (productSlug || productId)
+    ? `${getMiniAppUrl()}/#product-${productSlug || productId}`
+    : null;
+  await sendToAdmins(
+    `🛒 <b>Новая заявка!</b>\n─────────────────\n` +
+    `📦 ${escHtml(productTitle || '—')}\n` +
+    `👤 ${escHtml(inq.customer_name || '—')}\n` +
+    `📞 <b>${escHtml(inq.customer_phone)}</b>\n` +
+    `✈️ ${escHtml(inq.customer_telegram || '—')}\n` +
+    `📝 ${escHtml(inq.note || '—')}` +
+    (url ? `\n🔗 <a href="${url}">Открыть объявление</a>` : ''),
+    url ? { reply_markup: { inline_keyboard: [[{ text: '🔗 Открыть объявление', url }]] } } : {}
+  );
+}
+
+// ─────────────────────────────────────────────
+//  Callback: Одобрить / Отклонить
+// ─────────────────────────────────────────────
+function setupCallbacks(onApprove, onReject) {
+  if (!adminBot) return;
+  adminBot.on('callback_query', async (q) => {
+    const [action, id] = (q.data || '').split(':');
+    if (action === 'approve') {
+      await onApprove(id);
+      await adminBot.answerCallbackQuery(q.id, { text: '✅ Одобрено!' });
+      await adminBot.editMessageReplyMarkup(
+        { inline_keyboard: [[{ text: '✅ Одобрено', callback_data: 'done' }]] },
+        { chat_id: q.message.chat.id, message_id: q.message.message_id }
+      ).catch(() => {});
+    }
+    if (action === 'reject') {
+      await onReject(id);
+      await adminBot.answerCallbackQuery(q.id, { text: '❌ Отклонено' });
+      await adminBot.editMessageReplyMarkup(
+        { inline_keyboard: [[{ text: '❌ Отклонено', callback_data: 'done' }]] },
+        { chat_id: q.message.chat.id, message_id: q.message.message_id }
+      ).catch(() => {});
+    }
+  });
+}
+
+module.exports = {
+  initBots,
+  notifyProduct,
+  notifyInquiry,
+  notifySellerApproved,
+  notifySellerRejected,
+  markExpiredInChannel,
+  setupCallbacks
 };
