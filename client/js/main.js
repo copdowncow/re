@@ -268,14 +268,13 @@ window.submitInquiry = async () => {
 
     console.log('[inquiry] adminHandle:', adminHandle, '| tgUrl:', tgUrl);
 
-    const tg = window.Telegram?.WebApp;
-    if (tg) {
-      // Пробуем deep link сначала
+    const tgApp = window.Telegram?.WebApp;
+    if (tgApp) {
       try {
-        tg.openLink(tgDeepLink);
+        tgApp.openLink(tgDeepLink);
       } catch(e1) {
         try {
-          tg.openTelegramLink(tgUrl);
+          tgApp.openTelegramLink(tgUrl);
         } catch(e2) {
           window.open(tgUrl, '_blank');
         }
