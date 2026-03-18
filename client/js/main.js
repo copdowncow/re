@@ -269,7 +269,7 @@ window.showInqSuccess = function(adminUrl) {
 
 window.submitInquiry = async () => {
   const phone = document.getElementById('inq-phone').value.trim();
-  if (!phone) { toast('Введите телефон!','err'); return; }
+  if (!phone) { toast('Введите телефон!', 'err'); return; }
 
   const btn   = document.getElementById('inq-btn');
   const name  = document.getElementById('inq-name').value.trim();
@@ -281,12 +281,8 @@ window.submitInquiry = async () => {
 
   btn.disabled = true; btn.textContent = 'Отправляем...';
   try {
-    // Получаем chat_id покупателя из Telegram
     var buyerChatId = null;
-    try {
-      var tgApp2 = window.Telegram?.WebApp;
-      if (tgApp2?.initDataUnsafe?.user?.id) buyerChatId = String(tgApp2.initDataUnsafe.user.id);
-    } catch(ex) {}
+    try { var tgW = window.Telegram && window.Telegram.WebApp; if (tgW && tgW.initDataUnsafe && tgW.initDataUnsafe.user) buyerChatId = String(tgW.initDataUnsafe.user.id); } catch(ex) {}
 
     await api.inquiry({
       product_id:        pid || undefined,
@@ -298,69 +294,66 @@ window.submitInquiry = async () => {
     });
 
     window.closeModal('inq-modal');
-    ['inq-name','inq-phone','inq-tg','inq-note'].forEach(id => { document.getElementById(id).value=''; });
+    ['inq-name','inq-phone','inq-tg','inq-note'].forEach(function(id) { var el = document.getElementById(id); if (el) el.value = ''; });
 
     // Строим готовое сообщение
-    var msgLines = [
+    var lines = [
       '🌸 Здравствуйте! Хочу купить:',
       '',
       '📦 ' + title,
-      '📞 Мой телефон: ' + phone
+      '📞 ' + phone
     ];
-    if (name) msgLines.push('👤 Имя: ' + name);
-    if (tg)   msgLines.push('✈️ Telegram: ' + tg);
-    if (note) msgLines.push('📝 Комментарий: ' + note);
-    msgLines.push('', '🔗 ' + pageUrl);
-    var readyMsg = msgLines.join('\n');
+    if (name) lines.push('👤 ' + name);
+    if (tg)   lines.push('✈️ ' + tg);
+    if (note) lines.push('📝 ' + note);
+    lines.push('', '🔗 ' + pageUrl);
+    var readyMsg = lines.join('\n');
 
-    // base64 кодируем и передаём через start=
     var b64 = btoa(unescape(encodeURIComponent(readyMsg)));
-    var safeB64 = b64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
-    var startParam = safeB64.length <= 500 ? 'inq_' + safeB64 : 'inquiry';
+    var safe = b64.replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'');
+    var startParam = safe.length <= 500 ? 'inq_' + safe : 'inquiry';
+    var botName = (_cfg.bot_username || 'ReBuket_bot');
+    var botUrl  = 'https://t.me/' + botName + '?start=' + startParam;
 
-    var old2 = document.getElementById('inq-success-popup');
-    if (old2) old2.remove();
+    // Показываем попап
+    var oldP = document.getElementById('inq-popup');
+    if (oldP) oldP.remove();
 
-    var botUrl = 'https://t.me/' + ((_cfg.bot_username) || 'ReBuket_bot') + '?start=' + startParam;
+    var ov = document.createElement('div');
+    ov.id = 'inq-popup';
+    ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9999;display:flex;align-items:flex-end;justify-content:center;padding:16px';
 
-    var overlay = document.createElement('div');
-    overlay.id = 'inq-success-popup';
-    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9999;display:flex;align-items:flex-end;justify-content:center;padding:16px';
+    var bx = document.createElement('div');
+    bx.style.cssText = 'background:#fff;border-radius:24px;padding:32px 24px 28px;width:100%;max-width:440px;text-align:center';
 
-    var box = document.createElement('div');
-    box.style.cssText = 'background:#fff;border-radius:24px;padding:32px 24px 28px;width:100%;max-width:440px;text-align:center';
+    var ic = document.createElement('div');
+    ic.style.cssText = 'font-size:3rem;margin-bottom:10px';
+    ic.textContent = '✅';
 
-    var icon = document.createElement('div');
-    icon.style.cssText = 'font-size:3rem;margin-bottom:10px';
-    icon.textContent = '✅';
+    var tl = document.createElement('div');
+    tl.style.cssText = 'font-size:1.15rem;font-weight:800;margin-bottom:10px;color:#1a1a1a';
+    tl.textContent = 'Заявка принята!';
 
-    var ttl = document.createElement('div');
-    ttl.style.cssText = 'font-size:1.15rem;font-weight:800;margin-bottom:10px;color:#1a1a1a';
-    ttl.textContent = 'Заявка принята!';
+    var ds = document.createElement('div');
+    ds.style.cssText = 'color:#555;font-size:.9rem;line-height:1.5;margin-bottom:22px';
+    ds.textContent = 'Нажмите кнопку ниже — откроется бот, где будет готовая кнопка — нажмите её и отправьте.';
 
-    var desc = document.createElement('div');
-    desc.style.cssText = 'color:#555;font-size:.9rem;line-height:1.5;margin-bottom:22px';
-    desc.textContent = 'Бот уже отправил вам готовое сообщение для администратора. Откройте бота, там будет кнопка — нажмите её и отправьте.';
+    var bb = document.createElement('a');
+    bb.href = botUrl;
+    bb.style.cssText = 'display:block;padding:14px;background:#8B2A3F;color:#fff;border-radius:14px;font-weight:700;font-size:1rem;text-decoration:none;margin-bottom:10px';
+    bb.textContent = '🤖 Открыть бота';
 
-    var botBtn = document.createElement('a');
-    botBtn.href = botUrl;
-    botBtn.style.cssText = 'display:block;padding:14px;background:#8B2A3F;color:#fff;border-radius:14px;font-weight:700;font-size:1rem;text-decoration:none;margin-bottom:10px';
-    botBtn.textContent = '🤖 Открыть бота';
+    var cb = document.createElement('button');
+    cb.style.cssText = 'width:100%;padding:12px;background:#f0f0f0;border:none;border-radius:14px;cursor:pointer;font-size:.9rem;color:#666';
+    cb.textContent = 'Закрыть';
+    cb.onclick = function() { ov.remove(); };
 
-    var closeBtn = document.createElement('button');
-    closeBtn.style.cssText = 'width:100%;padding:12px;background:#f0f0f0;border:none;border-radius:14px;cursor:pointer;font-size:.9rem;color:#666';
-    closeBtn.textContent = 'Закрыть';
-    closeBtn.onclick = function() { overlay.remove(); };
+    bx.appendChild(ic); bx.appendChild(tl); bx.appendChild(ds); bx.appendChild(bb); bx.appendChild(cb);
+    ov.appendChild(bx);
+    document.body.appendChild(ov);
 
-    box.appendChild(icon);
-    box.appendChild(ttl);
-    box.appendChild(desc);
-    box.appendChild(botBtn);
-    box.appendChild(closeBtn);
-    overlay.appendChild(box);
-    document.body.appendChild(overlay);
-  } catch(e) { toast('Ошибка: '+e.message,'err'); }
-  finally { btn.disabled=false; btn.textContent='📩 Отправить заявку'; }
+  } catch(e) { toast('Ошибка: ' + e.message, 'err'); }
+  finally { btn.disabled = false; btn.textContent = '📩 Отправить заявку'; }
 };
 
 // ── FILTERS ───────────────────────────────────────────────
