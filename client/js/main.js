@@ -265,15 +265,13 @@ window.submitInquiry = async () => {
 
     console.log('[inquiry] tgUrl:', tgUrl);
 
-    try {
-      if (window.Telegram?.WebApp?.openTelegramLink) {
-        window.Telegram.WebApp.openTelegramLink(tgUrl);
-      } else {
-        window.open(tgUrl, '_blank');
-      }
-    } catch(te) {
-      window.open(tgUrl, '_blank');
-    }
+    // Открываем через обычную ссылку — единственный способ передать текст
+    const a = document.createElement('a');
+    a.href = tgUrl;
+    a.target = '_blank';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
   } catch(e) { toast('Ошибка: '+e.message,'err'); }
   finally { btn.disabled=false; btn.textContent='📩 Отправить заявку'; }
 };
