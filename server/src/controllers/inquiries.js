@@ -1,6 +1,6 @@
-'use strict';
+use strict';
 const { getClient } = require('../db/supabase');
-const { notifyInquiry } = require('../services/telegram');
+const { notifyInquiry, savePendingInquiry } = require('../services/telegram');
 
 exports.createInquiry = async (req, res) => {
   try {
@@ -38,7 +38,19 @@ exports.createInquiry = async (req, res) => {
 
     notifyInquiry(data, productTitle, productSlug, productId).catch(() => {});
 
-    res.status(201).json({ id: data.id, message: 'Заявка отправлена! Мы свяжемся с вами.' });
+    // Сохраняем данные заявки для бота
+    const inqKey = 'inq_' + Date.now();
+    const siteUrl = process.env.SITE_URL || process.env.MINI_APP_URL || '';
+    savePendingInquiry(inqKey, {
+      productTitle,
+      productUrl: productSlug ? siteUrl + '/#product-' + productSlug : siteUrl,
+      customer_phone,
+      customer_name:     customer_name     || null,
+      customer_telegram: customer_telegram || null,
+      note:              note              || null,
+    });
+
+    res.status(201).json({ id: data.id, message: 'Заявка отправлена! Мы свяжемся с вами.', inq_key: inqKey });({ id: data.id, message: 'Заявка отправлена! Мы свяжемся с вами.' });
   } catch(e) { res.status(500).json({ error: e.message }); }
 };
 
