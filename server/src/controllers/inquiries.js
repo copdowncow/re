@@ -1,4 +1,4 @@
-use strict';
+'use strict';
 const { getClient } = require('../db/supabase');
 const { notifyInquiry, savePendingInquiry } = require('../services/telegram');
 
