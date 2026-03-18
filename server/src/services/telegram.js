@@ -376,12 +376,61 @@ function setupCallbacks(onApprove, onReject) {
   });
 }
 
+async function notifyBuyerInquirySent(d) {
+  if (!userBot || !d.customer_chat_id) return;
+  try {
+    const COMM = 0.20;
+    const price = d.productPrice
+      ? Math.ceil(Number(d.productPrice) * (1 + COMM)).toLocaleString('ru-RU') + ' сомони'
+      : null;
+
+    const url = (d.productSlug || d.productId)
+      ? getMiniAppUrl() + '/#product-' + (d.productSlug || d.productId)
+      : getMiniAppUrl();
+
+    const adminHandle = (process.env.ADMIN_TELEGRAM || 'https://t.me/Rebuket_admin')
+      .replace('https://t.me/', '').replace('@', '').trim();
+
+    const parts = [
+      '\u{1F338} \u0417\u0434\u0440\u0430\u0432\u0441\u0442\u0432\u0443\u0439\u0442\u0435! \u0425\u043E\u0447\u0443 \u043A\u0443\u043F\u0438\u0442\u044C:',
+      '',
+      '\u{1F4E6} ' + (d.productTitle || '—'),
+      '\u{1F4DE} \u041C\u043E\u0439 \u0442\u0435\u043B\u0435\u0444\u043E\u043D: ' + d.customer_phone
+    ];
+    if (d.customer_name)     parts.push('\u{1F464} \u0418\u043C\u044F: ' + d.customer_name);
+    if (d.customer_telegram) parts.push('\u2708\uFE0F Telegram: ' + d.customer_telegram);
+    if (d.note)              parts.push('\u{1F4DD} \u041A\u043E\u043C\u043C\u0435\u043D\u0442\u0430\u0440\u0438\u0439: ' + d.note);
+    parts.push('', '\u{1F517} ' + url);
+
+    const readyText = parts.join('\n');
+    const tgLink = 'https://t.me/' + adminHandle + '?text=' + encodeURIComponent(readyText);
+
+    const text = '\u2705 <b>\u0412\u0430\u0448\u0430 \u0437\u0430\u044F\u0432\u043A\u0430 \u043F\u0440\u0438\u043D\u044F\u0442\u0430!</b>\n\n' +
+      '\u{1F4E6} ' + escHtml(d.productTitle || '—') + '\n' +
+      (price ? '\u{1F4B0} ' + price + '\n' : '') +
+      '\n\u041D\u0430\u0436\u043C\u0438\u0442\u0435 \u043A\u043D\u043E\u043F\u043A\u0443 \u043D\u0438\u0436\u0435 \u2014 \u0441\u043E\u043E\u0431\u0449\u0435\u043D\u0438\u0435 \u0443\u0436\u0435 \u0433\u043E\u0442\u043E\u0432\u043E, \u043E\u0441\u0442\u0430\u043D\u0435\u0442\u0441\u044F \u0442\u043E\u043B\u044C\u043A\u043E \u043D\u0430\u0436\u0430\u0442\u044C \u041E\u0442\u043F\u0440\u0430\u0432\u0438\u0442\u044C.';
+
+    await userBot.sendMessage(d.customer_chat_id, text, {
+      parse_mode: 'HTML',
+      reply_markup: {
+        inline_keyboard: [[
+          { text: '\u2708\uFE0F \u041D\u0430\u043F\u0438\u0441\u0430\u0442\u044C \u0430\u0434\u043C\u0438\u043D\u0438\u0441\u0442\u0440\u0430\u0442\u043E\u0440\u0443', url: tgLink }
+        ]]
+      }
+    });
+  } catch(e) {
+    console.log('notifyBuyerInquirySent error:', e.message);
+  }
+}
+
+
 module.exports = {
   initBots,
   notifyProduct,
   notifyInquiry,
   notifySellerApproved,
   notifySellerRejected,
+  notifyBuyerInquirySent,
   markExpiredInChannel,
   setupCallbacks
 };
