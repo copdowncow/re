@@ -38,22 +38,6 @@ exports.createInquiry = async (req, res) => {
 
     notifyInquiry(data, productTitle, productSlug, productId).catch(() => {});
 
-    // Отправляем покупателю сообщение с готовой кнопкой
-    if (customer_chat_id) {
-      const { notifyBuyerInquirySent } = require('../services/telegram');
-      notifyBuyerInquirySent({
-        customer_chat_id,
-        customer_name,
-        customer_phone,
-        customer_telegram,
-        note,
-        productTitle,
-        productSlug,
-        productId,
-        productPrice
-      }).catch(() => {});
-    }
-
     res.status(201).json({ id: data.id, message: 'Заявка отправлена! Мы свяжемся с вами.' });
   } catch(e) { res.status(500).json({ error: e.message }); }
 };
