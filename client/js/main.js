@@ -300,12 +300,28 @@ window.submitInquiry = async () => {
     window.closeModal('inq-modal');
     ['inq-name','inq-phone','inq-tg','inq-note'].forEach(id => { document.getElementById(id).value=''; });
 
-    // Попап с кнопкой перехода в бот
-    var inqKey = inqResult && inqResult.inq_key ? inqResult.inq_key : 'inquiry';
+    // Строим готовое сообщение
+    var msgLines = [
+      '🌸 Здравствуйте! Хочу купить:',
+      '',
+      '📦 ' + title,
+      '📞 Мой телефон: ' + phone
+    ];
+    if (name) msgLines.push('👤 Имя: ' + name);
+    if (tg)   msgLines.push('✈️ Telegram: ' + tg);
+    if (note) msgLines.push('📝 Комментарий: ' + note);
+    msgLines.push('', '🔗 ' + pageUrl);
+    var readyMsg = msgLines.join('\n');
+
+    // base64 кодируем и передаём через start=
+    var b64 = btoa(unescape(encodeURIComponent(readyMsg)));
+    var safeB64 = b64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+    var startParam = safeB64.length <= 500 ? 'inq_' + safeB64 : 'inquiry';
+
     var old2 = document.getElementById('inq-success-popup');
     if (old2) old2.remove();
 
-    var botUrl = 'https://t.me/' + ((_cfg.bot_username) || 'ReBuket_bot') + '?start=' + inqKey;
+    var botUrl = 'https://t.me/' + ((_cfg.bot_username) || 'ReBuket_bot') + '?start=' + startParam;
 
     var overlay = document.createElement('div');
     overlay.id = 'inq-success-popup';
