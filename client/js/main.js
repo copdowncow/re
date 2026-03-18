@@ -263,15 +263,27 @@ window.submitInquiry = async () => {
     const msg = lines.join('\n');
     const tgUrl = 'https://t.me/' + adminHandle + '?text=' + encodeURIComponent(msg);
 
-    console.log('[inquiry] tgUrl:', tgUrl);
+    // tg:// deep link передаёт text параметр корректно
+    const tgDeepLink = 'tg://resolve?domain=' + adminHandle + '&text=' + encodeURIComponent(msg);
 
-    // Открываем чат с готовым текстом — пользователю останется нажать Отправить
-    if (window.Telegram?.WebApp?.openTelegramLink) {
-      window.Telegram.WebApp.openTelegramLink(tgUrl);
+    console.log('[inquiry] adminHandle:', adminHandle, '| tgUrl:', tgUrl);
+
+    const tg = window.Telegram?.WebApp;
+    if (tg) {
+      // Пробуем deep link сначала
+      try {
+        tg.openLink(tgDeepLink);
+      } catch(e1) {
+        try {
+          tg.openTelegramLink(tgUrl);
+        } catch(e2) {
+          window.open(tgUrl, '_blank');
+        }
+      }
     } else {
       window.open(tgUrl, '_blank');
     }
-    toast('Заявка отправлена! Откройте чат и нажмите Отправить 🌸', 'ok');
+    toast('Откройте чат и нажмите Отправить 🌸', 'ok');
   } catch(e) { toast('Ошибка: '+e.message,'err'); }
   finally { btn.disabled=false; btn.textContent='📩 Отправить заявку'; }
 };
