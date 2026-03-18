@@ -1,4 +1,4 @@
-'use strict';
+use strict';
 import { api }  from './api.js';
 import { esc, fmt, toast, openModal, goPage } from './utils.js';
 
@@ -225,6 +225,48 @@ window.openInqModal = (pid, title) => {
   openModal('inq-modal');
 };
 
+window.showInqSuccess = function(adminUrl) {
+  var old = document.getElementById('inq-success-popup');
+  if (old) old.remove();
+
+  var overlay = document.createElement('div');
+  overlay.id = 'inq-success-popup';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px';
+
+  var box = document.createElement('div');
+  box.style.cssText = 'background:#fff;border-radius:20px;padding:28px 24px;width:100%;max-width:360px;text-align:center;box-shadow:0 8px 40px rgba(0,0,0,.2)';
+
+  var icon = document.createElement('div');
+  icon.style.cssText = 'font-size:3rem;margin-bottom:12px';
+  icon.textContent = '🌸';
+
+  var title = document.createElement('div');
+  title.style.cssText = 'font-size:1.1rem;font-weight:700;margin-bottom:8px';
+  title.textContent = 'Заявка отправлена!';
+
+  var desc = document.createElement('div');
+  desc.style.cssText = 'color:#666;font-size:.9rem;margin-bottom:20px';
+  desc.textContent = 'Администратор получил вашу заявку и свяжется с вами в ближайшее время.';
+
+  var tgBtn = document.createElement('a');
+  tgBtn.href = adminUrl;
+  tgBtn.style.cssText = 'display:block;padding:13px;background:#229ED9;color:#fff;border-radius:12px;font-weight:700;text-decoration:none;margin-bottom:10px';
+  tgBtn.textContent = '✈️ Написать в Telegram';
+
+  var closeBtn = document.createElement('button');
+  closeBtn.style.cssText = 'width:100%;padding:12px;background:#f5f5f5;border:none;border-radius:12px;cursor:pointer;font-size:.95rem';
+  closeBtn.textContent = 'Закрыть';
+  closeBtn.onclick = function() { overlay.remove(); };
+
+  box.appendChild(icon);
+  box.appendChild(title);
+  box.appendChild(desc);
+  box.appendChild(tgBtn);
+  box.appendChild(closeBtn);
+  overlay.appendChild(box);
+  document.body.appendChild(overlay);
+};
+
 window.submitInquiry = async () => {
   const phone = document.getElementById('inq-phone').value.trim();
   if (!phone) { toast('Введите телефон!','err'); return; }
@@ -250,24 +292,46 @@ window.submitInquiry = async () => {
     window.closeModal('inq-modal');
     ['inq-name','inq-phone','inq-tg','inq-note'].forEach(id => { document.getElementById(id).value=''; });
 
-    // Показываем красивое подтверждение
-    const existing = document.getElementById('inq-success-popup');
-    if (existing) existing.remove();
+    var adminTgUrl = (_cfg.telegram || 'https://t.me/Rebuket_admin');
+    var old2 = document.getElementById('inq-success-popup');
+    if (old2) old2.remove();
 
-    const adminTgUrl = (_cfg.telegram || 'https://t.me/Rebuket_admin');
+    var overlay = document.createElement('div');
+    overlay.id = 'inq-success-popup';
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px';
 
-    const popup = document.createElement('div');
-    popup.id = 'inq-success-popup';
-    popup.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px';
-    popup.innerHTML =
-      '<div style="background:#fff;border-radius:20px;padding:28px 24px;width:100%;max-width:360px;text-align:center;box-shadow:0 8px 40px rgba(0,0,0,.2)">' +
-        '<div style="font-size:3rem;margin-bottom:12px">🌸</div>' +
-        '<div style="font-size:1.1rem;font-weight:700;margin-bottom:8px">Заявка отправлена!</div>' +
-        '<div style="color:#666;font-size:.9rem;margin-bottom:20px">Администратор получил вашу заявку и свяжется с вами в ближайшее время.</div>' +
-        '<a href="' + adminTgUrl + '" style="display:block;padding:13px;background:#229ED9;color:#fff;border-radius:12px;font-weight:700;text-decoration:none;margin-bottom:10px">✈️ Написать в Telegram</a>' +
-        '<button onclick="document.getElementById('inq-success-popup').remove()" style="width:100%;padding:12px;background:#f5f5f5;border:none;border-radius:12px;cursor:pointer;font-size:.95rem">Закрыть</button>' +
-      '</div>';
-    document.body.appendChild(popup);
+    var box = document.createElement('div');
+    box.style.cssText = 'background:#fff;border-radius:20px;padding:28px 24px;width:100%;max-width:360px;text-align:center;box-shadow:0 8px 40px rgba(0,0,0,.2)';
+
+    var icon = document.createElement('div');
+    icon.style.cssText = 'font-size:3rem;margin-bottom:12px';
+    icon.textContent = '🌸';
+
+    var ttl = document.createElement('div');
+    ttl.style.cssText = 'font-size:1.1rem;font-weight:700;margin-bottom:8px';
+    ttl.textContent = 'Заявка отправлена!';
+
+    var desc = document.createElement('div');
+    desc.style.cssText = 'color:#666;font-size:.9rem;margin-bottom:20px';
+    desc.textContent = 'Администратор получил вашу заявку и свяжется с вами в ближайшее время.';
+
+    var tgBtn = document.createElement('a');
+    tgBtn.href = adminTgUrl;
+    tgBtn.style.cssText = 'display:block;padding:13px;background:#229ED9;color:#fff;border-radius:12px;font-weight:700;text-decoration:none;margin-bottom:10px';
+    tgBtn.textContent = '✈️ Написать в Telegram';
+
+    var closeBtn = document.createElement('button');
+    closeBtn.style.cssText = 'width:100%;padding:12px;background:#f5f5f5;border:none;border-radius:12px;cursor:pointer;font-size:.95rem';
+    closeBtn.textContent = 'Закрыть';
+    closeBtn.onclick = function() { overlay.remove(); };
+
+    box.appendChild(icon);
+    box.appendChild(ttl);
+    box.appendChild(desc);
+    box.appendChild(tgBtn);
+    box.appendChild(closeBtn);
+    overlay.appendChild(box);
+    document.body.appendChild(overlay);
   } catch(e) { toast('Ошибка: '+e.message,'err'); }
   finally { btn.disabled=false; btn.textContent='📩 Отправить заявку'; }
 };
