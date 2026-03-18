@@ -251,18 +251,27 @@ window.submitInquiry = async () => {
     ['inq-name','inq-phone','inq-tg','inq-note'].forEach(id => { document.getElementById(id).value=''; });
 
     // Формируем текст для Telegram
-    const adminTg = (_cfg.telegram || 'https://t.me/rebuket_admin').replace('https://t.me/', '');
+    // Строим ссылку на админа
+    const rawTg = (_cfg.telegram || 'https://t.me/Rebuket_admin');
+    const adminHandle = rawTg.replace('https://t.me/', '').replace('@', '').trim();
+
     const lines = ['🌸 Здравствуйте! Хочу купить:', '', '📦 ' + title, '📞 Мой телефон: ' + phone];
     if (name) lines.push('👤 Имя: ' + name);
     if (tg)   lines.push('✈️ Telegram: ' + tg);
     if (note) lines.push('📝 Комментарий: ' + note);
     lines.push('', '🔗 ' + pageUrl);
     const msg = lines.join('\n');
-    const tgUrl = 'https://t.me/' + adminTg + '?text=' + encodeURIComponent(msg);
+    const tgUrl = 'https://t.me/' + adminHandle + '?text=' + encodeURIComponent(msg);
 
-    if (window.Telegram?.WebApp?.openTelegramLink) {
-      window.Telegram.WebApp.openTelegramLink(tgUrl);
-    } else {
+    console.log('[inquiry] tgUrl:', tgUrl);
+
+    try {
+      if (window.Telegram?.WebApp?.openTelegramLink) {
+        window.Telegram.WebApp.openTelegramLink(tgUrl);
+      } else {
+        window.open(tgUrl, '_blank');
+      }
+    } catch(te) {
       window.open(tgUrl, '_blank');
     }
   } catch(e) { toast('Ошибка: '+e.message,'err'); }
