@@ -265,13 +265,28 @@ window.submitInquiry = async () => {
 
     console.log('[inquiry] tgUrl:', tgUrl);
 
-    // Открываем через обычную ссылку — единственный способ передать текст
-    const a = document.createElement('a');
-    a.href = tgUrl;
-    a.target = '_blank';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
+    // Показываем готовый текст + кнопка открыть чат
+    const existing = document.getElementById('tg-msg-popup');
+    if (existing) existing.remove();
+
+    const popup = document.createElement('div');
+    popup.id = 'tg-msg-popup';
+    popup.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9999;display:flex;align-items:flex-end;justify-content:center;padding:16px';
+    popup.innerHTML =
+      '<div style="background:#fff;border-radius:20px;padding:20px;width:100%;max-width:480px;box-shadow:0 8px 32px rgba(0,0,0,.2)">' +
+        '<div style="font-weight:700;font-size:1rem;margin-bottom:10px">📋 Скопируйте и отправьте админу:</div>' +
+        '<textarea id="tg-msg-text" readonly style="width:100%;height:140px;border:1px solid #eee;border-radius:10px;padding:10px;font-size:.85rem;resize:none;background:#f9f9f9">' + msg + '</textarea>' +
+        '<div style="display:flex;gap:10px;margin-top:12px">' +
+          '<button onclick="navigator.clipboard.writeText(document.getElementById('tg-msg-text').value).then(()=>{ this.textContent='✅ Скопировано!'; })" ' +
+            'style="flex:1;padding:12px;background:#8B2A3F;color:#fff;border:none;border-radius:12px;font-weight:700;cursor:pointer">📋 Скопировать</button>' +
+          '<button onclick="document.getElementById('tg-msg-popup').remove();' +
+            'if(window.Telegram?.WebApp?.openTelegramLink){window.Telegram.WebApp.openTelegramLink('' + tgUrl + '');}else{window.open('' + tgUrl + '','_blank');}" ' +
+            'style="flex:1;padding:12px;background:#229ED9;color:#fff;border:none;border-radius:12px;font-weight:700;cursor:pointer">✈️ Открыть чат</button>' +
+        '</div>' +
+        '<button onclick="document.getElementById('tg-msg-popup').remove()" ' +
+          'style="width:100%;margin-top:8px;padding:10px;background:#f5f5f5;border:none;border-radius:12px;cursor:pointer;color:#666">Закрыть</button>' +
+      '</div>';
+    document.body.appendChild(popup);
   } catch(e) { toast('Ошибка: '+e.message,'err'); }
   finally { btn.disabled=false; btn.textContent='📩 Отправить заявку'; }
 };
