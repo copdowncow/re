@@ -256,7 +256,7 @@ window.submitInquiry = async () => {
       note:              note || undefined,
     });
 
-    closeModal('inq-modal');
+    window.closeModal('inq-modal');
     ['inq-name','inq-phone','inq-tg','inq-note'].forEach(id => { document.getElementById(id).value=''; });
 
     // Формируем готовый текст для Telegram
