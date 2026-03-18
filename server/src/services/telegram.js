@@ -99,12 +99,21 @@ function initUserBot() {
       const adminHandle = (process.env.ADMIN_TELEGRAM || 'https://t.me/Rebuket_admin')
         .replace('https://t.me/', '').replace('@', '').trim();
 
-      const readyText = '🌸 Здравствуйте! Хочу сделать заказ через ReBuket. Свяжитесь со мной пожалуйста!';
-      const adminUrl = 'https://t.me/' + adminHandle + '?text=' + encodeURIComponent(readyText);
+      let readyText = '🌸 Здравствуйте! Хочу сделать заказ через ReBuket.';
 
-            await userBot.sendMessage(msg.chat.id,
-        '✅ <b>Заявка принята!</b>\n\n' +
-        'Для полного оформления заказа — нажмите на кнопку ниже и отправьте готовое сообщение администратору 👇',
+      if (param.startsWith('inq_')) {
+        try {
+          const b64 = param.slice(4).replace(/-/g, '+').replace(/_/g, '/');
+          const decoded = decodeURIComponent(escape(Buffer.from(b64, 'base64').toString('binary')));
+          if (decoded && decoded.length > 5) readyText = decoded;
+        } catch(e) { console.log('decode err:', e.message); }
+      }
+
+      const adminUrl = 'https://t.me/' + adminHandle + '?text=' + encodeURIComponent(readyText);
+      console.log('[bot] inquiry start, adminUrl:', adminUrl.substring(0, 100));
+
+      await userBot.sendMessage(msg.chat.id,
+        '✅ <b>Заявка принята!</b>\n\nДля полного оформления заказа — нажмите кнопку ниже, откроется чат с готовым сообщением — останется нажать Отправить 👇',
         { parse_mode: 'HTML', reply_markup: { inline_keyboard: [[{ text: '✈️ Отправить заказ администратору', url: adminUrl }]] } }
       );
       return;
