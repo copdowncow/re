@@ -301,10 +301,11 @@ window.submitInquiry = async () => {
     ['inq-name','inq-phone','inq-tg','inq-note'].forEach(id => { document.getElementById(id).value=''; });
 
     // Попап с кнопкой перехода в бот
+    var inqKey = inqResult && inqResult.inq_key ? inqResult.inq_key : 'inquiry';
     var old2 = document.getElementById('inq-success-popup');
     if (old2) old2.remove();
 
-    var botUrl = 'https://t.me/' + ((_cfg.bot_username) || 'ReBuket_bot') + '?start=inquiry';
+    var botUrl = 'https://t.me/' + ((_cfg.bot_username) || 'ReBuket_bot') + '?start=' + inqKey;
 
     var overlay = document.createElement('div');
     overlay.id = 'inq-success-popup';
