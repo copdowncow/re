@@ -268,21 +268,8 @@ window.submitInquiry = async () => {
 
     console.log('[inquiry] adminHandle:', adminHandle, '| tgUrl:', tgUrl);
 
-    const tgApp = window.Telegram?.WebApp;
-    if (tgApp) {
-      try {
-        tgApp.openLink(tgDeepLink);
-      } catch(e1) {
-        try {
-          tgApp.openTelegramLink(tgUrl);
-        } catch(e2) {
-          window.open(tgUrl, '_blank');
-        }
-      }
-    } else {
-      window.open(tgUrl, '_blank');
-    }
-    toast('Откройте чат и нажмите Отправить 🌸', 'ok');
+    // Прямой переход на tg:// — единственный способ передать текст в Mini App
+    window.location.href = tgDeepLink;
   } catch(e) { toast('Ошибка: '+e.message,'err'); }
   finally { btn.disabled=false; btn.textContent='📩 Отправить заявку'; }
 };
