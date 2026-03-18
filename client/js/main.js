@@ -295,12 +295,28 @@ window.submitInquiry = async () => {
 
     const ds = document.createElement('div');
     ds.style.cssText = 'color:#555;font-size:.9rem;line-height:1.5;margin-bottom:22px';
-    ds.textContent = 'Нажмите кнопку ниже — откроется чат с готовым сообщением, останется только нажать Отправить.';
+    ds.textContent = 'Скопируйте готовое сообщение, откройте чат администратора и вставьте его.';
+
+    // Текстовое поле с готовым сообщением
+    const ta = document.createElement('textarea');
+    ta.value = msg;
+    ta.readOnly = true;
+    ta.style.cssText = 'width:100%;height:120px;border:1px solid #eee;border-radius:10px;padding:10px;font-size:.82rem;resize:none;background:#f9f9f9;margin-bottom:10px;box-sizing:border-box;text-align:left';
+
+    const cpBtn = document.createElement('button');
+    cpBtn.style.cssText = 'width:100%;padding:13px;background:#8B2A3F;color:#fff;border-radius:14px;font-weight:700;font-size:1rem;border:none;cursor:pointer;margin-bottom:8px';
+    cpBtn.textContent = '📋 Скопировать сообщение';
+    cpBtn.onclick = () => {
+      navigator.clipboard.writeText(msg).then(() => {
+        cpBtn.textContent = '✅ Скопировано!';
+        setTimeout(() => cpBtn.textContent = '📋 Скопировать сообщение', 2000);
+      }).catch(() => { ta.select(); document.execCommand('copy'); });
+    };
 
     const bb = document.createElement('a');
     bb.href = adminUrl;
-    bb.style.cssText = 'display:block;padding:14px;background:#229ED9;color:#fff;border-radius:14px;font-weight:700;font-size:1rem;text-decoration:none;margin-bottom:10px';
-    bb.textContent = '✈️ Написать администратору';
+    bb.style.cssText = 'display:block;padding:13px;background:#229ED9;color:#fff;border-radius:14px;font-weight:700;font-size:1rem;text-decoration:none;margin-bottom:10px';
+    bb.textContent = '✈️ Открыть чат администратора';
 
     const cb = document.createElement('button');
     cb.style.cssText = 'width:100%;padding:12px;background:#f0f0f0;border:none;border-radius:14px;cursor:pointer;font-size:.9rem;color:#666';
@@ -308,7 +324,7 @@ window.submitInquiry = async () => {
     cb.onclick = () => ov.remove();
 
     bx.appendChild(ic); bx.appendChild(tl); bx.appendChild(ds);
-    bx.appendChild(bb); bx.appendChild(cb);
+    bx.appendChild(ta); bx.appendChild(cpBtn); bx.appendChild(bb); bx.appendChild(cb);
     ov.appendChild(bx);
     document.body.appendChild(ov);
 
