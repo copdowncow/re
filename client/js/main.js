@@ -39,7 +39,6 @@ function getExpiresAt(p) {
   }
   return null;
 }
-
 function timerBadge(p) {
   if (!EXPIRY_CATS.includes(p.category)) return '';
   const ea = getExpiresAt(p);
@@ -135,7 +134,6 @@ function expiryChip(p) {
 function renderDetail(p, el) {
   const photos = Array.isArray(p.photos) ? p.photos : [];
   const pUrl = location.origin + '/#product-' + (p.slug||p.id);
-
   window._lbPhotos = photos;
   window._lbIdx = 0;
 
@@ -173,7 +171,7 @@ function renderDetail(p, el) {
       '<div class="pd-contact">' +
         '<p>Хотите купить?</p>' +
         '<div class="pd-contact-btns">' +
-          '<button class="btn btn-primary" onclick="openInqModal(\'' + esc(p.id) + '\',\'' + esc(p.title) + '\')">📩 Оставить заявку</button>' +
+          '<button class="btn btn-primary" onclick="openInqModal(\'' + esc(p.id) + '\',\'' + esc(p.title) + '\',\'' + esc(p.slug||p.id) + '\')">📩 Оставить заявку</button>' +
           '<a class="btn btn-ig" href="' + esc(_cfg.instagram) + '" target="_blank">📸 Instagram</a>' +
           '<a class="btn btn-tg" href="' + esc(_cfg.telegram) + '" target="_blank">✈️ Telegram</a>' +
         '</div>' +
@@ -219,52 +217,11 @@ window.lightboxNext = (e) => {
 };
 
 // ── INQUIRY MODAL ─────────────────────────────────────────
-window.openInqModal = (pid, title) => {
-  document.getElementById('inq-pid').value = pid || '';
+window.openInqModal = (pid, title, slug) => {
+  document.getElementById('inq-pid').value   = pid   || '';
+  document.getElementById('inq-slug').value  = slug  || pid || '';
   document.getElementById('inq-title').textContent = 'Заявка: ' + title;
   openModal('inq-modal');
-};
-
-window.showInqSuccess = function(adminUrl) {
-  var old = document.getElementById('inq-success-popup');
-  if (old) old.remove();
-
-  var overlay = document.createElement('div');
-  overlay.id = 'inq-success-popup';
-  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px';
-
-  var box = document.createElement('div');
-  box.style.cssText = 'background:#fff;border-radius:20px;padding:28px 24px;width:100%;max-width:360px;text-align:center;box-shadow:0 8px 40px rgba(0,0,0,.2)';
-
-  var icon = document.createElement('div');
-  icon.style.cssText = 'font-size:3rem;margin-bottom:12px';
-  icon.textContent = '🌸';
-
-  var title = document.createElement('div');
-  title.style.cssText = 'font-size:1.1rem;font-weight:700;margin-bottom:8px';
-  title.textContent = 'Заявка отправлена!';
-
-  var desc = document.createElement('div');
-  desc.style.cssText = 'color:#666;font-size:.9rem;margin-bottom:20px';
-  desc.textContent = 'Администратор получил вашу заявку и свяжется с вами в ближайшее время.';
-
-  var tgBtn = document.createElement('a');
-  tgBtn.href = adminUrl;
-  tgBtn.style.cssText = 'display:block;padding:13px;background:#229ED9;color:#fff;border-radius:12px;font-weight:700;text-decoration:none;margin-bottom:10px';
-  tgBtn.textContent = '✈️ Написать в Telegram';
-
-  var closeBtn = document.createElement('button');
-  closeBtn.style.cssText = 'width:100%;padding:12px;background:#f5f5f5;border:none;border-radius:12px;cursor:pointer;font-size:.95rem';
-  closeBtn.textContent = 'Закрыть';
-  closeBtn.onclick = function() { overlay.remove(); };
-
-  box.appendChild(icon);
-  box.appendChild(title);
-  box.appendChild(desc);
-  box.appendChild(tgBtn);
-  box.appendChild(closeBtn);
-  overlay.appendChild(box);
-  document.body.appendChild(overlay);
 };
 
 window.submitInquiry = async () => {
@@ -277,66 +234,83 @@ window.submitInquiry = async () => {
   const note  = document.getElementById('inq-note').value.trim();
   const title = document.getElementById('inq-title').textContent.replace('Заявка: ', '');
   const pid   = document.getElementById('inq-pid').value;
-  const pageUrl = pid ? (location.origin + '/#product-' + pid) : location.href;
+  const slug  = document.getElementById('inq-slug')?.value || pid;
+  const pageUrl = slug ? (location.origin + '/#product-' + slug) : location.href;
 
   btn.disabled = true; btn.textContent = 'Отправляем...';
   try {
-    var buyerChatId = null;
-    try { var tgW = window.Telegram && window.Telegram.WebApp; if (tgW && tgW.initDataUnsafe && tgW.initDataUnsafe.user) buyerChatId = String(tgW.initDataUnsafe.user.id); } catch(ex) {}
+    let buyerChatId = null;
+    try {
+      const tgW = window.Telegram?.WebApp;
+      if (tgW?.initDataUnsafe?.user?.id) buyerChatId = String(tgW.initDataUnsafe.user.id);
+    } catch(ex) {}
 
     await api.inquiry({
-      product_id:        pid || undefined,
-      customer_name:     name || undefined,
+      product_id:        pid        || undefined,
+      customer_name:     name       || undefined,
       customer_phone:    phone,
-      customer_telegram: tg || undefined,
-      note:              note || undefined,
-      customer_chat_id:  buyerChatId || undefined,
+      customer_telegram: tg         || undefined,
+      note:              note       || undefined,
+      customer_chat_id:  buyerChatId|| undefined,
     });
 
     window.closeModal('inq-modal');
-    ['inq-name','inq-phone','inq-tg','inq-note'].forEach(function(id) { var el = document.getElementById(id); if (el) el.value = ''; });
+    ['inq-name','inq-phone','inq-tg','inq-note'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.value = '';
+    });
 
-    // Строим ссылку на админа с готовым текстом
-    var adminRaw = (_cfg.telegram || 'https://t.me/Rebuket_admin');
-    var adminHandle = adminRaw.replace('https://t.me/','').replace('@','').trim();
-    var lines = [
-      '🌸 Здравствуйте! Хочу купить:',
-      '',
-      '📦 ' + title,
-      '📞 ' + phone
-    ];
-    if (name) lines.push('👤 ' + name);
-    if (tg)   lines.push('✈️ ' + tg);
-    if (note) lines.push('📝 ' + note);
-    lines.push('', '🔗 ' + pageUrl);
-    var adminUrl = 'https://t.me/' + adminHandle + '?text=' + encodeURIComponent(lines.join(String.fromCharCode(10));
+    // Строим готовое сообщение для администратора
+    const NL = '\n';
+    let msg = '🌸 Здравствуйте! Хочу купить:' + NL + NL;
+    msg += '📦 ' + title + NL;
+    msg += '📞 Мой телефон: ' + phone + NL;
+    if (name) msg += '👤 Имя: '        + name + NL;
+    if (tg)   msg += '✈️ Telegram: '   + tg   + NL;
+    if (note) msg += '📝 Комментарий: '+ note + NL;
+    msg += NL + '🔗 ' + pageUrl;
 
-    // Попап
-    var oldP = document.getElementById('inq-popup');
+    const adminRaw    = (_cfg.telegram || 'https://t.me/Rebuket_admin');
+    const adminHandle = adminRaw.replace('https://t.me/', '').replace('@', '').trim();
+    const adminUrl    = 'https://t.me/' + adminHandle + '?text=' + encodeURIComponent(msg);
+
+    // Показываем попап
+    const oldP = document.getElementById('inq-popup');
     if (oldP) oldP.remove();
-    var ov = document.createElement('div');
+
+    const ov = document.createElement('div');
     ov.id = 'inq-popup';
     ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9999;display:flex;align-items:flex-end;justify-content:center;padding:16px';
-    var bx = document.createElement('div');
+
+    const bx = document.createElement('div');
     bx.style.cssText = 'background:#fff;border-radius:24px;padding:32px 24px 28px;width:100%;max-width:440px;text-align:center';
-    var ic = document.createElement('div');
-    ic.style.cssText = 'font-size:3rem;margin-bottom:10px'; ic.textContent = '✅';
-    var tl = document.createElement('div');
+
+    const ic = document.createElement('div');
+    ic.style.cssText = 'font-size:3rem;margin-bottom:10px';
+    ic.textContent = '✅';
+
+    const tl = document.createElement('div');
     tl.style.cssText = 'font-size:1.15rem;font-weight:800;margin-bottom:10px;color:#1a1a1a';
     tl.textContent = 'Заявка принята!';
-    var ds = document.createElement('div');
+
+    const ds = document.createElement('div');
     ds.style.cssText = 'color:#555;font-size:.9rem;line-height:1.5;margin-bottom:22px';
-    ds.textContent = 'Нажмите кнопку ниже — откроется чат с администратором, готовое сообщение уже заполнено — останется только нажать Отправить.';
-    var bb = document.createElement('a');
+    ds.textContent = 'Нажмите кнопку ниже — откроется чат с готовым сообщением, останется только нажать Отправить.';
+
+    const bb = document.createElement('a');
     bb.href = adminUrl;
     bb.style.cssText = 'display:block;padding:14px;background:#229ED9;color:#fff;border-radius:14px;font-weight:700;font-size:1rem;text-decoration:none;margin-bottom:10px';
     bb.textContent = '✈️ Написать администратору';
-    var cb = document.createElement('button');
+
+    const cb = document.createElement('button');
     cb.style.cssText = 'width:100%;padding:12px;background:#f0f0f0;border:none;border-radius:14px;cursor:pointer;font-size:.9rem;color:#666';
     cb.textContent = 'Закрыть';
-    cb.onclick = function() { ov.remove(); };
-    bx.appendChild(ic); bx.appendChild(tl); bx.appendChild(ds); bx.appendChild(bb); bx.appendChild(cb);
-    ov.appendChild(bx); document.body.appendChild(ov);
+    cb.onclick = () => ov.remove();
+
+    bx.appendChild(ic); bx.appendChild(tl); bx.appendChild(ds);
+    bx.appendChild(bb); bx.appendChild(cb);
+    ov.appendChild(bx);
+    document.body.appendChild(ov);
 
   } catch(e) { toast('Ошибка: ' + e.message, 'err'); }
   finally { btn.disabled = false; btn.textContent = '📩 Отправить заявку'; }
@@ -446,7 +420,6 @@ function scrollToFirst(ids) {
   }
 }
 
-// Сбрасываем подсветку при вводе
 document.addEventListener('DOMContentLoaded', () => {
   ['sell-title','sell-price','sell-city','sell-phone'].forEach(id => {
     const el = document.getElementById(id);
