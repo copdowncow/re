@@ -66,6 +66,16 @@ function getNextSerial(channel) {
   return counters[channel];
 }
 
+// Временное хранилище заявок (5 минут)
+const _pendingInquiries = new Map();
+function savePendingInquiry(key, data) {
+  _pendingInquiries.set(key, data);
+  setTimeout(() => _pendingInquiries.delete(key), 5 * 60 * 1000);
+}
+function getPendingInquiry(key) {
+  return _pendingInquiries.get(key) || null;
+}
+
 function initBots() {
   if (process.env.ADMIN_CHAT_ID_1) adminChatIds.add(process.env.ADMIN_CHAT_ID_1);
   if (process.env.ADMIN_CHAT_ID_2) adminChatIds.add(process.env.ADMIN_CHAT_ID_2);
@@ -85,7 +95,22 @@ function initUserBot() {
     const param  = (match && match[1] || '').trim();
 
     // Пользователь пришёл после оставления заявки
-    if (param === 'inquiry') {
+    if (param === 'inquiry' || param.startsWith('inq_')) {
+      const adminHandle = (process.env.ADMIN_TELEGRAM || 'https://t.me/Rebuket_admin')
+        .replace('https://t.me/', '').replace('@', '').trim();
+
+      const readyText = '🌸 Здравствуйте! Хочу сделать заказ через ReBuket. Свяжитесь со мной пожалуйста!';
+      const adminUrl = 'https://t.me/' + adminHandle + '?text=' + encodeURIComponent(readyText);
+
+            await userBot.sendMessage(msg.chat.id,
+        '✅ <b>Заявка принята!</b>\n\n' +
+        'Для полного оформления заказа — нажмите на кнопку ниже и отправьте готовое сообщение администратору 👇',
+        { parse_mode: 'HTML', reply_markup: { inline_keyboard: [[{ text: '✈️ Отправить заказ администратору', url: adminUrl }]] } }
+      );
+      return;
+    }
+
+    if (param === 'inquiry_OLDCODE') {
       const adminUrl = process.env.ADMIN_TELEGRAM || 'https://t.me/Rebuket_admin';
       await userBot.sendMessage(msg.chat.id,
         `🌸 <b>Привет, ${escHtml(name)}!</b>
@@ -442,6 +467,7 @@ async function notifyBuyerInquirySent(d) {
 
 module.exports = {
   initBots,
+  savePendingInquiry,
   notifyProduct,
   notifyInquiry,
   notifySellerApproved,
