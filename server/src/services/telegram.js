@@ -93,6 +93,7 @@ function initUserBot() {
     const name   = msg.from?.first_name || 'друг';
     const appUrl = getMiniAppUrl();
     const param  = (match && match[1] || '').trim();
+    console.log('[bot /start] param:', JSON.stringify(param.substring(0,50)));
 
     // Пользователь пришёл после оставления заявки
     if (param === 'inquiry' || param.startsWith('inq_')) {
