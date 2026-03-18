@@ -309,7 +309,7 @@ window.submitInquiry = async () => {
     if (tg)   lines.push('✈️ ' + tg);
     if (note) lines.push('📝 ' + note);
     lines.push('', '🔗 ' + pageUrl);
-    var adminUrl = 'https://t.me/' + adminHandle + '?text=' + encodeURIComponent(lines.join('\n'));
+    var adminUrl = 'https://t.me/' + adminHandle + '?text=' + encodeURIComponent(lines.join(String.fromCharCode(10));
 
     // Попап
     var oldP = document.getElementById('inq-popup');
