@@ -304,7 +304,7 @@ window.submitInquiry = async () => {
     var old2 = document.getElementById('inq-success-popup');
     if (old2) old2.remove();
 
-    var botUrl = 'https://t.me/' + ((_cfg.bot_username) || 'ReBuket_bot');
+    var botUrl = 'https://t.me/' + ((_cfg.bot_username) || 'ReBuket_bot') + '?start=inquiry';
 
     var overlay = document.createElement('div');
     overlay.id = 'inq-success-popup';
