@@ -296,7 +296,9 @@ window.submitInquiry = async () => {
     window.closeModal('inq-modal');
     ['inq-name','inq-phone','inq-tg','inq-note'].forEach(function(id) { var el = document.getElementById(id); if (el) el.value = ''; });
 
-    // Строим готовое сообщение
+    // Строим ссылку на админа с готовым текстом
+    var adminRaw = (_cfg.telegram || 'https://t.me/Rebuket_admin');
+    var adminHandle = adminRaw.replace('https://t.me/','').replace('@','').trim();
     var lines = [
       '🌸 Здравствуйте! Хочу купить:',
       '',
@@ -307,50 +309,34 @@ window.submitInquiry = async () => {
     if (tg)   lines.push('✈️ ' + tg);
     if (note) lines.push('📝 ' + note);
     lines.push('', '🔗 ' + pageUrl);
-    var readyMsg = lines.join('\n');
+    var adminUrl = 'https://t.me/' + adminHandle + '?text=' + encodeURIComponent(lines.join('\n'));
 
-    var b64 = btoa(unescape(encodeURIComponent(readyMsg)));
-    var safe = b64.replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'');
-    var startParam = safe.length <= 500 ? 'inq_' + safe : 'inquiry';
-    var botName = (_cfg.bot_username || 'ReBuket_bot');
-    var botUrl  = 'https://t.me/' + botName + '?start=' + startParam;
-
-    // Показываем попап
+    // Попап
     var oldP = document.getElementById('inq-popup');
     if (oldP) oldP.remove();
-
     var ov = document.createElement('div');
     ov.id = 'inq-popup';
     ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9999;display:flex;align-items:flex-end;justify-content:center;padding:16px';
-
     var bx = document.createElement('div');
     bx.style.cssText = 'background:#fff;border-radius:24px;padding:32px 24px 28px;width:100%;max-width:440px;text-align:center';
-
     var ic = document.createElement('div');
-    ic.style.cssText = 'font-size:3rem;margin-bottom:10px';
-    ic.textContent = '✅';
-
+    ic.style.cssText = 'font-size:3rem;margin-bottom:10px'; ic.textContent = '✅';
     var tl = document.createElement('div');
     tl.style.cssText = 'font-size:1.15rem;font-weight:800;margin-bottom:10px;color:#1a1a1a';
     tl.textContent = 'Заявка принята!';
-
     var ds = document.createElement('div');
     ds.style.cssText = 'color:#555;font-size:.9rem;line-height:1.5;margin-bottom:22px';
-    ds.textContent = 'Нажмите кнопку ниже — откроется бот, где будет готовая кнопка — нажмите её и отправьте.';
-
+    ds.textContent = 'Нажмите кнопку ниже — откроется чат с администратором, готовое сообщение уже заполнено — останется только нажать Отправить.';
     var bb = document.createElement('a');
-    bb.href = botUrl;
-    bb.style.cssText = 'display:block;padding:14px;background:#8B2A3F;color:#fff;border-radius:14px;font-weight:700;font-size:1rem;text-decoration:none;margin-bottom:10px';
-    bb.textContent = '🤖 Открыть бота';
-
+    bb.href = adminUrl;
+    bb.style.cssText = 'display:block;padding:14px;background:#229ED9;color:#fff;border-radius:14px;font-weight:700;font-size:1rem;text-decoration:none;margin-bottom:10px';
+    bb.textContent = '✈️ Написать администратору';
     var cb = document.createElement('button');
     cb.style.cssText = 'width:100%;padding:12px;background:#f0f0f0;border:none;border-radius:14px;cursor:pointer;font-size:.9rem;color:#666';
     cb.textContent = 'Закрыть';
     cb.onclick = function() { ov.remove(); };
-
     bx.appendChild(ic); bx.appendChild(tl); bx.appendChild(ds); bx.appendChild(bb); bx.appendChild(cb);
-    ov.appendChild(bx);
-    document.body.appendChild(ov);
+    ov.appendChild(bx); document.body.appendChild(ov);
 
   } catch(e) { toast('Ошибка: ' + e.message, 'err'); }
   finally { btn.disabled = false; btn.textContent = '📩 Отправить заявку'; }
