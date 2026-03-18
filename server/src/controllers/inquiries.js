@@ -4,7 +4,7 @@ const { notifyInquiry } = require('../services/telegram');
 
 exports.createInquiry = async (req, res) => {
   try {
-    const { product_id, customer_name, customer_phone, customer_telegram, note } = req.body;
+    const { product_id, customer_name, customer_phone, customer_telegram, note, customer_chat_id } = req.body;
     if (!customer_phone) return res.status(400).json({ error: 'Телефон обязателен' });
 
     const { data, error } = await getClient().from('inquiries').insert({
@@ -21,20 +21,39 @@ exports.createInquiry = async (req, res) => {
     let productTitle = null;
     let productSlug  = null;
     let productId    = null;
+    let productPrice = null;
 
     if (product_id) {
       const { data: prod } = await getClient()
         .from('products')
-        .select('title, slug, id')
+        .select('title, slug, id, price')
         .eq('id', product_id)
         .single();
 
       productTitle = prod?.title || null;
       productSlug  = prod?.slug  || null;
       productId    = prod?.id    || null;
+      productPrice = prod?.price || null;
     }
 
     notifyInquiry(data, productTitle, productSlug, productId).catch(() => {});
+
+    // Отправляем покупателю сообщение с готовой кнопкой
+    if (customer_chat_id) {
+      const { notifyBuyerInquirySent } = require('../services/telegram');
+      notifyBuyerInquirySent({
+        customer_chat_id,
+        customer_name,
+        customer_phone,
+        customer_telegram,
+        note,
+        productTitle,
+        productSlug,
+        productId,
+        productPrice
+      }).catch(() => {});
+    }
+
     res.status(201).json({ id: data.id, message: 'Заявка отправлена! Мы свяжемся с вами.' });
   } catch(e) { res.status(500).json({ error: e.message }); }
 };
