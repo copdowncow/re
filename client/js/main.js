@@ -235,19 +235,56 @@ window.openInqModal = (pid, title) => {
 window.submitInquiry = async () => {
   const phone = document.getElementById('inq-phone').value.trim();
   if (!phone) { toast('Введите телефон!','err'); return; }
-  const btn = document.getElementById('inq-btn');
+
+  const btn      = document.getElementById('inq-btn');
+  const name     = document.getElementById('inq-name').value.trim();
+  const tg       = document.getElementById('inq-tg').value.trim();
+  const note     = document.getElementById('inq-note').value.trim();
+  const title    = document.getElementById('inq-title').textContent.replace('Заявка: ', '');
+  const pid      = document.getElementById('inq-pid').value;
+  const pageUrl  = pid ? `${location.origin}/#product-${pid}` : location.href;
+
   btn.disabled = true; btn.textContent = 'Отправляем...';
+
   try {
+    // Отправляем заявку на сервер
     await api.inquiry({
-      product_id:        document.getElementById('inq-pid').value || undefined,
-      customer_name:     document.getElementById('inq-name').value.trim() || undefined,
+      product_id:        pid || undefined,
+      customer_name:     name || undefined,
       customer_phone:    phone,
-      customer_telegram: document.getElementById('inq-tg').value.trim() || undefined,
-      note:              document.getElementById('inq-note').value.trim() || undefined,
+      customer_telegram: tg || undefined,
+      note:              note || undefined,
     });
+
     closeModal('inq-modal');
-    toast('Заявка отправлена! Мы свяжемся с вами.','ok');
     ['inq-name','inq-phone','inq-tg','inq-note'].forEach(id => { document.getElementById(id).value=''; });
+
+    // Формируем готовый текст для Telegram
+    const adminTg = (_cfg.telegram || 'https://t.me/rebuket_admin')
+      .replace('https://t.me/', '');
+
+    const msg = [
+      '🌸 Здравствуйте! Хочу купить:',
+      '',
+      `📦 ${title}`,
+      `📞 Мой телефон: ${phone}`,
+      name ? `👤 Имя: ${name}` : '',
+      tg   ? `✈️ Telegram: ${tg}` : '',
+      note ? `📝 Комментарий: ${note}` : '',
+      '',
+      `🔗 ${pageUrl}`,
+    ].filter(l => l !== undefined && !(l === '' && false)).join('
+');
+
+    const tgUrl = `https://t.me/${adminTg}?text=${encodeURIComponent(msg)}`;
+
+    // Открываем чат с админом
+    if (window.Telegram?.WebApp) {
+      window.Telegram.WebApp.openTelegramLink(tgUrl);
+    } else {
+      window.open(tgUrl, '_blank');
+    }
+
   } catch(e) { toast('Ошибка: '+e.message,'err'); }
   finally { btn.disabled=false; btn.textContent='📩 Отправить заявку'; }
 };
