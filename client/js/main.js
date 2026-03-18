@@ -250,26 +250,24 @@ window.submitInquiry = async () => {
     window.closeModal('inq-modal');
     ['inq-name','inq-phone','inq-tg','inq-note'].forEach(id => { document.getElementById(id).value=''; });
 
-    // Формируем текст для Telegram
-    // Строим ссылку на админа
-    const rawTg = (_cfg.telegram || 'https://t.me/Rebuket_admin');
-    const adminHandle = rawTg.replace('https://t.me/', '').replace('@', '').trim();
+    // Показываем красивое подтверждение
+    const existing = document.getElementById('inq-success-popup');
+    if (existing) existing.remove();
 
-    const lines = ['🌸 Здравствуйте! Хочу купить:', '', '📦 ' + title, '📞 Мой телефон: ' + phone];
-    if (name) lines.push('👤 Имя: ' + name);
-    if (tg)   lines.push('✈️ Telegram: ' + tg);
-    if (note) lines.push('📝 Комментарий: ' + note);
-    lines.push('', '🔗 ' + pageUrl);
-    const msg = lines.join('\n');
-    const tgUrl = 'https://t.me/' + adminHandle + '?text=' + encodeURIComponent(msg);
+    const adminTgUrl = (_cfg.telegram || 'https://t.me/Rebuket_admin');
 
-    // tg:// deep link передаёт text параметр корректно
-    const tgDeepLink = 'tg://resolve?domain=' + adminHandle + '&text=' + encodeURIComponent(msg);
-
-    console.log('[inquiry] adminHandle:', adminHandle, '| tgUrl:', tgUrl);
-
-    // Прямой переход на tg:// — единственный способ передать текст в Mini App
-    window.location.href = tgDeepLink;
+    const popup = document.createElement('div');
+    popup.id = 'inq-success-popup';
+    popup.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px';
+    popup.innerHTML =
+      '<div style="background:#fff;border-radius:20px;padding:28px 24px;width:100%;max-width:360px;text-align:center;box-shadow:0 8px 40px rgba(0,0,0,.2)">' +
+        '<div style="font-size:3rem;margin-bottom:12px">🌸</div>' +
+        '<div style="font-size:1.1rem;font-weight:700;margin-bottom:8px">Заявка отправлена!</div>' +
+        '<div style="color:#666;font-size:.9rem;margin-bottom:20px">Администратор получил вашу заявку и свяжется с вами в ближайшее время.</div>' +
+        '<a href="' + adminTgUrl + '" style="display:block;padding:13px;background:#229ED9;color:#fff;border-radius:12px;font-weight:700;text-decoration:none;margin-bottom:10px">✈️ Написать в Telegram</a>' +
+        '<button onclick="document.getElementById('inq-success-popup').remove()" style="width:100%;padding:12px;background:#f5f5f5;border:none;border-radius:12px;cursor:pointer;font-size:.95rem">Закрыть</button>' +
+      '</div>';
+    document.body.appendChild(popup);
   } catch(e) { toast('Ошибка: '+e.message,'err'); }
   finally { btn.disabled=false; btn.textContent='📩 Отправить заявку'; }
 };
