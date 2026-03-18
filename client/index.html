@@ -1,360 +1,406 @@
+DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#8B2A3F">
+<title>ReBuket — Букеты и сладости</title>
+<meta name="description" content="ReBuket — маркетплейс букетов, корзин, мишек и сладостей в Таджикистане">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="dns-prefetch" href="https://telegram.org">
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<link rel="stylesheet" href="css/style.css">
+<style>
+.timer-badge {
+  position: absolute;
+  bottom: 8px;
+  left: 8px;
+  background: rgba(0,0,0,.55);
+  color: #fff;
+  font-size: .72rem;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 20px;
+  backdrop-filter: blur(4px);
+}
+.timer-badge.urgent {
+  background: #dc3545;
+  animation: pulse 1.2s infinite;
+}
+.timer-badge.expired {
+  background: #6c757d;
+}
+@keyframes pulse {
+  0%,100% { opacity:1; }
+  50%      { opacity:.6; }
+}
+</style>
+<style>
+/* Fix category cards on mobile */
+.cat-card { min-width: 0; }
+.cat-body { padding: 10px 12px; min-width: 0; overflow: hidden; }
+.cat-body h3 { font-size: .95rem; font-weight: 700; margin-bottom: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cat-body p  { color: var(--gray); font-size: .73rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cat-cnt { display: inline-block; background: var(--rose-l); color: var(--rose-d); padding: 2px 8px; border-radius: 20px; font-size: .68rem; font-weight: 700; margin-top: 4px; white-space: nowrap; }
+.cats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+@media (min-width: 560px) { .cats { grid-template-columns: repeat(4, 1fr); } }
+.cat-img { height: 110px; font-size: 2.8rem; }
+@media (min-width: 560px) { .cat-img { height: 130px; font-size: 3.2rem; } }
+</style>
+</head>
+<body>
+
+<!-- ════ NAV ════════════════════════════════════════════ -->
+<nav>
+  <div class="nav-wrap">
+    <div class="logo" onclick="goPage('home')">🌸&nbsp;<em>ReBuket</em></div>
+    <ul class="nav-links">
+      <li><a data-nav="home"    onclick="goPage('home')">Главная</a></li>
+      <li><a data-nav="catalog" onclick="goPage('catalog')">Каталог</a></li>
+      <li><a data-nav="sell"    onclick="goPage('sell')">+ Продать</a></li>
+      <li><a data-nav="admin"   class="nav-admin" onclick="goPage('admin')">⚙ Панель</a></li>
+    </ul>
+    <button class="burger" id="burger" onclick="toggleBurger()" aria-label="Меню">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+  <!-- Mobile drawer -->
+  <div class="nav-drawer" id="nav-drawer">
+    <a data-nav="home"    onclick="goPage('home')">🏠 Главная</a>
+    <a data-nav="catalog" onclick="goPage('catalog')">🛍 Каталог</a>
+    <a data-nav="sell"    onclick="goPage('sell')">➕ Разместить объявление</a>
+    <a data-nav="admin"   class="nav-admin" onclick="goPage('admin')">⚙ Панель администратора</a>
+  </div>
+</nav>
+
+<!-- ════ HOME ════════════════════════════════════════════ -->
+<div id="page-home" class="page active">
+  <div class="hero">
+    <div class="hero-inner">
+      <h1>🌸 ReBuket</h1>
+      <p>Купи или продай букеты, корзины, мишки и сладости.<br>Свежие цветы и угощения по всему Таджикистану.</p>
+      <div class="hero-btns">
+        <button class="btn btn-white"   onclick="goPage('catalog')">💐 Смотреть каталог</button>
+        <button class="btn btn-outline" onclick="goPage('sell')">+ Разместить</button>
+      </div>
+    </div>
+  </div>
+  <div class="section">
+    <h2 class="section-title">Категории</h2>
+    <p class="section-sub">Выберите категорию или разместите своё объявление</p>
+    <div class="cats">
+      <div class="cat-card" onclick="filterAndGo('Букет')">
+        <div class="cat-img ci-bouquet">💐</div>
+        <div class="cat-body"><h3>Букеты</h3><p>Классические и авторские</p><span class="cat-cnt" id="cnt-bouquet">…</span></div>
+      </div>
+      <div class="cat-card" onclick="filterAndGo('Корзина')">
+        <div class="cat-img ci-basket">🧺</div>
+        <div class="cat-body"><h3>Корзины</h3><p>Праздничные корзины</p><span class="cat-cnt" id="cnt-basket">…</span></div>
+      </div>
+      <div class="cat-card" onclick="filterAndGo('Мишка')">
+        <div class="cat-img ci-bear">🧸</div>
+        <div class="cat-body"><h3>Мишки</h3><p>Мишки с цветами</p><span class="cat-cnt" id="cnt-bear">…</span></div>
+      </div>
+      <div class="cat-card" onclick="filterAndGo('Сладости')">
+        <div class="cat-img ci-sweets">🍰</div>
+        <div class="cat-body"><h3>Сладости</h3><p>Торты, трайфлы, панкейки, капкейки</p><span class="cat-cnt" id="cnt-sweets">…</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════ CATALOG ════════════════════════════════════════ -->
+<div id="page-catalog" class="page">
+  <div class="section">
+    <button class="back" onclick="goPage('home')">← Назад</button>
+    <h2 class="section-title">Каталог</h2>
+    <p class="section-sub">Найдите идеальный подарок</p>
+    <div class="filters">
+      <div class="fg">
+        <label>Категория</label>
+        <div class="chips" id="cat-chips">
+          <button class="chip active" onclick="setCat('Все',this)">Все</button>
+          <button class="chip" onclick="setCat('Букеты',this)">💐 Букеты</button>
+          <button class="chip" onclick="setCat('Корзины',this)">🧺 Корзины</button>
+          <button class="chip" onclick="setCat('Мишки',this)">🧸 Мишки</button>
+          <button class="chip" onclick="setCat('Сладости',this)">🍰 Сладости</button>
+        </div>
+      </div>
+      <div class="fg">
+        <label>Город</label>
+        <select id="f-city" onchange="applyFilters()">
+          <option value="">Все города</option>
+        </select>
+      </div>
+      <div class="fg">
+        <label>Цена до (TJS)</label>
+        <input type="number" id="f-price" placeholder="Любая" oninput="applyFilters()" style="width:120px">
+      </div>
+      <div class="fg">
+        <label>Поиск</label>
+        <input type="text" id="f-search" placeholder="Название…" oninput="applyFilters()" style="width:160px">
+      </div>
+    </div>
+    <div class="pgrid" id="pgrid"><div class="loader">🌸 Загружаем…</div></div>
+    <div id="pgn" class="pgn"></div>
+  </div>
+</div>
+
+<!-- ════ PRODUCT DETAIL ══════════════════════════════════ -->
+<div id="page-product" class="page">
+  <div class="section">
+    <button class="back" onclick="goPage('home')">← Назад</button>
+    <div id="pd-content"></div>
+  </div>
+</div>
+
+<!-- ════ SELL ════════════════════════════════════════════ -->
+<div id="page-sell" class="page">
+  <div class="section">
+    <button class="back" onclick="goPage('home')">← Назад</button>
+    <h2 class="section-title">Разместить объявление</h2>
+    <p class="section-sub">Ваш товар увидят покупатели после проверки администратором</p>
+    <div class="sell-wrap">
+
+      <!-- Категория -->
+      <div class="form-group" style="margin-bottom:20px">
+        <label>Категория *</label>
+        <div class="cat-select-row">
+          <div class="cat-sel active" data-val="bouquet" onclick="selectCat(this)"><span class="cs-em">💐</span><span class="cs-txt">Букет</span></div>
+          <div class="cat-sel" data-val="basket"  onclick="selectCat(this)"><span class="cs-em">🧺</span><span class="cs-txt">Корзина</span></div>
+          <div class="cat-sel" data-val="bear"    onclick="selectCat(this)"><span class="cs-em">🧸</span><span class="cs-txt">Мишка</span></div>
+          <div class="cat-sel" data-val="sweets"  onclick="selectCat(this)"><span class="cs-em">🍰</span><span class="cs-txt">Сладости</span></div>
+        </div>
+        <input type="hidden" name="sell-cat" id="sell-cat-val" value="bouquet">
+      </div>
+
+      <div class="fgrid">
+        <!-- Название -->
+        <div class="form-group fg-full">
+          <label>Название *</label>
+          <input type="text" id="sell-title" placeholder="Нежный букет из роз / Трайфл клубничный">
+        </div>
+        <!-- Описание -->
+        <div class="form-group fg-full">
+          <label>Описание</label>
+          <textarea id="sell-desc" placeholder="Состав, особенности, повод, вес (для сладостей)…"></textarea>
+        </div>
+        <!-- Цена и город -->
+        <div class="form-group">
+          <label>Ваша цена (TJS) *</label>
+          <input type="number" id="sell-price" placeholder="350" oninput="updatePricePreview()" min="1">
+          <div id="price-preview" style="display:none;margin-top:10px;padding:12px;background:var(--warm);border-radius:10px;font-size:.88rem;line-height:1.8">
+            <div style="display:flex;justify-content:space-between">
+              <span style="color:var(--gray)">Вы получите:</span>
+              <span id="price-seller" style="font-weight:700;color:var(--rose)"></span>
+            </div>
+            <div style="display:flex;justify-content:space-between">
+              <span style="color:var(--gray)">Комиссия площадки (20%):</span>
+              <span id="price-commission" style="color:var(--gray)"></span>
+            </div>
+            <div style="display:flex;justify-content:space-between;border-top:1px solid #e8d8d0;margin-top:6px;padding-top:6px">
+              <span style="font-weight:700">Покупатель заплатит:</span>
+              <span id="price-total" style="font-weight:700;color:var(--rose);font-size:1rem"></span>
+            </div>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Город *</label>
+          <select id="sell-city">
+            <option value="">— Выберите —</option>
+            <option>Душанбе</option><option>Худжанд</option><option>Куляб</option>
+            <option>Бохтар</option><option>Вахдат</option>
+            <option>Турсунзода</option><option>Исфара</option><option>Шахринав</option><option>Дангара</option><option>Регар</option><option>Бустон</option>
+          </select>
+        </div>
+
+        <!-- Контакты продавца (только для администратора) -->
+        <div class="form-group fg-full" style="background:var(--warm);border-radius:12px;padding:16px">
+          <p style="font-weight:700;margin-bottom:12px;color:var(--mid)">🔐 Ваши контакты (видит только администратор)</p>
+          <div class="fgrid">
+            <div class="form-group">
+              <label>Ваше имя</label>
+              <input type="text" id="sell-name" placeholder="Алина">
+            </div>
+            <div class="form-group">
+              <label>Телефон *</label>
+              <input type="tel" id="sell-phone" placeholder="+992 900 000000">
+            </div>
+            <div class="form-group">
+              <label>Telegram</label>
+              <input type="text" id="sell-tg" placeholder="@username">
+            </div>
+            <div class="form-group">
+              <label>Адрес</label>
+              <input type="text" id="sell-address" placeholder="ул. Рудаки, 12">
+            </div>
+            <div class="form-group">
+              <label>Время получения</label>
+              <input type="text" id="sell-time" placeholder="09:00–21:00 ежедневно">
+            </div>
+          </div>
+          <p style="font-size:.78rem;color:var(--gray);margin-top:10px">
+            Покупатели увидят только кнопки Instagram и Telegram администратора. Ваши личные контакты защищены.
+          </p>
+        </div>
+
+        <!-- Фотографии -->
+        <div class="form-group fg-full">
+          <label>Фотографии * <span style="color:var(--gray);font-weight:400">(минимум 3 фото)</span></label>
+          <label class="photo-area" for="sell-photos" style="cursor:pointer">
+            <span class="icon">📸</span>
+            <b>Нажмите для загрузки</b>
+            <p style="color:var(--gray);font-size:.82rem;margin-top:3px">JPG, PNG, WebP — до 10 МБ каждое</p>
+          </label>
+          <input type="file" id="sell-photos" accept="image/*" multiple onchange="handlePhotos(event)" style="display:none">
+          <div class="photo-grid" id="sell-photo-grid"></div>
+          <p class="photo-hint" id="photo-hint">Загружено 0 из 3 (минимум 3 фото)</p>
+        </div>
+      </div>
+
+      <button class="btn btn-primary" id="sell-btn" style="width:100%;padding:14px;margin-top:8px;font-size:1rem" onclick="submitListing()">
+        ✅ Разместить объявление
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ════ ADMIN ════════════════════════════════════════════ -->
+<div id="page-admin" class="page">
+  <div class="section">
+
+    <!-- Login -->
+    <div id="a-login" style="max-width:400px;margin:50px auto;background:#fff;border-radius:var(--rr);padding:40px;box-shadow:0 8px 40px rgba(0,0,0,.12);text-align:center">
+      <div style="font-size:2.8rem;margin-bottom:14px">🔐</div>
+      <h2 style="margin-bottom:5px">Панель администратора</h2>
+      
+      <div class="form-group" style="margin-bottom:14px">
+        <input type="text"     id="a-user" placeholder="Логин" style="text-align:center" onkeydown="if(event.key==='Enter')adminLogin()">
+      </div>
+      <div class="form-group" style="margin-bottom:20px">
+        <input type="password" id="a-pass" placeholder="Пароль" style="text-align:center" onkeydown="if(event.key==='Enter')adminLogin()">
+      </div>
+      <button class="btn btn-primary" id="a-btn" style="width:100%" onclick="adminLogin()">Войти</button>
+    </div>
+
+    <!-- Dashboard -->
+    <div id="a-dash" style="display:none">
+      <div class="a-hdr">
+        <div>
+          <h2>🌸 ReBuket — Администратор</h2>
+          <p id="a-welcome" style="opacity:.65;font-size:.82rem;margin-top:2px"></p>
+        </div>
+        <button class="btn btn-outline" onclick="adminLogout()" style="font-size:.82rem;padding:7px 16px;border-color:rgba(255,255,255,.4)">Выйти</button>
+      </div>
+      <div class="stats-bar" id="a-stats">
+        <div class="s-card"><em>⏳</em><b>—</b><small>Загрузка…</small></div>
+      </div>
+      <div class="atabs">
+        <button class="atab active" data-tab="products"  onclick="switchTab('products')">📦 Объявления</button>
+        <button class="atab"        data-tab="inquiries" onclick="switchTab('inquiries')">🛒 Заявки</button>
+        <button class="atab"        data-tab="stats"     onclick="switchTab('stats')">📊 Статистика</button>
+      </div>
+      <div id="tab-products"  class="atab-pane"></div>
+      <div id="tab-inquiries" class="atab-pane" style="display:none"></div>
+      <div id="tab-stats"     class="atab-pane" style="display:none"></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ════ INQUIRY MODAL ═══════════════════════════════════ -->
+<div class="overlay" id="inq-modal">
+  <div class="modal">
+    <button class="modal-x" onclick="closeModal('inq-modal')">✕</button>
+    <h3 id="inq-title">Оставить заявку</h3>
+    <p style="color:var(--gray);margin-bottom:20px;font-size:.88rem">Ваши данные увидит только администратор</p>
+    <input type="hidden" id="inq-pid">
+    <input type="hidden" id="inq-slug">
+    <div class="form-group" style="margin-bottom:13px">
+      <label>Имя</label>
+      <input type="text" id="inq-name" placeholder="Необязательно">
+    </div>
+    <div class="form-group" style="margin-bottom:13px">
+      <label>Телефон *</label>
+      <input type="tel" id="inq-phone" placeholder="+992 900 000000">
+    </div>
+    <div class="form-group" style="margin-bottom:13px">
+      <label>Telegram</label>
+      <input type="text" id="inq-tg" placeholder="@username">
+    </div>
+    <div class="form-group" style="margin-bottom:20px">
+      <label>Пожелания</label>
+      <textarea id="inq-note" placeholder="Желаемое время, особые пожелания…" style="height:72px"></textarea>
+    </div>
+    <button class="btn btn-primary" id="inq-btn" style="width:100%" onclick="submitInquiry()">📩 Отправить заявку</button>
+  </div>
+</div>
+
+<!-- ════ TOAST ═══════════════════════════════════════════ -->
+<div class="toast" id="toast"></div>
+<button id="scroll-top" onclick="window.scrollTo({top:0,behavior:'smooth'})"
+  style="display:none;position:fixed;bottom:24px;right:24px;z-index:888;
+  width:44px;height:44px;border-radius:50%;background:var(--rose);color:#fff;
+  border:none;font-size:1.3rem;box-shadow:0 4px 16px rgba(200,83,106,.4);cursor:pointer">↑</button>
+<script>
+  window.addEventListener('scroll', () => {
+    document.getElementById('scroll-top').style.display = window.scrollY > 300 ? 'block' : 'none';
+  });
+</script>
+
+<!-- ════ LIGHTBOX ═══════════════════════════════════════ -->
+<div id="lightbox" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:9998;align-items:center;justify-content:center;padding:16px" onclick="closeLightbox()">
+  <button onclick="lightboxPrev(event)" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);background:rgba(255,255,255,.15);border:none;color:#fff;font-size:1.8rem;width:44px;height:44px;border-radius:50%;cursor:pointer;z-index:1">‹</button>
+  <img id="lb-img" src="" style="max-width:100%;max-height:90vh;object-fit:contain;border-radius:8px;user-select:none">
+  <button onclick="lightboxNext(event)" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:rgba(255,255,255,.15);border:none;color:#fff;font-size:1.8rem;width:44px;height:44px;border-radius:50%;cursor:pointer;z-index:1">›</button>
+  <button onclick="closeLightbox()" style="position:absolute;top:14px;right:14px;background:rgba(255,255,255,.15);border:none;color:#fff;font-size:1.2rem;width:36px;height:36px;border-radius:50%;cursor:pointer">✕</button>
+</div>
+
+<footer>
+  <div class="logo">🌸&nbsp;<em>ReBuket</em></div>
+  <p>© 2025 ReBuket — Подарки по всему Таджикистану</p>
+</footer>
+
 <script type="module">
 import { api, isAuth, setTok, clrTok } from './js/api.js';
-import * as utils from './js/utils.js';
-import * as main from './js/main.js';
-import * as admin from './js/admin.js';
+import { goPage, toast } from './js/utils.js';
+import { loadCatalog, loadCounts, loadCities, filterAndGo, handleRoute, loadConfig } from './js/main.js';
+import { checkAdminAuth } from './js/admin.js';
 
-/* ──────────────────────────────────────────────
-   Telegram WebApp init
-────────────────────────────────────────────── */
-const tg = window.Telegram?.WebApp;
-
-try {
-  if (tg) {
-    tg.ready();
-    tg.expand();
-    tg.enableClosingConfirmation?.();
-  }
-} catch (e) {
-  console.warn('Telegram WebApp init error:', e);
-}
-
-/* ──────────────────────────────────────────────
-   Helpers
-────────────────────────────────────────────── */
-const safe = (fn, fallback = () => {}) => typeof fn === 'function' ? fn : fallback;
-
-const goPage = safe(utils.goPage, (page) => {
-  console.warn('goPage fallback:', page);
-});
-
-const toast = safe(utils.toast, (msg) => {
-  console.log('toast:', msg);
-  alert(msg);
-});
-
-const loadCatalog   = safe(main.loadCatalog, async () => {});
-const loadCounts    = safe(main.loadCounts, async () => {});
-const loadCities    = safe(main.loadCities, () => {});
-const filterAndGo   = safe(main.filterAndGo, (cat) => console.warn('filterAndGo fallback:', cat));
-const handleRoute   = safe(main.handleRoute, () => {});
-const loadConfig    = safe(main.loadConfig, async () => {});
-
-const checkAdminAuth = safe(admin.checkAdminAuth, async () => {});
-
-/* ──────────────────────────────────────────────
-   Export to window for inline onclick=""
-────────────────────────────────────────────── */
-window.api = api;
-window.isAuth = isAuth;
-window.setTok = setTok;
-window.clrTok = clrTok;
-
-window.goPage = goPage;
-window.toast = toast;
-
-window.loadCatalog = loadCatalog;
-window.loadCounts = loadCounts;
-window.loadCities = loadCities;
-window.filterAndGo = filterAndGo;
-window.handleRoute = handleRoute;
-window.loadConfig = loadConfig;
-window.checkAdminAuth = checkAdminAuth;
-
-/* ──────────────────────────────────────────────
-   Optional functions from modules or fallbacks
-────────────────────────────────────────────── */
-window.setCat = typeof main.setCat === 'function'
-  ? main.setCat
-  : function(category, el) {
-      document.querySelectorAll('#cat-chips .chip').forEach(btn => btn.classList.remove('active'));
-      if (el) el.classList.add('active');
-      window.currentCategory = category;
-      if (typeof window.applyFilters === 'function') window.applyFilters();
-    };
-
-window.applyFilters = typeof main.applyFilters === 'function'
-  ? main.applyFilters
-  : function() {
-      console.warn('applyFilters not implemented in main.js');
-    };
-
-window.selectCat = typeof main.selectCat === 'function'
-  ? main.selectCat
-  : function(el) {
-      document.querySelectorAll('.cat-sel').forEach(x => x.classList.remove('active'));
-      el.classList.add('active');
-      const hidden = document.getElementById('sell-cat-val');
-      if (hidden) hidden.value = el.dataset.val || 'bouquet';
-    };
-
-window.updatePricePreview = typeof main.updatePricePreview === 'function'
-  ? main.updatePricePreview
-  : function() {
-      const input = document.getElementById('sell-price');
-      const wrap = document.getElementById('price-preview');
-      const seller = document.getElementById('price-seller');
-      const commission = document.getElementById('price-commission');
-      const total = document.getElementById('price-total');
-
-      const value = Number(input?.value || 0);
-      if (!value || value <= 0) {
-        if (wrap) wrap.style.display = 'none';
-        return;
-      }
-
-      const sellerAmount = Math.round(value * 100) / 100;
-      const fee = Math.round(value * 0.2 * 100) / 100;
-      const buyerTotal = Math.round((value + fee) * 100) / 100;
-
-      if (seller) seller.textContent = `${sellerAmount} TJS`;
-      if (commission) commission.textContent = `${fee} TJS`;
-      if (total) total.textContent = `${buyerTotal} TJS`;
-      if (wrap) wrap.style.display = 'block';
-    };
-
-window.handlePhotos = typeof main.handlePhotos === 'function'
-  ? main.handlePhotos
-  : function(event) {
-      const files = Array.from(event.target.files || []);
-      const grid = document.getElementById('sell-photo-grid');
-      const hint = document.getElementById('photo-hint');
-
-      if (!grid) return;
-      grid.innerHTML = '';
-
-      files.forEach(file => {
-        const reader = new FileReader();
-        reader.onload = e => {
-          const div = document.createElement('div');
-          div.style.cssText = 'position:relative;border-radius:12px;overflow:hidden;background:#f5f5f5;height:100px';
-          div.innerHTML = `<img src="${e.target.result}" style="width:100%;height:100%;object-fit:cover">`;
-          grid.appendChild(div);
-        };
-        reader.readAsDataURL(file);
-      });
-
-      if (hint) {
-        hint.textContent = `Загружено ${files.length} из 3 (минимум 3 фото)`;
-      }
-    };
-
-window.submitListing = typeof main.submitListing === 'function'
-  ? main.submitListing
-  : async function() {
-      toast('submitListing() не найден в main.js', 'err');
-    };
-
-window.adminLogin = typeof admin.adminLogin === 'function'
-  ? admin.adminLogin
-  : async function() {
-      const login = document.getElementById('a-user')?.value?.trim();
-      const pass = document.getElementById('a-pass')?.value?.trim();
-
-      if (!login || !pass) {
-        toast('Введите логин и пароль', 'err');
-        return;
-      }
-
-      toast('adminLogin() не подключен в admin.js', 'err');
-    };
-
-window.adminLogout = typeof admin.adminLogout === 'function'
-  ? admin.adminLogout
-  : function() {
-      try { clrTok(); } catch {}
-      location.reload();
-    };
-
-window.switchTab = typeof admin.switchTab === 'function'
-  ? admin.switchTab
-  : function(tab) {
-      document.querySelectorAll('.atab').forEach(btn => btn.classList.remove('active'));
-      document.querySelectorAll('.atab-pane').forEach(pane => pane.style.display = 'none');
-
-      document.querySelector(`.atab[data-tab="${tab}"]`)?.classList.add('active');
-      document.getElementById(`tab-${tab}`)?.style.setProperty('display', 'block');
-    };
-
-window.closeModal = typeof utils.closeModal === 'function'
-  ? utils.closeModal
-  : function(id) {
-      document.getElementById(id)?.classList.remove('open');
-    };
-
-window.submitInquiry = typeof main.submitInquiry === 'function'
-  ? main.submitInquiry
-  : async function() {
-      toast('submitInquiry() не найден в main.js', 'err');
-    };
-
-window.closeLightbox = typeof main.closeLightbox === 'function'
-  ? main.closeLightbox
-  : function() {
-      const lb = document.getElementById('lightbox');
-      if (lb) lb.style.display = 'none';
-    };
-
-window.lightboxPrev = typeof main.lightboxPrev === 'function'
-  ? main.lightboxPrev
-  : function(e) { e?.stopPropagation?.(); };
-
-window.lightboxNext = typeof main.lightboxNext === 'function'
-  ? main.lightboxNext
-  : function(e) { e?.stopPropagation?.(); };
-
-/* ──────────────────────────────────────────────
-   Telegram open chat functions
-────────────────────────────────────────────── */
-
-/* Открыть чат с обычным username */
-window.openTelegramChat = async function(username, text = '') {
-  if (!username) {
-    toast('Не указан username Telegram', 'err');
-    return;
-  }
-
-  const cleanUsername = String(username).replace(/^@/, '').trim();
-  const url = `https://t.me/${cleanUsername}`;
-
-  if (text) {
-    try {
-      await navigator.clipboard.writeText(text);
-      tg?.showAlert?.('Текст скопирован. Вставьте его в чат.');
-    } catch (e) {
-      console.warn('Clipboard error:', e);
-    }
-  }
-
-  try {
-    if (tg?.openTelegramLink) {
-      tg.openTelegramLink(url);
-    } else {
-      window.open(url, '_blank', 'noopener,noreferrer');
-    }
-  } catch (e) {
-    console.error('openTelegramChat error:', e);
-    window.open(url, '_blank', 'noopener,noreferrer');
-  }
-};
-
-/* Открыть бота с payload */
-window.openTelegramBot = function(botUsername, payload = '') {
-  if (!botUsername) {
-    toast('Не указан username бота', 'err');
-    return;
-  }
-
-  const cleanBot = String(botUsername).replace(/^@/, '').trim();
-  const encoded = encodeURIComponent(payload || '');
-  const url = encoded
-    ? `https://t.me/${cleanBot}?start=${encoded}`
-    : `https://t.me/${cleanBot}`;
-
-  try {
-    if (tg?.openTelegramLink) {
-      tg.openTelegramLink(url);
-    } else {
-      window.open(url, '_blank', 'noopener,noreferrer');
-    }
-  } catch (e) {
-    console.error('openTelegramBot error:', e);
-    window.open(url, '_blank', 'noopener,noreferrer');
-  }
-};
-
-/* Для товара */
-window.contactAdminAboutProduct = async function({
-  username = 'your_admin_username',
-  title = '',
-  id = '',
-  price = '',
-  city = ''
-} = {}) {
-  const text =
-`Здравствуйте!
-Меня интересует товар${title ? `: ${title}` : ''}${id ? ` (ID: ${id})` : ''}${price ? `
-Цена: ${price}` : ''}${city ? `
-Город: ${city}` : ''}
-
-Можно подробнее?`;
-
-  await window.openTelegramChat(username, text);
-};
-
-/* ──────────────────────────────────────────────
-   Mobile nav
-────────────────────────────────────────────── */
+// ── Mobile nav ──────────────────────────────────────────
 window.toggleBurger = () => {
-  document.getElementById('burger')?.classList.toggle('open');
-  document.getElementById('nav-drawer')?.classList.toggle('open');
+  document.getElementById('burger').classList.toggle('open');
+  document.getElementById('nav-drawer').classList.toggle('open');
 };
 
-/* ──────────────────────────────────────────────
-   Close overlay on bg click
-────────────────────────────────────────────── */
+// ── Close overlay on bg click ───────────────────────────
 document.querySelectorAll('.overlay').forEach(el => {
-  el.addEventListener('click', e => {
-    if (e.target === el) el.classList.remove('open');
-  });
+  el.addEventListener('click', e => { if (e.target === el) el.classList.remove('open'); });
 });
 
-/* ──────────────────────────────────────────────
-   Unauthorized
-────────────────────────────────────────────── */
-window.addEventListener('rbt:unauth', () => {
-  toast('Сессия истекла', 'err');
-  goPage('admin');
-});
+// ── Unauthorized ────────────────────────────────────────
+window.addEventListener('rbt:unauth', () => { toast('Сессия истекла','err'); goPage('admin'); });
 
-/* ──────────────────────────────────────────────
-   Page change events
-────────────────────────────────────────────── */
+// ── Page change events ──────────────────────────────────
 window.addEventListener('rbt:page', e => {
   const p = e.detail;
   if (p === 'catalog') loadCatalog();
-  if (p === 'home') loadCounts();
-  if (p === 'admin') checkAdminAuth();
+  if (p === 'home')    loadCounts();
+  if (p === 'admin')   checkAdminAuth();
 });
 
-/* ──────────────────────────────────────────────
-   Init
-────────────────────────────────────────────── */
-try {
-  await loadConfig();
-} catch (e) {
-  console.warn('loadConfig error:', e);
-}
+// ── Init ────────────────────────────────────────────────
+await loadConfig();
+await loadCounts();
+loadCities('f-city');
 
-try {
-  await loadCounts();
-} catch (e) {
-  console.warn('loadCounts error:', e);
-}
+// ── Handle back/forward navigation ──────────────────────
+window.addEventListener('popstate', () => handleRoute());
 
-try {
-  loadCities('f-city');
-} catch (e) {
-  console.warn('loadCities error:', e);
-}
-
-/* ──────────────────────────────────────────────
-   Handle back/forward navigation
-────────────────────────────────────────────── */
-window.addEventListener('popstate', () => {
-  try {
-    handleRoute();
-  } catch (e) {
-    console.warn('handleRoute error:', e);
-  }
-});
-
-/* ──────────────────────────────────────────────
-   Initial route
-────────────────────────────────────────────── */
-try {
-  handleRoute();
-} catch (e) {
-  console.warn('Initial handleRoute error:', e);
-}
+// ── Initial route ────────────────────────────────────────
+handleRoute();
 </script>
+
+</body>
+</html>
