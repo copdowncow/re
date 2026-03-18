@@ -292,36 +292,46 @@ window.submitInquiry = async () => {
     window.closeModal('inq-modal');
     ['inq-name','inq-phone','inq-tg','inq-note'].forEach(id => { document.getElementById(id).value=''; });
 
-    var adminTgUrl = (_cfg.telegram || 'https://t.me/Rebuket_admin');
+    // Готовый текст для Telegram
+    var rawTg = (_cfg.telegram || 'https://t.me/Rebuket_admin');
+    var adminHandle = rawTg.replace('https://t.me/', '').replace('@', '').trim();
+    var msgLines = ['🌸 Здравствуйте! Хочу купить:', '', '📦 ' + title, '📞 Мой телефон: ' + phone];
+    if (name) msgLines.push('👤 Имя: ' + name);
+    if (tg)   msgLines.push('✈️ Telegram: ' + tg);
+    if (note) msgLines.push('📝 Комментарий: ' + note);
+    msgLines.push('', '🔗 ' + pageUrl);
+    var readyMsg = msgLines.join('\n');
+    var tgWithText = 'https://t.me/' + adminHandle + '?text=' + encodeURIComponent(readyMsg);
+
     var old2 = document.getElementById('inq-success-popup');
     if (old2) old2.remove();
 
     var overlay = document.createElement('div');
     overlay.id = 'inq-success-popup';
-    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px';
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9999;display:flex;align-items:flex-end;justify-content:center;padding:16px';
 
     var box = document.createElement('div');
-    box.style.cssText = 'background:#fff;border-radius:20px;padding:28px 24px;width:100%;max-width:360px;text-align:center;box-shadow:0 8px 40px rgba(0,0,0,.2)';
+    box.style.cssText = 'background:#fff;border-radius:24px 24px 20px 20px;padding:32px 24px 28px;width:100%;max-width:440px;text-align:center;box-shadow:0 -4px 40px rgba(0,0,0,.15)';
 
     var icon = document.createElement('div');
-    icon.style.cssText = 'font-size:3rem;margin-bottom:12px';
-    icon.textContent = '🌸';
+    icon.style.cssText = 'font-size:3.5rem;margin-bottom:10px';
+    icon.textContent = '✅';
 
     var ttl = document.createElement('div');
-    ttl.style.cssText = 'font-size:1.1rem;font-weight:700;margin-bottom:8px';
-    ttl.textContent = 'Заявка отправлена!';
+    ttl.style.cssText = 'font-size:1.2rem;font-weight:800;margin-bottom:8px;color:#1a1a1a';
+    ttl.textContent = 'Заявка принята!';
 
     var desc = document.createElement('div');
-    desc.style.cssText = 'color:#666;font-size:.9rem;margin-bottom:20px';
-    desc.textContent = 'Администратор получил вашу заявку и свяжется с вами в ближайшее время.';
+    desc.style.cssText = 'color:#555;font-size:.92rem;line-height:1.5;margin-bottom:22px';
+    desc.textContent = 'Администратор уже получил уведомление о вашей заявке. Нажмите кнопку ниже чтобы написать напрямую — сообщение уже готово.';
 
     var tgBtn = document.createElement('a');
-    tgBtn.href = adminTgUrl;
-    tgBtn.style.cssText = 'display:block;padding:13px;background:#229ED9;color:#fff;border-radius:12px;font-weight:700;text-decoration:none;margin-bottom:10px';
-    tgBtn.textContent = '✈️ Написать в Telegram';
+    tgBtn.href = tgWithText;
+    tgBtn.style.cssText = 'display:flex;align-items:center;justify-content:center;gap:8px;padding:15px;background:#229ED9;color:#fff;border-radius:14px;font-weight:700;font-size:1rem;text-decoration:none;margin-bottom:10px';
+    tgBtn.innerHTML = '✈️ Открыть чат с готовым сообщением';
 
     var closeBtn = document.createElement('button');
-    closeBtn.style.cssText = 'width:100%;padding:12px;background:#f5f5f5;border:none;border-radius:12px;cursor:pointer;font-size:.95rem';
+    closeBtn.style.cssText = 'width:100%;padding:12px;background:#f0f0f0;border:none;border-radius:14px;cursor:pointer;font-size:.9rem;color:#666';
     closeBtn.textContent = 'Закрыть';
     closeBtn.onclick = function() { overlay.remove(); };
 
