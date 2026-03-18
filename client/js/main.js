@@ -281,54 +281,54 @@ window.submitInquiry = async () => {
 
   btn.disabled = true; btn.textContent = 'Отправляем...';
   try {
+    // Получаем chat_id покупателя из Telegram
+    var buyerChatId = null;
+    try {
+      var tgApp2 = window.Telegram?.WebApp;
+      if (tgApp2?.initDataUnsafe?.user?.id) buyerChatId = String(tgApp2.initDataUnsafe.user.id);
+    } catch(ex) {}
+
     await api.inquiry({
       product_id:        pid || undefined,
       customer_name:     name || undefined,
       customer_phone:    phone,
       customer_telegram: tg || undefined,
       note:              note || undefined,
+      customer_chat_id:  buyerChatId || undefined,
     });
 
     window.closeModal('inq-modal');
     ['inq-name','inq-phone','inq-tg','inq-note'].forEach(id => { document.getElementById(id).value=''; });
 
-    // Готовый текст для Telegram
-    var rawTg = (_cfg.telegram || 'https://t.me/Rebuket_admin');
-    var adminHandle = rawTg.replace('https://t.me/', '').replace('@', '').trim();
-    var msgLines = ['🌸 Здравствуйте! Хочу купить:', '', '📦 ' + title, '📞 Мой телефон: ' + phone];
-    if (name) msgLines.push('👤 Имя: ' + name);
-    if (tg)   msgLines.push('✈️ Telegram: ' + tg);
-    if (note) msgLines.push('📝 Комментарий: ' + note);
-    msgLines.push('', '🔗 ' + pageUrl);
-    var readyMsg = msgLines.join('\n');
-    var tgWithText = 'https://t.me/' + adminHandle + '?text=' + encodeURIComponent(readyMsg);
-
+    // Попап с кнопкой перехода в бот
     var old2 = document.getElementById('inq-success-popup');
     if (old2) old2.remove();
+
+    var botUrl = 'https://t.me/' + ((_cfg.bot_username) || 'ReBuket_bot');
 
     var overlay = document.createElement('div');
     overlay.id = 'inq-success-popup';
     overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9999;display:flex;align-items:flex-end;justify-content:center;padding:16px';
 
     var box = document.createElement('div');
-    box.style.cssText = 'background:#fff;border-radius:24px 24px 20px 20px;padding:32px 24px 28px;width:100%;max-width:440px;text-align:center;box-shadow:0 -4px 40px rgba(0,0,0,.15)';
+    box.style.cssText = 'background:#fff;border-radius:24px;padding:32px 24px 28px;width:100%;max-width:440px;text-align:center';
 
     var icon = document.createElement('div');
-    icon.style.cssText = 'font-size:3.5rem;margin-bottom:10px';
+    icon.style.cssText = 'font-size:3rem;margin-bottom:10px';
     icon.textContent = '✅';
 
     var ttl = document.createElement('div');
-    ttl.style.cssText = 'font-size:1.2rem;font-weight:800;margin-bottom:8px;color:#1a1a1a';
+    ttl.style.cssText = 'font-size:1.15rem;font-weight:800;margin-bottom:10px;color:#1a1a1a';
     ttl.textContent = 'Заявка принята!';
 
     var desc = document.createElement('div');
-    desc.style.cssText = 'color:#555;font-size:.92rem;line-height:1.5;margin-bottom:22px';
-    desc.textContent = 'Администратор уже получил уведомление о вашей заявке. Нажмите кнопку ниже чтобы написать напрямую — сообщение уже готово.';
+    desc.style.cssText = 'color:#555;font-size:.9rem;line-height:1.5;margin-bottom:22px';
+    desc.textContent = 'Бот уже отправил вам готовое сообщение для администратора. Откройте бота, там будет кнопка — нажмите её и отправьте.';
 
-    var tgBtn = document.createElement('a');
-    tgBtn.href = tgWithText;
-    tgBtn.style.cssText = 'display:flex;align-items:center;justify-content:center;gap:8px;padding:15px;background:#229ED9;color:#fff;border-radius:14px;font-weight:700;font-size:1rem;text-decoration:none;margin-bottom:10px';
-    tgBtn.innerHTML = '✈️ Открыть чат с готовым сообщением';
+    var botBtn = document.createElement('a');
+    botBtn.href = botUrl;
+    botBtn.style.cssText = 'display:block;padding:14px;background:#8B2A3F;color:#fff;border-radius:14px;font-weight:700;font-size:1rem;text-decoration:none;margin-bottom:10px';
+    botBtn.textContent = '🤖 Открыть бота';
 
     var closeBtn = document.createElement('button');
     closeBtn.style.cssText = 'width:100%;padding:12px;background:#f0f0f0;border:none;border-radius:14px;cursor:pointer;font-size:.9rem;color:#666';
@@ -338,7 +338,7 @@ window.submitInquiry = async () => {
     box.appendChild(icon);
     box.appendChild(ttl);
     box.appendChild(desc);
-    box.appendChild(tgBtn);
+    box.appendChild(botBtn);
     box.appendChild(closeBtn);
     overlay.appendChild(box);
     document.body.appendChild(overlay);
