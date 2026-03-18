@@ -24,8 +24,9 @@ const CLIENT_DIR = path.join(__dirname, '../../client');
 app.use(express.static(CLIENT_DIR));
 
 app.get('/api/config', (req, res) => res.json({
-  instagram: process.env.ADMIN_INSTAGRAM || 'https://instagram.com/rebuket',
-  telegram:  process.env.ADMIN_TELEGRAM  || 'https://t.me/rebuket_admin',
+  instagram:    process.env.ADMIN_INSTAGRAM || 'https://instagram.com/rebuket',
+  telegram:     process.env.ADMIN_TELEGRAM  || 'https://t.me/rebuket_admin',
+  bot_username: process.env.BOT_USERNAME    || 'ReBuket_bot',
 }));
 
 app.use('/api', routes);
