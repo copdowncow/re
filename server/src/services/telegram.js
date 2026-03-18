@@ -79,9 +79,25 @@ function initUserBot() {
   if (!token) { console.log('BOT_TOKEN_USER не задан'); return; }
   userBot = new TG(token, { polling: true });
 
-  userBot.onText(/\/start/, async (msg) => {
+  userBot.onText(/\/start(?:\s+(.+))?/, async (msg, match) => {
     const name   = msg.from?.first_name || 'друг';
     const appUrl = getMiniAppUrl();
+    const param  = (match && match[1] || '').trim();
+
+    // Пользователь пришёл после оставления заявки
+    if (param === 'inquiry') {
+      const adminUrl = process.env.ADMIN_TELEGRAM || 'https://t.me/Rebuket_admin';
+      await userBot.sendMessage(msg.chat.id,
+        `🌸 <b>Привет, ${escHtml(name)}!</b>
+
+Ваша заявка успешно отправлена администратору.
+
+Чтобы уточнить детали заказа — напишите администратору напрямую:`,
+        { parse_mode: 'HTML', reply_markup: { inline_keyboard: [[{ text: '✈️ Написать администратору', url: adminUrl }]] } }
+      );
+      return;
+    }
+
     await userBot.sendMessage(msg.chat.id,
       `🌸 <b>Привет, ${escHtml(name)}!</b>\n\nДобро пожаловать в <b>ReBuket</b> — маркетплейс букетов и сладостей в Таджикистане.\n\n💐 <b>Купить</b> — просматривать букеты, корзины, игрушки и сладости\n🛍 <b>Продать</b> — разместить своё объявление\n📩 <b>Связаться</b> — оставить заявку продавцу\n\n👇 Нажмите кнопку ниже чтобы открыть каталог:`,
       { parse_mode: 'HTML', reply_markup: { inline_keyboard: [[{ text: '🌸 Открыть ReBuket', web_app: { url: appUrl } }]] } }
