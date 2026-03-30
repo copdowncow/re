@@ -1,5 +1,16 @@
 'use strict';
 require('dotenv').config();
+
+// Проверяем наличие telegram модуля
+let TelegramClientLib = null;
+let StringSessionLib  = null;
+try {
+  TelegramClientLib = require('telegram').TelegramClient;
+  StringSessionLib  = require('telegram/sessions').StringSession;
+  console.log('✅ telegram (gramjs) загружен');
+} catch(e) {
+  console.log('⚠️  telegram (gramjs) не найден:', e.message);
+}
 const express   = require('express');
 const cors      = require('cors');
 const helmet    = require('helmet');
@@ -35,8 +46,9 @@ app.use('/api', routes);
 const _authState = {};
 app.get('/api/userbot/auth', async (req, res) => {
   try {
-    const { TelegramClient } = require('telegram');
-    const { StringSession }  = require('telegram/sessions');
+    const TelegramClient = TelegramClientLib;
+    const StringSession  = StringSessionLib;
+    if (!TelegramClient) return res.json({ error: 'telegram модуль не установлен' });
     const readline           = require('readline');
     const apiId   = Number(process.env.TG_API_ID);
     const apiHash = process.env.TG_API_HASH;
