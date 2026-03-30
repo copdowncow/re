@@ -120,9 +120,7 @@ async function start() {
 
   initBots();
 
-  // Инициализируем User Bot
-  const { initUserBot } = require('./services/userbot');
-  initUserBot().catch(e => console.log('UserBot init error:', e.message));
+
 
   setupCallbacks(
     async (id) => {
