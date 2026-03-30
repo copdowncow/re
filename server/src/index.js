@@ -31,6 +31,40 @@ app.get('/api/config', (req, res) => res.json({
 
 app.use('/api', routes);
 
+// ── User Bot авторизация (одноразовая) ────────────────────
+const _authState = {};
+app.get('/api/userbot/auth', async (req, res) => {
+  try {
+    const { TelegramClient } = require('telegram');
+    const { StringSession }  = require('telegram/sessions');
+    const readline           = require('readline');
+    const apiId   = Number(process.env.TG_API_ID);
+    const apiHash = process.env.TG_API_HASH;
+    const phone   = process.env.TG_PHONE;
+    if (!apiId || !apiHash || !phone) return res.json({ error: 'TG_API_ID, TG_API_HASH, TG_PHONE не заданы' });
+    const c = new TelegramClient(new StringSession(''), apiId, apiHash, { connectionRetries: 3 });
+    await c.connect();
+    await c.sendCode({ apiId, apiHash }, phone);
+    _authState.client = c;
+    res.json({ ok: true, message: 'Код отправлен на ' + phone + '. Введи: /api/userbot/confirm?code=XXXXX' });
+  } catch(e) { res.json({ error: e.message }); }
+});
+
+app.get('/api/userbot/confirm', async (req, res) => {
+  try {
+    const code = req.query.code;
+    if (!code || !_authState.client) return res.json({ error: 'Сначала вызови /api/userbot/auth' });
+    const phone = process.env.TG_PHONE;
+    await _authState.client.signInUser(
+      { apiId: Number(process.env.TG_API_ID), apiHash: process.env.TG_API_HASH },
+      { phoneNumber: phone, phoneCode: async () => code, onError: e => { throw e; } }
+    );
+    const session = _authState.client.session.save();
+    delete _authState.client;
+    res.json({ ok: true, session, message: 'Добавь в Railway: TG_SESSION=' + session });
+  } catch(e) { res.json({ error: e.message }); }
+});
+
 app.use((err, req, res, next) => {
   if (err.code === 'LIMIT_FILE_SIZE') return res.status(400).json({ error: 'Файл слишком большой (макс 10 МБ)' });
   console.error('❌', err.message);
@@ -85,6 +119,10 @@ async function start() {
   }
 
   initBots();
+
+  // Инициализируем User Bot
+  const { initUserBot } = require('./services/userbot');
+  initUserBot().catch(e => console.log('UserBot init error:', e.message));
 
   setupCallbacks(
     async (id) => {
