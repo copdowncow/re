@@ -4,6 +4,54 @@ const TG = require('node-telegram-bot-api');
 
 let userBot  = null;
 let adminBot = null;
+let userAccount = null; // gramjs реальный аккаунт
+
+// ── Инициализация реального аккаунта (gramjs) ─────────────
+async function initUserAccount() {
+  if (!process.env.TG_API_ID || !process.env.TG_API_HASH || !process.env.TG_SESSION) {
+    console.log('TG_SESSION не задан — пересылка через реальный аккаунт отключена');
+    return;
+  }
+  try {
+    const { TelegramClient } = require('telegram');
+    const { StringSession }  = require('telegram/sessions');
+    const { Api }            = require('telegram');
+    const apiId   = Number(process.env.TG_API_ID);
+    const apiHash = process.env.TG_API_HASH;
+    const session = new StringSession(process.env.TG_SESSION);
+    userAccount = new TelegramClient(session, apiId, apiHash, { connectionRetries: 3 });
+    await userAccount.connect();
+    if (await userAccount.isUserAuthorized()) {
+      console.log('✅ Реальный аккаунт подключён (gramjs)');
+    } else {
+      console.log('⚠️  Аккаунт не авторизован — нужен TG_SESSION');
+      userAccount = null;
+    }
+  } catch(e) {
+    console.log('gramjs ошибка:', e.message);
+    userAccount = null;
+  }
+}
+
+// Переслать пост из канала пользователю через реальный аккаунт
+async function forwardChannelPost(toChatId, channelId, messageId) {
+  if (!userAccount || !toChatId || !channelId || !messageId) return false;
+  try {
+    const { Api } = require('telegram');
+    await userAccount.invoke(new Api.messages.ForwardMessages({
+      fromPeer: channelId,
+      id:       [Number(messageId)],
+      toPeer:   String(toChatId),
+      randomId: [BigInt(Math.floor(Math.random() * 1e15))],
+      silent:   false,
+    }));
+    console.log('📨 Пост переслан через реальный аккаунт ->', toChatId);
+    return true;
+  } catch(e) {
+    console.log('forwardChannelPost error:', e.message);
+    return false;
+  }
+}
 
 const adminChatIds = new Set();
 
@@ -82,6 +130,7 @@ function initBots() {
   if (process.env.ADMIN_CHAT_ID)   adminChatIds.add(process.env.ADMIN_CHAT_ID);
   initUserBot();
   initAdminBot();
+  initUserAccount().catch(e => console.log('gramjs init error:', e.message));
 }
 
 function initUserBot() {
@@ -331,14 +380,36 @@ async function markExpiredInChannel(p) {
 //  Уведомление продавцу — одобрено
 // ─────────────────────────────────────────────
 async function notifySellerApproved(p) {
-  publishToChannel(p).catch(e => console.log('Channel publish error:', e.message));
+  // Публикуем в канал и ждём чтобы получить message_id
+  try {
+    await publishToChannel(p);
+  } catch(e) {
+    console.log('Channel publish error:', e.message);
+  }
+
   if (!userBot || !p.seller_chat_id) return;
+
   const url = `${getMiniAppUrl()}/#product-${p.slug || p.id}`;
   try {
+    // Сначала шлём текстовое уведомление
     await userBot.sendMessage(p.seller_chat_id,
       `🎉 <b>Ваше объявление одобрено!</b>\n\n📦 <b>${escHtml(p.title)}</b>\n💰 ${p.price} TJS · 📍 ${escHtml(p.city)}\n\nТеперь его видят все покупатели. Удачных продаж! 🌸`,
       { parse_mode: 'HTML', reply_markup: { inline_keyboard: [[{ text: '🔗 Открыть моё объявление', web_app: { url } }]] } }
     );
+
+    // Пересылаем пост из канала через реальный аккаунт
+    if (p.channel_message_id && p.channel_name) {
+      const channelId = p.channel_name === 'khujand'
+        ? (process.env.CHANNEL_ID_KHUJAND || '-1003818624807')
+        : process.env.CHANNEL_ID;
+      if (channelId) {
+        const forwarded = await forwardChannelPost(p.seller_chat_id, channelId, p.channel_message_id);
+        if (!forwarded && userBot) {
+          // Fallback через бот если реальный аккаунт недоступен
+          try { await userBot.forwardMessage(p.seller_chat_id, channelId, p.channel_message_id); } catch(fe) {}
+        }
+      }
+    }
   } catch(e) {
     console.log('Не удалось уведомить продавца:', e.message);
   }
