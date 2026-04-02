@@ -19,7 +19,7 @@ function imgUrl(url, w = 400) {
   }
   return url;
 }
-function priceWithCommission(p) { return Math.ceil(Number(p) * (1 + COMMISSION)); }
+function priceWithCommission(p) { return Math.ceil(Number(p) * (1 + COMMISSION) / 10) * 10; }
 function fmtPrice(p) { return Number(p).toLocaleString('ru-RU') + ' TJS'; }
 
 const EXPIRY_CATS = ['bouquet', 'basket'];
@@ -402,11 +402,9 @@ window.updatePricePreview = () => {
   const val = Number(document.getElementById('sell-price').value);
   const preview = document.getElementById('price-preview');
   if (!val || val <= 0) { if(preview) preview.style.display = 'none'; return; }
-  const commission = Math.ceil(val * COMMISSION);
-  const total = val + commission;
-  document.getElementById('price-seller').textContent     = fmtPrice(val);
-  document.getElementById('price-commission').textContent = fmtPrice(commission);
-  document.getElementById('price-total').textContent      = fmtPrice(total);
+  const total = Math.ceil(val * (1 + COMMISSION) / 10) * 10;
+  document.getElementById('price-seller').textContent = fmtPrice(val);
+  document.getElementById('price-total').textContent  = fmtPrice(total);
   if(preview) preview.style.display = 'block';
 };
 
