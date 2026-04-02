@@ -138,6 +138,9 @@ async function renderProducts() {
           ${p.seller_name ? `<span>👤 ${esc(p.seller_name)}</span>` : ''}
           <a href="tel:${esc(p.seller_phone)}" style="color:var(--rose-d);font-weight:700">📞 ${esc(p.seller_phone)}</a>
           ${p.seller_telegram ? `<a href="https://t.me/${esc(p.seller_telegram.replace('@',''))}" target="_blank">✈️ ${esc(p.seller_telegram)}</a>` : ''}
+          ${p.address ? `<span>🏠 ${esc(p.address)}</span>` : ''}
+          ${p.pickup_time ? `<span>🕐 ${esc(p.pickup_time)}</span>` : ''}
+          ${p.gift_when ? `<span>🎁 Подарили: ${esc(p.gift_when)}</span>` : ''}
         </div>
 
         <div class="acard-actions">
@@ -229,6 +232,16 @@ window.openEditModal = (id) => {
         </div>
       </div>
 
+      <div style="margin-bottom:14px">
+        <label style="display:block;font-size:.82rem;font-weight:600;margin-bottom:5px;color:var(--gray)">Адрес</label>
+        <input id="em-address" type="text" value="${esc(p.address||'')}" placeholder="Адрес получения" style="width:100%;padding:10px 12px;border:1.5px solid #e8d8d0;border-radius:9px;font-size:.95rem;box-sizing:border-box">
+      </div>
+
+      <div style="margin-bottom:14px">
+        <label style="display:block;font-size:.82rem;font-weight:600;margin-bottom:5px;color:var(--gray)">Время получения</label>
+        <input id="em-pickup_time" type="text" value="${esc(p.pickup_time||'')}" placeholder="Например: с 10:00 до 18:00" style="width:100%;padding:10px 12px;border:1.5px solid #e8d8d0;border-radius:9px;font-size:.95rem;box-sizing:border-box">
+      </div>
+
       <div style="display:flex;gap:10px;margin-top:20px">
         <button onclick="saveEdit(false)" style="flex:1;padding:12px;background:#f0f0f0;border:none;border-radius:10px;font-size:.95rem;cursor:pointer;font-weight:600">
           💾 Сохранить
@@ -252,11 +265,16 @@ window.saveEdit = async (andApprove = false) => {
   if (!title || !price) { toast('Заполните название и цену','err'); return; }
 
   const fd = new FormData();
+  const address     = document.getElementById('em-address')?.value.trim() || '';
+  const pickup_time = document.getElementById('em-pickup_time')?.value.trim() || '';
+
   fd.append('title',       title);
   fd.append('description', description);
   fd.append('category',    category);
   fd.append('price',       price);
   fd.append('city',        city);
+  fd.append('address',     address);
+  fd.append('pickup_time', pickup_time);
   if (andApprove) fd.append('status', 'active');
 
   try {
