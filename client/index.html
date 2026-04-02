@@ -238,6 +238,18 @@
               <label>Время получения</label>
               <input type="text" id="sell-time" placeholder="09:00–21:00 ежедневно">
             </div>
+            <div class="form-group fg-full">
+              <label>Когда получили * <span style="color:var(--gray);font-weight:400">(обязательно)</span></label>
+              <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:6px" id="gift-when-chips">
+                <button type="button" class="chip" onclick="selectGiftWhen('Только что',this)">⚡ Только что</button>
+                <button type="button" class="chip" onclick="selectGiftWhen('Сегодня',this)">📅 Сегодня</button>
+                <button type="button" class="chip" onclick="selectGiftWhen('Вчера',this)">🕐 Вчера</button>
+                <button type="button" class="chip" onclick="selectGiftWhen('2-3 дня назад',this)">📆 2-3 дня назад</button>
+                <button type="button" class="chip" onclick="selectGiftWhen('Неделю назад',this)">🗓 Неделю назад</button>
+              </div>
+              <input type="hidden" id="sell-gift-when">
+              <div id="gift-when-error" style="display:none;color:#dc3545;font-size:.82rem;margin-top:4px">Выберите когда получили</div>
+            </div>
           </div>
           <p style="font-size:.78rem;color:var(--gray);margin-top:10px">
             Покупатели увидят только кнопки Instagram и Telegram администратора. Ваши личные контакты защищены.
