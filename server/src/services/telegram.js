@@ -428,7 +428,6 @@ async function notifyBuyerInquirySent(d) {
 
 module.exports = {
   initBots,
-  savePendingInquiry,
   notifyProduct,
   notifyInquiry,
   notifySellerApproved,
