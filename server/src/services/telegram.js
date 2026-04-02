@@ -4,133 +4,12 @@ const TG = require('node-telegram-bot-api');
 
 let userBot  = null;
 let adminBot = null;
-let userAccount = null; // gramjs реальный аккаунт
-
-// ── Инициализация реального аккаунта (gramjs) ─────────────
-async function initUserAccount() {
-  if (!process.env.TG_API_ID || !process.env.TG_API_HASH || !process.env.TG_SESSION) {
-    console.log('TG_SESSION не задан — пересылка через реальный аккаунт отключена');
-    return;
-  }
-  try {
-    const { TelegramClient } = require('telegram');
-    const { StringSession }  = require('telegram/sessions');
-    const { Api }            = require('telegram');
-    const apiId   = Number(process.env.TG_API_ID);
-    const apiHash = process.env.TG_API_HASH;
-    const session = new StringSession(process.env.TG_SESSION);
-    userAccount = new TelegramClient(session, apiId, apiHash, { connectionRetries: 3 });
-    await userAccount.connect();
-    if (await userAccount.isUserAuthorized()) {
-      console.log('✅ Реальный аккаунт подключён (gramjs)');
-    } else {
-      console.log('⚠️  Аккаунт не авторизован — нужен TG_SESSION');
-      userAccount = null;
-    }
-  } catch(e) {
-    console.log('gramjs ошибка:', e.message);
-    userAccount = null;
-  }
-}
-
-// Переслать пост из канала пользователю через реальный аккаунт
-async function forwardChannelPost(toChatId, channelId, messageId) {
-  if (!userAccount || !toChatId || !channelId || !messageId) return false;
-  try {
-    const { Api } = require('telegram');
-    await userAccount.invoke(new Api.messages.ForwardMessages({
-      fromPeer: channelId,
-      id:       [Number(messageId)],
-      toPeer:   String(toChatId),
-      randomId: [BigInt(Math.floor(Math.random() * 1e15))],
-      silent:   false,
-    }));
-    console.log('📨 Пост переслан через реальный аккаунт ->', toChatId);
-    return true;
-  } catch(e) {
-    console.log('forwardChannelPost error:', e.message);
-    return false;
-  }
-}
-
-const adminChatIds = new Set();
-
-const KHUJAND_CITIES = ['худжанд', 'бустон', 'исфара'];
-
-function getMiniAppUrl() {
-  return (process.env.MINI_APP_URL || process.env.SITE_URL || '').replace(/\/$/, '');
-}
-
-function escHtml(s) {
-  return String(s || '')
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;');
-}
-
-function getProductCode(num, prefix) {
-  if (!num) return null;
-  return prefix + '-' + String(Number(num)).padStart(4, '0');
-}
-
-// Счётчики в файле — надёжно и без зависимости от БД
-const fs   = require('fs');
-const path = require('path');
-const COUNTER_FILE = path.join(__dirname, 'counters.json');
-
-function readCounters() {
-  try {
-    if (fs.existsSync(COUNTER_FILE)) {
-      return JSON.parse(fs.readFileSync(COUNTER_FILE, 'utf8'));
-    }
-  } catch(e) {}
-  // Читаем стартовые значения из env переменных
-  return {
-    dushanbe: Number(process.env.COUNTER_DUSHANBE) || 872,
-    khujand:  Number(process.env.COUNTER_KHUJAND)  || 23
-  };
-}
-
-function writeCounters(data) {
-  try {
-    fs.writeFileSync(COUNTER_FILE, JSON.stringify(data), 'utf8');
-  } catch(e) {
-    // В Railway нет доступа к файловой системе — игнорируем
-  }
-}
-
-function getNextSerial(channel) {
-  const counters = readCounters();
-  const DEFAULTS = {
-    dushanbe: Number(process.env.COUNTER_DUSHANBE) || 872,
-    khujand:  Number(process.env.COUNTER_KHUJAND)  || 23
-  };
-  if (counters[channel] === undefined) {
-    counters[channel] = DEFAULTS[channel];
-  }
-  counters[channel] += 1;
-  writeCounters(counters);
-  console.log(`[getNextSerial] channel=${channel} next=${counters[channel]}`);
-  return counters[channel];
-}
-
-// Временное хранилище заявок (5 минут)
-const _pendingInquiries = new Map();
-function savePendingInquiry(key, data) {
-  _pendingInquiries.set(key, data);
-  setTimeout(() => _pendingInquiries.delete(key), 5 * 60 * 1000);
-}
-function getPendingInquiry(key) {
-  return _pendingInquiries.get(key) || null;
-}
-
 function initBots() {
   if (process.env.ADMIN_CHAT_ID_1) adminChatIds.add(process.env.ADMIN_CHAT_ID_1);
   if (process.env.ADMIN_CHAT_ID_2) adminChatIds.add(process.env.ADMIN_CHAT_ID_2);
   if (process.env.ADMIN_CHAT_ID)   adminChatIds.add(process.env.ADMIN_CHAT_ID);
   initUserBot();
   initAdminBot();
-  initUserAccount().catch(e => console.log('gramjs init error:', e.message));
 }
 
 function initUserBot() {
@@ -283,8 +162,9 @@ async function publishToChannel(p) {
 
   const EMOJIS = { bouquet:'💐', basket:'🧺', bear:'🧸', sweets:'🍰' };
   const em     = EMOJIS[p.category] || '🌸';
-  const desc   = p.description ? p.description.substring(0, 200) + (p.description.length > 200 ? '...' : '') : '';
-  const price  = Math.ceil(Number(p.price) * 1.20).toLocaleString('ru-RU');
+  const desc     = p.description ? p.description.substring(0, 200) + (p.description.length > 200 ? '...' : '') : '';
+  const giftWhen = p.gift_when || null;
+  const price  = (Math.ceil(Number(p.price) * 1.20 / 10) * 10).toLocaleString('ru-RU');
   const admin  = process.env.ADMIN_TELEGRAM
     ? process.env.ADMIN_TELEGRAM.replace('https://t.me/', '@')
     : '@rebuket_admin';
@@ -352,7 +232,7 @@ async function markExpiredInChannel(p) {
 
   const EMOJIS = { bouquet:'💐', basket:'🧺', bear:'🧸', sweets:'🍰' };
   const em     = EMOJIS[p.category] || '🌸';
-  const price  = Math.ceil(Number(p.price) * 1.20).toLocaleString('ru-RU');
+  const price  = (Math.ceil(Number(p.price) * 1.20 / 10) * 10).toLocaleString('ru-RU');
   const admin  = process.env.ADMIN_TELEGRAM
     ? process.env.ADMIN_TELEGRAM.replace('https://t.me/', '@')
     : '@rebuket_admin';
@@ -397,16 +277,16 @@ async function notifySellerApproved(p) {
       { parse_mode: 'HTML', reply_markup: { inline_keyboard: [[{ text: '🔗 Открыть моё объявление', web_app: { url } }]] } }
     );
 
-    // Пересылаем пост из канала через реальный аккаунт
-    if (p.channel_message_id && p.channel_name) {
+    // Пересылаем пост из канала продавцу через бот
+    if (p.channel_message_id && p.channel_name && userBot) {
       const channelId = p.channel_name === 'khujand'
         ? (process.env.CHANNEL_ID_KHUJAND || '-1003818624807')
         : process.env.CHANNEL_ID;
       if (channelId) {
-        const forwarded = await forwardChannelPost(p.seller_chat_id, channelId, p.channel_message_id);
-        if (!forwarded && userBot) {
-          // Fallback через бот если реальный аккаунт недоступен
-          try { await userBot.forwardMessage(p.seller_chat_id, channelId, p.channel_message_id); } catch(fe) {}
+        try {
+          await userBot.forwardMessage(p.seller_chat_id, channelId, p.channel_message_id);
+        } catch(fe) {
+          console.log('forwardMessage error:', fe.message);
         }
       }
     }
@@ -503,7 +383,7 @@ async function notifyBuyerInquirySent(d) {
   try {
     const COMM = 0.20;
     const price = d.productPrice
-      ? Math.ceil(Number(d.productPrice) * (1 + COMM)).toLocaleString('ru-RU') + ' сомони'
+      ? (Math.ceil(Number(d.productPrice) * (1 + COMM) / 10) * 10).toLocaleString('ru-RU') + ' сомони'
       : null;
 
     const url = (d.productSlug || d.productId)
