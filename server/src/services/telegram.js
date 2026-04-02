@@ -25,6 +25,41 @@ function escHtml(value) {
     .replace(/"/g, '&quot;');
 }
 
+function formatGiftWhen(value) {
+  if (!value) return null;
+
+  try {
+    if (typeof value === 'string') {
+      const trimmed = value.trim();
+      if (!trimmed) return null;
+
+      const d = new Date(trimmed);
+      if (!Number.isNaN(d.getTime())) {
+        return d.toLocaleDateString('ru-RU', {
+          day: 'numeric',
+          month: 'long',
+          year: 'numeric'
+        });
+      }
+
+      return trimmed;
+    }
+
+    const d = new Date(value);
+    if (!Number.isNaN(d.getTime())) {
+      return d.toLocaleDateString('ru-RU', {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric'
+      });
+    }
+
+    return String(value);
+  } catch (e) {
+    return String(value);
+  }
+}
+
 async function getNextSerial(region) {
   try {
     const { createClient } = require('@supabase/supabase-js');
@@ -318,6 +353,7 @@ async function publishToChannel(p) {
   const desc = p.description
     ? p.description.substring(0, 200) + (p.description.length > 200 ? '...' : '')
     : '';
+  const giftWhen = formatGiftWhen(p.gift_when);
   const price = (Math.ceil(Number(p.price) * 1.2 / 10) * 10).toLocaleString('ru-RU');
   const admin = process.env.ADMIN_TELEGRAM
     ? process.env.ADMIN_TELEGRAM.replace('https://t.me/', '@')
@@ -334,6 +370,7 @@ async function publishToChannel(p) {
     `${em} <b>${escHtml(p.title)}</b>\n` +
     `📍 ${escHtml(p.city)}\n` +
     (desc ? `🌸 ${escHtml(desc)}\n` : '') +
+    (giftWhen ? `🎁 Когда подарили: <b>${escHtml(giftWhen)}</b>\n` : '') +
     `💰 Наша цена: <b>${price} сомони</b>\n` +
     `❓ По вопросам: ${admin}\n` +
     (code ? `🆔 ${code}` : '') +
