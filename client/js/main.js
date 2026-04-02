@@ -392,6 +392,13 @@ function renderSellPhotos() {
 }
 window.removePhoto = i => { sellFiles.splice(i,1); renderSellPhotos(); };
 
+window.selectGiftWhen = (val, el) => {
+  document.querySelectorAll('#gift-when-chips .chip').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('sell-gift-when').value = val;
+  document.getElementById('gift-when-error').style.display = 'none';
+};
+
 window.selectCat = (el) => {
   document.querySelectorAll('.cat-sel').forEach(e => e.classList.remove('active'));
   el.classList.add('active');
@@ -456,9 +463,19 @@ window.submitListing = async () => {
   const catEl = document.querySelector('.cat-sel-wrap');
   if (catEl) catEl.style.outline = category ? '' : '2px solid #dc3545';
 
+  const giftWhen = document.getElementById('sell-gift-when')?.value;
+  if (!giftWhen) {
+    document.getElementById('gift-when-error').style.display = 'block';
+    document.getElementById('gift-when-chips')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+
   if (!title||!price||!city||!phone||!category) {
     toast('Заполните все обязательные поля!','err');
     scrollToFirst(['sell-title','sell-price','sell-city','sell-phone']);
+    return;
+  }
+  if (!giftWhen) {
+    toast('Укажите когда получили!','err');
     return;
   }
   if (sellFiles.length < 3) {
@@ -478,6 +495,7 @@ window.submitListing = async () => {
   fd.append('seller_telegram', document.getElementById('sell-tg').value.trim());
   fd.append('address',         document.getElementById('sell-address').value.trim());
   fd.append('pickup_time',     document.getElementById('sell-time').value.trim());
+  fd.append('gift_when',        giftWhen);
   sellFiles.forEach(f => fd.append('photos', f));
   const tgId = getTelegramUserId();
   if (tgId) fd.append('seller_chat_id', tgId);
@@ -491,6 +509,8 @@ window.submitListing = async () => {
     ['sell-title','sell-desc','sell-price','sell-phone','sell-name','sell-tg','sell-address','sell-time']
       .forEach(id => { const el=document.getElementById(id); if(el) el.value=''; });
     document.getElementById('sell-city').value = '';
+    document.getElementById('sell-gift-when').value = '';
+    document.querySelectorAll('#gift-when-chips .chip').forEach(b => b.classList.remove('active'));
     sellFiles = []; renderSellPhotos();
     setTimeout(() => goPage('catalog'), 1600);
   } catch(e) { toast('Ошибка: '+e.message,'err'); }
