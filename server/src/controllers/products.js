@@ -154,7 +154,7 @@ exports.createProduct = async (req, res) => {
     const {
       title, description, category, price, city,
       seller_name, seller_phone, seller_telegram,
-      address, pickup_time, gift_when,
+      address, pickup_time, gift_when, market_price, size,
       seller_chat_id  // ← добавлено: chat_id продавца из Telegram
     } = req.body;
 
@@ -184,6 +184,8 @@ exports.createProduct = async (req, res) => {
         address:         address         || null,
         pickup_time:     pickup_time     || null,
         gift_when:       req.body.gift_when || null,
+        market_price:    market_price ? Number(market_price) : null,
+        size:            req.body.size || null,
         seller_chat_id:  seller_chat_id  || null,
         photos: [],
         slug,
