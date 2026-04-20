@@ -1,6 +1,7 @@
 'use strict';
 
 const TG = require('node-telegram-bot-api');
+const { createClient } = require('@supabase/supabase-js');
 
 let userBot = null;
 let adminBot = null;
@@ -33,44 +34,39 @@ function getMiniAppUrl() {
   ).replace(/\/+$/, '');
 }
 
-function getProductCode(serialNum, prefix = 'AB') {
-  const n = Number(serialNum) || 1;
-  return `${prefix}${String(n).padStart(5, '0')}`;
+function getDb() {
+  if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_KEY) {
+    throw new Error('SUPABASE_URL или SUPABASE_SERVICE_KEY не заданы');
+  }
+
+  return createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
 }
 
-async function getNextSerial(region = 'dushanbe') {
+async function getFreshProductById(id) {
+  if (!id) return null;
+
   try {
-    const { createClient } = require('@supabase/supabase-js');
-
-    if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_KEY) {
-      console.log('[getNextSerial] SUPABASE_URL или SUPABASE_SERVICE_KEY не заданы');
-      return Date.now() % 100000;
-    }
-
-    const db = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
-
+    const db = getDb();
     const { data, error } = await db
       .from('products')
-      .select('id, city, created_at')
-      .order('created_at', { ascending: false })
-      .limit(200);
+      .select('*')
+      .eq('id', id)
+      .single();
 
     if (error) {
-      console.log('[getNextSerial] products select error:', error.message);
-      return Date.now() % 100000;
+      console.log('[getFreshProductById] error:', error.message);
+      return null;
     }
 
-    const filtered = (data || []).filter((item) => {
-      const city = String(item.city || '').toLowerCase().trim();
-      const isKhujand = KHUJAND_CITIES.includes(city);
-      return region === 'khujand' ? isKhujand : !isKhujand;
-    });
-
-    return filtered.length + 1;
+    return data || null;
   } catch (e) {
-    console.log('[getNextSerial] error:', e.message);
-    return Date.now() % 100000;
+    console.log('[getFreshProductById] exception:', e.message);
+    return null;
   }
+}
+
+function normalizeProduct(input, fresh = null) {
+  return fresh || input || {};
 }
 
 // ─────────────────────────────────────────────
@@ -105,7 +101,6 @@ function initUserBot() {
 
       console.log('[bot /start] param:', JSON.stringify(param.substring(0, 50)));
 
-      // Пользователь пришёл после оставления заявки
       if (param === 'inquiry' || param.startsWith('inq_')) {
         const adminHandle = (process.env.ADMIN_TELEGRAM || 'https://t.me/Rebuket_admin')
           .replace('https://t.me/', '')
@@ -332,8 +327,12 @@ async function sendToAdmins(text, opts = {}) {
 
 // ─────────────────────────────────────────────
 // Публикация в канал при одобрении
+// Берём данные только из БД
 // ─────────────────────────────────────────────
 async function publishToChannel(p) {
+  const fresh = await getFreshProductById(p?.id);
+  p = normalizeProduct(p, fresh);
+
   const city = String(p.city || '').toLowerCase().trim();
   const isKhujand = KHUJAND_CITIES.includes(city);
 
@@ -368,7 +367,10 @@ async function publishToChannel(p) {
   const size = p.size || null;
   const giftWhen = p.gift_when || null;
   const marketPrice = p.market_price || null;
-  const price = (Math.ceil(Number(p.price) * 1.20 / 10) * 10).toLocaleString('ru-RU');
+  const code = p.code || null;
+  const price = Number(p.price)
+    ? (Math.ceil(Number(p.price) * 1.20 / 10) * 10).toLocaleString('ru-RU')
+    : '0';
 
   const admin = process.env.ADMIN_TELEGRAM
     ? process.env.ADMIN_TELEGRAM.replace('https://t.me/', '@')
@@ -379,12 +381,10 @@ async function publishToChannel(p) {
     ? p.photos.filter(Boolean).map((ph) => String(ph).split('?')[0])
     : [];
 
-  const serialNum = await getNextSerial(isKhujand ? 'khujand' : 'dushanbe');
-  const code = getProductCode(serialNum, isKhujand ? 'AK' : 'AB');
-
   const sizeLine = size ? `📏 Размер: <b>${escHtml(size)}</b>\n` : '';
   const giftWhenLine = giftWhen ? `🎁 Когда получили: <b>${escHtml(giftWhen)}</b>\n` : '';
   const marketPriceLine = marketPrice ? `🏪 Цена в магазинах: <b>${escHtml(marketPrice)} сомони</b>\n` : '';
+  const codeLine = code ? `🆔 ${escHtml(code)}\n` : '';
 
   const caption =
     `${em} <b>${escHtml(p.title)}</b>\n` +
@@ -395,8 +395,8 @@ async function publishToChannel(p) {
     marketPriceLine +
     `💰 Наша цена: <b>${price} сомони</b>\n` +
     `❓ По вопросам: ${admin}\n` +
-    (code ? `🆔 ${code}` : '') +
-    `\n\n<a href="${url}">Смотреть объявление на ReBuket</a>`;
+    codeLine +
+    `\n<a href="${url}">Смотреть объявление на ReBuket</a>`;
 
   try {
     let sent = null;
@@ -417,8 +417,7 @@ async function publishToChannel(p) {
     }
 
     try {
-      const { createClient } = require('@supabase/supabase-js');
-      const db = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
+      const db = getDb();
 
       if (sent?.message_id) {
         await db
@@ -436,7 +435,7 @@ async function publishToChannel(p) {
       console.log('Не удалось сохранить message_id:', e.message);
     }
 
-    console.log(`📢 Опубликовано в канал: ${p.title} [${code}]`);
+    console.log(`📢 Опубликовано в канал: ${p.title} [${code || 'NO-CODE'}]`);
     return sent;
   } catch (e) {
     console.log('[publishToChannel] Ошибка:', e.message);
@@ -446,8 +445,12 @@ async function publishToChannel(p) {
 
 // ─────────────────────────────────────────────
 // Пометить истёкшие посты в канале
+// Берём данные только из БД
 // ─────────────────────────────────────────────
 async function markExpiredInChannel(p) {
+  const fresh = await getFreshProductById(p?.id);
+  p = normalizeProduct(p, fresh);
+
   const bot = userBot || adminBot;
   if (!bot || !p.channel_message_id || !p.channel_name) return;
 
@@ -467,7 +470,10 @@ async function markExpiredInChannel(p) {
   const em = EMOJIS[p.category] || '🌸';
   const size = p.size || null;
   const marketPrice = p.market_price || null;
-  const price = (Math.ceil(Number(p.price) * 1.20 / 10) * 10).toLocaleString('ru-RU');
+  const code = p.code || null;
+  const price = Number(p.price)
+    ? (Math.ceil(Number(p.price) * 1.20 / 10) * 10).toLocaleString('ru-RU')
+    : '0';
 
   const admin = process.env.ADMIN_TELEGRAM
     ? process.env.ADMIN_TELEGRAM.replace('https://t.me/', '@')
@@ -475,6 +481,7 @@ async function markExpiredInChannel(p) {
 
   const sizeLine = size ? `📏 Размер был: <b>${escHtml(size)}</b>\n` : '';
   const marketPriceLine = marketPrice ? `🏪 Цена в магазинах была: <b>${escHtml(marketPrice)} сомони</b>\n` : '';
+  const codeLine = code ? `🆔 ${escHtml(code)}\n` : '';
 
   const newCaption =
     `🔴 <b>СНЯТО С ПРОДАЖИ</b>\n\n` +
@@ -482,8 +489,9 @@ async function markExpiredInChannel(p) {
     `📍 ${escHtml(p.city)}\n` +
     sizeLine +
     marketPriceLine +
-    `💰 Цена была: <b>${price} сомони</b>\n\n` +
-    `❓ По вопросам: ${admin}`;
+    `💰 Цена была: <b>${price} сомони</b>\n` +
+    `❓ По вопросам: ${admin}\n` +
+    codeLine;
 
   try {
     await bot.editMessageCaption(newCaption, {
@@ -500,22 +508,37 @@ async function markExpiredInChannel(p) {
 
 // ─────────────────────────────────────────────
 // Уведомление продавцу — одобрено
+// Берём данные только из БД
 // ─────────────────────────────────────────────
 async function notifySellerApproved(p) {
+  const fresh = await getFreshProductById(p?.id);
+  p = normalizeProduct(p, fresh);
+
   try {
     await publishToChannel(p);
   } catch (e) {
     console.log('Channel publish error:', e.message);
   }
 
+  const freshAfterPublish = await getFreshProductById(p?.id);
+  p = normalizeProduct(p, freshAfterPublish);
+
   if (!userBot || !p.seller_chat_id) return;
 
   const url = `${getMiniAppUrl()}/#product-${p.slug || p.id}`;
 
   try {
+    const sizeLine = p.size ? `📏 ${escHtml(p.size)}\n` : '';
+    const codeLine = p.code ? `🆔 ${escHtml(p.code)}\n` : '';
+
     await userBot.sendMessage(
       p.seller_chat_id,
-      `🎉 <b>Ваше объявление одобрено!</b>\n\n📦 <b>${escHtml(p.title)}</b>\n💰 ${p.price} TJS · 📍 ${escHtml(p.city)}\n${p.size ? `📏 ${escHtml(p.size)}\n` : ''}\nТеперь его видят все покупатели. Удачных продаж! 🌸`,
+      `🎉 <b>Ваше объявление одобрено!</b>\n\n` +
+      `📦 <b>${escHtml(p.title)}</b>\n` +
+      `💰 ${escHtml(p.price)} TJS · 📍 ${escHtml(p.city)}\n` +
+      sizeLine +
+      codeLine +
+      `\nТеперь его видят все покупатели. Удачных продаж! 🌸`,
       {
         parse_mode: 'HTML',
         reply_markup: {
@@ -548,6 +571,9 @@ async function notifySellerApproved(p) {
 // Уведомление продавцу — отклонено
 // ─────────────────────────────────────────────
 async function notifySellerRejected(p) {
+  const fresh = await getFreshProductById(p?.id);
+  p = normalizeProduct(p, fresh);
+
   if (!userBot || !p.seller_chat_id) return;
 
   try {
@@ -570,6 +596,7 @@ async function notifySellerRejected(p) {
 
 // ─────────────────────────────────────────────
 // Уведомление — новое объявление (для админов)
+// Берём данные только из БД
 // ─────────────────────────────────────────────
 const CATS = {
   bouquet: '💐 Букет',
@@ -579,19 +606,24 @@ const CATS = {
 };
 
 async function notifyProduct(p) {
+  const fresh = await getFreshProductById(p?.id);
+  p = normalizeProduct(p, fresh);
+
   const url = `${getMiniAppUrl()}/#product-${p.slug || p.id}`;
 
   const sizeLine = p.size ? `📏 Размер: <b>${escHtml(p.size)}</b>\n` : '';
   const giftWhenLine = p.gift_when ? `🎁 Когда получили: <b>${escHtml(p.gift_when)}</b>\n` : '';
   const marketPriceLine = p.market_price ? `🏪 Цена в магазинах: <b>${escHtml(p.market_price)} TJS</b>\n` : '';
+  const codeLine = p.code ? `🆔 ${escHtml(p.code)}\n` : '';
 
   await sendToAdmins(
     `📦 <b>Новое объявление на проверке!</b>\n─────────────────\n` +
       `${CATS[p.category] || p.category}: <b>${escHtml(p.title)}</b>\n` +
-      `💰 ${p.price} TJS · 📍 ${escHtml(p.city)}\n` +
+      `💰 ${escHtml(p.price)} TJS · 📍 ${escHtml(p.city)}\n` +
       sizeLine +
       giftWhenLine +
       marketPriceLine +
+      codeLine +
       `👤 ${escHtml(p.seller_name || '—')} · 📞 ${escHtml(p.seller_phone || '—')}\n` +
       `✈️ ${escHtml(p.seller_telegram || '—')}\n` +
       `🔗 <a href="${url}">Открыть объявление</a>`,
