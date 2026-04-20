@@ -238,6 +238,20 @@
               <label>Время получения</label>
               <input type="text" id="sell-time" placeholder="09:00–21:00 ежедневно">
             </div>
+            <div class="form-group">
+              <label>Цена в других магазинах <span style="color:var(--gray);font-weight:400">(необязательно)</span></label>
+              <input type="number" id="sell-market-price" placeholder="Например: 350" min="0">
+            </div>
+            <div class="form-group fg-full" id="size-field" style="display:none">
+              <label>Размер * <span style="color:var(--gray);font-weight:400">(обязательно)</span></label>
+              <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:6px" id="size-chips">
+                <button type="button" class="chip" onclick="selectSize('Маленький',this)">🟢 Маленький</button>
+                <button type="button" class="chip" onclick="selectSize('Средний',this)">🟡 Средний</button>
+                <button type="button" class="chip" onclick="selectSize('Большой',this)">🔴 Большой</button>
+              </div>
+              <input type="hidden" id="sell-size">
+              <div id="size-error" style="display:none;color:#dc3545;font-size:.82rem;margin-top:4px">Выберите размер</div>
+            </div>
             <div class="form-group fg-full">
               <label>Когда получили * <span style="color:var(--gray);font-weight:400">(обязательно)</span></label>
               <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:6px" id="gift-when-chips">
