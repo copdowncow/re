@@ -9,92 +9,75 @@ const adminChatIds = new Set();
 const KHUJAND_CITIES = [
   'худжанд',
   'khujand',
-  'khodjent',
-  'khujand city'
+  'khudzhand',
+  'хучанд',
+  'хуҷанд'
 ];
 
-function getMiniAppUrl() {
-  return process.env.MINI_APP_URL || process.env.SITE_URL || 'https://rebuket.tj';
-}
-
-function escHtml(value) {
-  return String(value || '')
+// ─────────────────────────────────────────────
+// Вспомогательные функции
+// ─────────────────────────────────────────────
+function escHtml(v) {
+  return String(v || '')
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;');
 }
 
-function formatGiftWhen(value) {
-  if (!value) return null;
-
-  try {
-    if (typeof value === 'string') {
-      const trimmed = value.trim();
-      if (!trimmed) return null;
-
-      const d = new Date(trimmed);
-      if (!Number.isNaN(d.getTime())) {
-        return d.toLocaleDateString('ru-RU', {
-          day: 'numeric',
-          month: 'long',
-          year: 'numeric'
-        });
-      }
-
-      return trimmed;
-    }
-
-    const d = new Date(value);
-    if (!Number.isNaN(d.getTime())) {
-      return d.toLocaleDateString('ru-RU', {
-        day: 'numeric',
-        month: 'long',
-        year: 'numeric'
-      });
-    }
-
-    return String(value);
-  } catch (e) {
-    return String(value);
-  }
+function getMiniAppUrl() {
+  return (
+    process.env.MINI_APP_URL ||
+    process.env.APP_URL ||
+    'https://rebuket.tj'
+  ).replace(/\/+$/, '');
 }
 
-async function getNextSerial(region) {
+function getProductCode(serialNum, prefix = 'AB') {
+  const n = Number(serialNum) || 1;
+  return `${prefix}${String(n).padStart(5, '0')}`;
+}
+
+async function getNextSerial(region = 'dushanbe') {
   try {
     const { createClient } = require('@supabase/supabase-js');
 
-    const db = createClient(
-      process.env.SUPABASE_URL,
-      process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY
-    );
-
-    const safeRegion = region === 'khujand' ? 'khujand' : 'dushanbe';
-
-    const { data, error } = await db
-      .from('products')
-      .select('id')
-      .eq('status', 'approved')
-      .eq('channel_name', safeRegion);
-
-    if (error) {
-      console.log('[getNextSerial] supabase error:', error.message);
-      return 1;
+    if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_KEY) {
+      console.log('[getNextSerial] SUPABASE_URL или SUPABASE_SERVICE_KEY не заданы');
+      return Date.now() % 100000;
     }
 
-    return Array.isArray(data) ? data.length + 1 : 1;
+    const db = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
+
+    // Пытаемся взять последний товар по региону
+    let query = db
+      .from('products')
+      .select('id, city, created_at')
+      .order('created_at', { ascending: false })
+      .limit(200);
+
+    const { data, error } = await query;
+    if (error) {
+      console.log('[getNextSerial] products select error:', error.message);
+      return Date.now() % 100000;
+    }
+
+    const filtered = (data || []).filter((item) => {
+      const city = String(item.city || '').toLowerCase().trim();
+      const isKhujand = KHUJAND_CITIES.includes(city);
+      return region === 'khujand' ? isKhujand : !isKhujand;
+    });
+
+    return filtered.length + 1;
   } catch (e) {
     console.log('[getNextSerial] error:', e.message);
-    return 1;
+    return Date.now() % 100000;
   }
 }
 
-function getProductCode(serialNum, prefix) {
-  const n = Number(serialNum) || 1;
-  const code = String(n).padStart(4, '0');
-  return `${prefix}-${code}`;
-}
-
+// ─────────────────────────────────────────────
+// Инициализация ботов
+// ─────────────────────────────────────────────
 function initBots() {
   if (process.env.ADMIN_CHAT_ID_1) adminChatIds.add(String(process.env.ADMIN_CHAT_ID_1));
   if (process.env.ADMIN_CHAT_ID_2) adminChatIds.add(String(process.env.ADMIN_CHAT_ID_2));
@@ -104,6 +87,9 @@ function initBots() {
   initAdminBot();
 }
 
+// ─────────────────────────────────────────────
+// USER BOT
+// ─────────────────────────────────────────────
 function initUserBot() {
   const token = process.env.BOT_TOKEN_USER;
   if (!token) {
@@ -114,145 +100,162 @@ function initUserBot() {
   userBot = new TG(token, { polling: true });
 
   userBot.onText(/\/start(?:\s+(.+))?/, async (msg, match) => {
-    const name = msg.from?.first_name || 'друг';
-    const appUrl = getMiniAppUrl();
-    const param = ((match && match[1]) || '').trim();
+    try {
+      const name = msg.from?.first_name || 'друг';
+      const appUrl = getMiniAppUrl();
+      const param = ((match && match[1]) || '').trim();
 
-    console.log('[bot /start] param:', JSON.stringify(param.substring(0, 50)));
+      console.log('[bot /start] param:', JSON.stringify(param.substring(0, 50)));
 
-    if (param === 'inquiry' || param.startsWith('inq_')) {
-      const adminHandle = (process.env.ADMIN_TELEGRAM || 'https://t.me/Rebuket_admin')
-        .replace('https://t.me/', '')
-        .replace('@', '')
-        .trim();
+      // Пользователь пришёл после оставления заявки
+      if (param === 'inquiry' || param.startsWith('inq_')) {
+        const adminHandle = (process.env.ADMIN_TELEGRAM || 'https://t.me/Rebuket_admin')
+          .replace('https://t.me/', '')
+          .replace('@', '')
+          .trim();
 
-      let readyText = '🌸 Здравствуйте! Хочу сделать заказ через ReBuket.';
+        let readyText = '🌸 Здравствуйте! Хочу сделать заказ через ReBuket.';
 
-      if (param.startsWith('inq_')) {
-        try {
-          const b64 = param.slice(4).replace(/-/g, '+').replace(/_/g, '/');
-          const decoded = decodeURIComponent(
-            escape(Buffer.from(b64, 'base64').toString('binary'))
-          );
-          if (decoded && decoded.length > 5) readyText = decoded;
-        } catch (e) {
-          console.log('decode err:', e.message);
+        if (param.startsWith('inq_')) {
+          try {
+            const b64 = param.slice(4).replace(/-/g, '+').replace(/_/g, '/');
+            const decoded = decodeURIComponent(
+              escape(Buffer.from(b64, 'base64').toString('binary'))
+            );
+            if (decoded && decoded.length > 5) readyText = decoded;
+          } catch (e) {
+            console.log('decode err:', e.message);
+          }
         }
+
+        const adminUrl = 'https://t.me/' + adminHandle + '?text=' + encodeURIComponent(readyText);
+        console.log('[bot] inquiry start, adminUrl:', adminUrl.substring(0, 100));
+
+        await userBot.sendMessage(
+          msg.chat.id,
+          '✅ <b>Заявка принята!</b>\n\nДля полного оформления заказа — нажмите кнопку ниже, откроется чат с готовым сообщением — останется нажать Отправить 👇',
+          {
+            parse_mode: 'HTML',
+            reply_markup: {
+              inline_keyboard: [[
+                { text: '✈️ Отправить заказ администратору', url: adminUrl }
+              ]]
+            }
+          }
+        );
+        return;
       }
 
-      const adminUrl = 'https://t.me/' + adminHandle + '?text=' + encodeURIComponent(readyText);
-      console.log('[bot] inquiry start, adminUrl:', adminUrl.substring(0, 100));
+      if (param === 'inquiry_OLDCODE') {
+        const adminUrl = process.env.ADMIN_TELEGRAM || 'https://t.me/Rebuket_admin';
+
+        await userBot.sendMessage(
+          msg.chat.id,
+          `🌸 <b>Привет, ${escHtml(name)}!</b>\n\nВаша заявка успешно отправлена администратору.\n\nЧтобы уточнить детали заказа — напишите администратору напрямую:`,
+          {
+            parse_mode: 'HTML',
+            reply_markup: {
+              inline_keyboard: [[
+                { text: '✈️ Написать администратору', url: adminUrl }
+              ]]
+            }
+          }
+        );
+        return;
+      }
 
       await userBot.sendMessage(
         msg.chat.id,
-        '✅ <b>Заявка принята!</b>\n\nДля полного оформления заказа — нажмите кнопку ниже, откроется чат с готовым сообщением — останется нажать Отправить 👇',
+        `🌸 <b>Привет, ${escHtml(name)}!</b>\n\nДобро пожаловать в <b>ReBuket</b> — маркетплейс букетов и сладостей в Таджикистане.\n\n💐 <b>Купить</b> — просматривать букеты, корзины, игрушки и сладости\n🛍 <b>Продать</b> — разместить своё объявление\n📩 <b>Связаться</b> — оставить заявку продавцу\n\n👇 Нажмите кнопку ниже чтобы открыть каталог:`,
         {
           parse_mode: 'HTML',
           reply_markup: {
             inline_keyboard: [[
-              { text: '✈️ Отправить заказ администратору', url: adminUrl }
+              { text: '🌸 Открыть ReBuket', web_app: { url: appUrl } }
             ]]
           }
         }
       );
-      return;
+    } catch (e) {
+      console.log('userBot /start error:', e.message);
     }
-
-    if (param === 'inquiry_OLDCODE') {
-      const adminUrl = process.env.ADMIN_TELEGRAM || 'https://t.me/Rebuket_admin';
-
-      await userBot.sendMessage(
-        msg.chat.id,
-        `🌸 <b>Привет, ${escHtml(name)}!</b>
-
-Ваша заявка успешно отправлена администратору.
-
-Чтобы уточнить детали заказа — напишите администратору напрямую:`,
-        {
-          parse_mode: 'HTML',
-          reply_markup: {
-            inline_keyboard: [[
-              { text: '✈️ Написать администратору', url: adminUrl }
-            ]]
-          }
-        }
-      );
-      return;
-    }
-
-    await userBot.sendMessage(
-      msg.chat.id,
-      `🌸 <b>Привет, ${escHtml(name)}!</b>\n\nДобро пожаловать в <b>ReBuket</b> — маркетплейс букетов и сладостей в Таджикистане.\n\n💐 <b>Купить</b> — просматривать букеты, корзины, игрушки и сладости\n🛍 <b>Продать</b> — разместить своё объявление\n📩 <b>Связаться</b> — оставить заявку продавцу\n\n👇 Нажмите кнопку ниже чтобы открыть каталог:`,
-      {
-        parse_mode: 'HTML',
-        reply_markup: {
-          inline_keyboard: [[
-            { text: '🌸 Открыть ReBuket', web_app: { url: appUrl } }
-          ]]
-        }
-      }
-    );
   });
 
   userBot.onText(/\/catalog/, async (msg) => {
-    await userBot.sendMessage(
-      msg.chat.id,
-      `💐 <b>Каталог ReBuket</b>\n\nБукеты, корзины, игрушки и сладости:`,
-      {
-        parse_mode: 'HTML',
-        reply_markup: {
-          inline_keyboard: [[
-            { text: '💐 Смотреть каталог', web_app: { url: getMiniAppUrl() + '#catalog' } }
-          ]]
+    try {
+      await userBot.sendMessage(
+        msg.chat.id,
+        `💐 <b>Каталог ReBuket</b>\n\nБукеты, корзины, игрушки и сладости:`,
+        {
+          parse_mode: 'HTML',
+          reply_markup: {
+            inline_keyboard: [[
+              { text: '💐 Смотреть каталог', web_app: { url: getMiniAppUrl() + '#catalog' } }
+            ]]
+          }
         }
-      }
-    );
+      );
+    } catch (e) {
+      console.log('/catalog error:', e.message);
+    }
   });
 
   userBot.onText(/\/sell/, async (msg) => {
-    await userBot.sendMessage(
-      msg.chat.id,
-      `🛍 <b>Разместить объявление</b>\n\nПродайте букеты или сладости через ReBuket!`,
-      {
-        parse_mode: 'HTML',
-        reply_markup: {
-          inline_keyboard: [[
-            { text: '➕ Разместить объявление', web_app: { url: getMiniAppUrl() + '#sell' } }
-          ]]
+    try {
+      await userBot.sendMessage(
+        msg.chat.id,
+        `🛍 <b>Разместить объявление</b>\n\nПродайте букеты или сладости через ReBuket!`,
+        {
+          parse_mode: 'HTML',
+          reply_markup: {
+            inline_keyboard: [[
+              { text: '➕ Разместить объявление', web_app: { url: getMiniAppUrl() + '#sell' } }
+            ]]
+          }
         }
-      }
-    );
+      );
+    } catch (e) {
+      console.log('/sell error:', e.message);
+    }
   });
 
   userBot.onText(/\/help/, async (msg) => {
-    await userBot.sendMessage(
-      msg.chat.id,
-      `🌸 <b>ReBuket — помощь</b>\n\n/start   — запустить бота\n/catalog — каталог\n/sell    — разместить объявление\n/help    — эта справка`,
-      {
-        parse_mode: 'HTML',
-        reply_markup: {
-          inline_keyboard: [[
-            { text: '🌸 Открыть ReBuket', web_app: { url: getMiniAppUrl() } }
-          ]]
+    try {
+      await userBot.sendMessage(
+        msg.chat.id,
+        `🌸 <b>ReBuket — помощь</b>\n\n/start   — запустить бота\n/catalog — каталог\n/sell    — разместить объявление\n/help    — эта справка`,
+        {
+          parse_mode: 'HTML',
+          reply_markup: {
+            inline_keyboard: [[
+              { text: '🌸 Открыть ReBuket', web_app: { url: getMiniAppUrl() } }
+            ]]
+          }
         }
-      }
-    );
+      );
+    } catch (e) {
+      console.log('/help error:', e.message);
+    }
   });
 
   userBot.on('message', async (msg) => {
-    if (msg.text?.startsWith('/')) return;
+    try {
+      if (msg.text?.startsWith('/')) return;
 
-    await userBot.sendMessage(
-      msg.chat.id,
-      `Нажмите кнопку ниже чтобы открыть ReBuket 🌸`,
-      {
-        reply_markup: {
-          inline_keyboard: [[
-            { text: '🌸 Открыть ReBuket', web_app: { url: getMiniAppUrl() } }
-          ]]
+      await userBot.sendMessage(
+        msg.chat.id,
+        `Нажмите кнопку ниже чтобы открыть ReBuket 🌸`,
+        {
+          reply_markup: {
+            inline_keyboard: [[
+              { text: '🌸 Открыть ReBuket', web_app: { url: getMiniAppUrl() } }
+            ]]
+          }
         }
-      }
-    );
+      );
+    } catch (e) {
+      console.log('userBot message error:', e.message);
+    }
   });
 
   userBot.on('polling_error', (err) => {
@@ -264,6 +267,9 @@ function initUserBot() {
   console.log('🤖 USER BOT запущен | Mini App:', getMiniAppUrl());
 }
 
+// ─────────────────────────────────────────────
+// ADMIN BOT
+// ─────────────────────────────────────────────
 function initAdminBot() {
   const token = process.env.BOT_TOKEN_ADMIN;
   if (!token) {
@@ -274,22 +280,24 @@ function initAdminBot() {
   adminBot = new TG(token, { polling: true });
 
   adminBot.onText(/\/start/, async (msg) => {
-    const chatId = String(msg.chat.id);
-    const isNew = !adminChatIds.has(chatId);
+    try {
+      const chatId = String(msg.chat.id);
+      const isNew = !adminChatIds.has(chatId);
 
-    adminChatIds.add(chatId);
+      adminChatIds.add(chatId);
 
-    await adminBot.sendMessage(
-      msg.chat.id,
-      `🔐 <b>ReBuket Admin Bot</b>\n\n` +
-        (isNew
-          ? `✅ Ваш Chat ID <b>${chatId}</b> добавлен.\nТеперь вы будете получать уведомления.`
-          : `Вы уже подключены. Ваш Chat ID: <b>${chatId}</b>`),
-      { parse_mode: 'HTML' }
-    );
+      await adminBot.sendMessage(
+        msg.chat.id,
+        `🔐 <b>ReBuket Admin Bot</b>\n\n` +
+          (isNew
+            ? `✅ Ваш Chat ID <b>${chatId}</b> добавлен.\nТеперь вы будете получать уведомления.`
+            : `Вы уже подключены. Ваш Chat ID: <b>${chatId}</b>`),
+        { parse_mode: 'HTML' }
+      );
 
-    if (isNew) {
-      console.log(`✅ Новый админ: ADMIN_CHAT_ID_1=${chatId}`);
+      if (isNew) console.log(`✅ Новый админ: ADMIN_CHAT_ID_1=${chatId}`);
+    } catch (e) {
+      console.log('admin /start error:', e.message);
     }
   });
 
@@ -302,9 +310,11 @@ function initAdminBot() {
   console.log('🛠 ADMIN BOT запущен');
 }
 
+// ─────────────────────────────────────────────
+// Отправка админам
+// ─────────────────────────────────────────────
 async function sendToAdmins(text, opts = {}) {
   if (!adminBot) return;
-
   if (!adminChatIds.size) {
     console.log('⚠️ Нет админов');
     return;
@@ -322,9 +332,13 @@ async function sendToAdmins(text, opts = {}) {
   }
 }
 
+// ─────────────────────────────────────────────
+// Публикация в канал при одобрении
+// ─────────────────────────────────────────────
 async function publishToChannel(p) {
-  const city = (p.city || '').toLowerCase().trim();
+  const city = String(p.city || '').toLowerCase().trim();
   const isKhujand = KHUJAND_CITIES.includes(city);
+
   const channelId = isKhujand
     ? (process.env.CHANNEL_ID_KHUJAND || '-1003818624807')
     : process.env.CHANNEL_ID;
@@ -333,13 +347,13 @@ async function publishToChannel(p) {
 
   if (!channelId) {
     console.log('[publishToChannel] CHANNEL_ID не задан в .env');
-    return;
+    return null;
   }
 
   const bot = userBot || adminBot;
   if (!bot) {
     console.log('[publishToChannel] Нет активного бота');
-    return;
+    return null;
   }
 
   const EMOJIS = {
@@ -351,26 +365,30 @@ async function publishToChannel(p) {
 
   const em = EMOJIS[p.category] || '🌸';
   const desc = p.description
-    ? p.description.substring(0, 200) + (p.description.length > 200 ? '...' : '')
+    ? p.description.substring(0, 200) + (p.description.length > 200 ? '…' : '')
     : '';
-  const giftWhen = formatGiftWhen(p.gift_when);
-  const price = (Math.ceil(Number(p.price) * 1.2 / 10) * 10).toLocaleString('ru-RU');
+  const giftWhen = p.gift_when || null;
+  const price = (Math.ceil(Number(p.price) * 1.20 / 10) * 10).toLocaleString('ru-RU');
+
   const admin = process.env.ADMIN_TELEGRAM
     ? process.env.ADMIN_TELEGRAM.replace('https://t.me/', '@')
     : '@rebuket_admin';
+
   const url = `${getMiniAppUrl()}/#product-${p.slug || p.id}`;
   const photos = Array.isArray(p.photos)
-    ? p.photos.filter(Boolean).map((ph) => ph.split('?')[0])
+    ? p.photos.filter(Boolean).map((ph) => String(ph).split('?')[0])
     : [];
 
   const serialNum = await getNextSerial(isKhujand ? 'khujand' : 'dushanbe');
   const code = getProductCode(serialNum, isKhujand ? 'AK' : 'AB');
 
+  const giftWhenLine = giftWhen ? `🎁 Когда подарили: <b>${escHtml(giftWhen)}</b>\n` : '';
+
   const caption =
     `${em} <b>${escHtml(p.title)}</b>\n` +
     `📍 ${escHtml(p.city)}\n` +
     (desc ? `🌸 ${escHtml(desc)}\n` : '') +
-    (giftWhen ? `🎁 Когда подарили: <b>${escHtml(giftWhen)}</b>\n` : '') +
+    giftWhenLine +
     `💰 Наша цена: <b>${price} сомони</b>\n` +
     `❓ По вопросам: ${admin}\n` +
     (code ? `🆔 ${code}` : '') +
@@ -382,10 +400,7 @@ async function publishToChannel(p) {
     if (photos.length === 0) {
       sent = await bot.sendMessage(channelId, caption, { parse_mode: 'HTML' });
     } else if (photos.length === 1) {
-      sent = await bot.sendPhoto(channelId, photos[0], {
-        caption,
-        parse_mode: 'HTML'
-      });
+      sent = await bot.sendPhoto(channelId, photos[0], { caption, parse_mode: 'HTML' });
     } else {
       const media = photos.slice(0, 10).map((ph, i) => ({
         type: 'photo',
@@ -399,11 +414,7 @@ async function publishToChannel(p) {
 
     try {
       const { createClient } = require('@supabase/supabase-js');
-
-      const db = createClient(
-        process.env.SUPABASE_URL,
-        process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY
-      );
+      const db = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
 
       if (sent?.message_id) {
         await db
@@ -413,17 +424,26 @@ async function publishToChannel(p) {
             channel_name: isKhujand ? 'khujand' : 'dushanbe'
           })
           .eq('id', p.id);
+
+        // Обновим и локальный объект тоже, чтобы forwardMessage сработал сразу
+        p.channel_message_id = sent.message_id;
+        p.channel_name = isKhujand ? 'khujand' : 'dushanbe';
       }
     } catch (e) {
       console.log('Не удалось сохранить message_id:', e.message);
     }
 
     console.log(`📢 Опубликовано в канал: ${p.title} [${code}]`);
+    return sent;
   } catch (e) {
     console.log('[publishToChannel] Ошибка:', e.message);
+    return null;
   }
 }
 
+// ─────────────────────────────────────────────
+// Пометить истёкшие посты в канале
+// ─────────────────────────────────────────────
 async function markExpiredInChannel(p) {
   const bot = userBot || adminBot;
   if (!bot || !p.channel_message_id || !p.channel_name) return;
@@ -442,7 +462,8 @@ async function markExpiredInChannel(p) {
   };
 
   const em = EMOJIS[p.category] || '🌸';
-  const price = (Math.ceil(Number(p.price) * 1.2 / 10) * 10).toLocaleString('ru-RU');
+  const price = (Math.ceil(Number(p.price) * 1.20 / 10) * 10).toLocaleString('ru-RU');
+
   const admin = process.env.ADMIN_TELEGRAM
     ? process.env.ADMIN_TELEGRAM.replace('https://t.me/', '@')
     : '@rebuket_admin';
@@ -467,6 +488,9 @@ async function markExpiredInChannel(p) {
   }
 }
 
+// ─────────────────────────────────────────────
+// Уведомление продавцу — одобрено
+// ─────────────────────────────────────────────
 async function notifySellerApproved(p) {
   try {
     await publishToChannel(p);
@@ -499,11 +523,7 @@ async function notifySellerApproved(p) {
 
       if (channelId) {
         try {
-          await userBot.forwardMessage(
-            p.seller_chat_id,
-            channelId,
-            p.channel_message_id
-          );
+          await userBot.forwardMessage(p.seller_chat_id, channelId, p.channel_message_id);
         } catch (fe) {
           console.log('forwardMessage error:', fe.message);
         }
@@ -514,6 +534,9 @@ async function notifySellerApproved(p) {
   }
 }
 
+// ─────────────────────────────────────────────
+// Уведомление продавцу — отклонено
+// ─────────────────────────────────────────────
 async function notifySellerRejected(p) {
   if (!userBot || !p.seller_chat_id) return;
 
@@ -535,6 +558,9 @@ async function notifySellerRejected(p) {
   }
 }
 
+// ─────────────────────────────────────────────
+// Уведомление — новое объявление (для админов)
+// ─────────────────────────────────────────────
 const CATS = {
   bouquet: '💐 Букет',
   basket: '🧺 Корзина',
@@ -568,6 +594,9 @@ async function notifyProduct(p) {
   );
 }
 
+// ─────────────────────────────────────────────
+// Уведомление — новая заявка (для админов)
+// ─────────────────────────────────────────────
 async function notifyInquiry(inq, productTitle, productSlug, productId) {
   const url = (productSlug || productId)
     ? `${getMiniAppUrl()}/#product-${productSlug || productId}`
@@ -593,48 +622,58 @@ async function notifyInquiry(inq, productTitle, productSlug, productId) {
   );
 }
 
+// ─────────────────────────────────────────────
+// Callback: Одобрить / Отклонить
+// ─────────────────────────────────────────────
 function setupCallbacks(onApprove, onReject) {
   if (!adminBot) return;
 
   adminBot.on('callback_query', async (q) => {
-    const [action, id] = (q.data || '').split(':');
+    try {
+      const [action, id] = String(q.data || '').split(':');
 
-    if (action === 'approve') {
-      await onApprove(id);
-      await adminBot.answerCallbackQuery(q.id, { text: '✅ Одобрено!' });
+      if (action === 'approve') {
+        await onApprove(id);
+        await adminBot.answerCallbackQuery(q.id, { text: '✅ Одобрено!' });
 
-      await adminBot.editMessageReplyMarkup(
-        {
-          inline_keyboard: [[
-            { text: '✅ Одобрено', callback_data: 'done' }
-          ]]
-        },
-        {
-          chat_id: q.message.chat.id,
-          message_id: q.message.message_id
-        }
-      ).catch(() => {});
-    }
+        await adminBot.editMessageReplyMarkup(
+          {
+            inline_keyboard: [[
+              { text: '✅ Одобрено', callback_data: 'done' }
+            ]]
+          },
+          {
+            chat_id: q.message.chat.id,
+            message_id: q.message.message_id
+          }
+        ).catch(() => {});
+      }
 
-    if (action === 'reject') {
-      await onReject(id);
-      await adminBot.answerCallbackQuery(q.id, { text: '❌ Отклонено' });
+      if (action === 'reject') {
+        await onReject(id);
+        await adminBot.answerCallbackQuery(q.id, { text: '❌ Отклонено' });
 
-      await adminBot.editMessageReplyMarkup(
-        {
-          inline_keyboard: [[
-            { text: '❌ Отклонено', callback_data: 'done' }
-          ]]
-        },
-        {
-          chat_id: q.message.chat.id,
-          message_id: q.message.message_id
-        }
-      ).catch(() => {});
+        await adminBot.editMessageReplyMarkup(
+          {
+            inline_keyboard: [[
+              { text: '❌ Отклонено', callback_data: 'done' }
+            ]]
+          },
+          {
+            chat_id: q.message.chat.id,
+            message_id: q.message.message_id
+          }
+        ).catch(() => {});
+      }
+    } catch (e) {
+      console.log('callback_query error:', e.message);
     }
   });
 }
 
+// ─────────────────────────────────────────────
+// Уведомление покупателю — заявка принята
+// ─────────────────────────────────────────────
 async function notifyBuyerInquirySent(d) {
   if (!userBot || !d.customer_chat_id) return;
 
@@ -670,10 +709,10 @@ async function notifyBuyerInquirySent(d) {
     const tgLink = 'https://t.me/' + adminHandle + '?text=' + encodeURIComponent(readyText);
 
     const text =
-      '✅ <b>Ваша заявка принята!</b>\n\n' +
-      '📦 ' + escHtml(d.productTitle || '—') + '\n' +
-      (price ? '💰 ' + price + '\n' : '') +
-      '\nНажмите кнопку ниже — сообщение уже готово, останется только нажать Отправить.';
+      `✅ <b>Ваша заявка принята!</b>\n\n` +
+      `📦 ${escHtml(d.productTitle || '—')}\n` +
+      (price ? `💰 ${price}\n` : '') +
+      `\nНажмите кнопку ниже — сообщение уже готово, останется только нажать Отправить.`;
 
     await userBot.sendMessage(d.customer_chat_id, text, {
       parse_mode: 'HTML',
@@ -696,5 +735,6 @@ module.exports = {
   notifySellerRejected,
   notifyBuyerInquirySent,
   markExpiredInChannel,
-  setupCallbacks
+  setupCallbacks,
+  publishToChannel
 };
