@@ -49,14 +49,12 @@ async function getNextSerial(region = 'dushanbe') {
 
     const db = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
 
-    // Пытаемся взять последний товар по региону
-    let query = db
+    const { data, error } = await db
       .from('products')
       .select('id, city, created_at')
       .order('created_at', { ascending: false })
       .limit(200);
 
-    const { data, error } = await query;
     if (error) {
       console.log('[getNextSerial] products select error:', error.message);
       return Date.now() % 100000;
@@ -76,7 +74,7 @@ async function getNextSerial(region = 'dushanbe') {
 }
 
 // ─────────────────────────────────────────────
-// Инициализация ботов
+// Инициализация
 // ─────────────────────────────────────────────
 function initBots() {
   if (process.env.ADMIN_CHAT_ID_1) adminChatIds.add(String(process.env.ADMIN_CHAT_ID_1));
@@ -367,7 +365,9 @@ async function publishToChannel(p) {
   const desc = p.description
     ? p.description.substring(0, 200) + (p.description.length > 200 ? '…' : '')
     : '';
+  const size = p.size || null;
   const giftWhen = p.gift_when || null;
+  const marketPrice = p.market_price || null;
   const price = (Math.ceil(Number(p.price) * 1.20 / 10) * 10).toLocaleString('ru-RU');
 
   const admin = process.env.ADMIN_TELEGRAM
@@ -382,13 +382,17 @@ async function publishToChannel(p) {
   const serialNum = await getNextSerial(isKhujand ? 'khujand' : 'dushanbe');
   const code = getProductCode(serialNum, isKhujand ? 'AK' : 'AB');
 
-  const giftWhenLine = giftWhen ? `🎁 Когда подарили: <b>${escHtml(giftWhen)}</b>\n` : '';
+  const sizeLine = size ? `📏 Размер: <b>${escHtml(size)}</b>\n` : '';
+  const giftWhenLine = giftWhen ? `🎁 Когда получили: <b>${escHtml(giftWhen)}</b>\n` : '';
+  const marketPriceLine = marketPrice ? `🏪 Цена в магазинах: <b>${escHtml(marketPrice)} сомони</b>\n` : '';
 
   const caption =
     `${em} <b>${escHtml(p.title)}</b>\n` +
     `📍 ${escHtml(p.city)}\n` +
     (desc ? `🌸 ${escHtml(desc)}\n` : '') +
+    sizeLine +
     giftWhenLine +
+    marketPriceLine +
     `💰 Наша цена: <b>${price} сомони</b>\n` +
     `❓ По вопросам: ${admin}\n` +
     (code ? `🆔 ${code}` : '') +
@@ -425,7 +429,6 @@ async function publishToChannel(p) {
           })
           .eq('id', p.id);
 
-        // Обновим и локальный объект тоже, чтобы forwardMessage сработал сразу
         p.channel_message_id = sent.message_id;
         p.channel_name = isKhujand ? 'khujand' : 'dushanbe';
       }
@@ -462,16 +465,23 @@ async function markExpiredInChannel(p) {
   };
 
   const em = EMOJIS[p.category] || '🌸';
+  const size = p.size || null;
+  const marketPrice = p.market_price || null;
   const price = (Math.ceil(Number(p.price) * 1.20 / 10) * 10).toLocaleString('ru-RU');
 
   const admin = process.env.ADMIN_TELEGRAM
     ? process.env.ADMIN_TELEGRAM.replace('https://t.me/', '@')
     : '@rebuket_admin';
 
+  const sizeLine = size ? `📏 Размер был: <b>${escHtml(size)}</b>\n` : '';
+  const marketPriceLine = marketPrice ? `🏪 Цена в магазинах была: <b>${escHtml(marketPrice)} сомони</b>\n` : '';
+
   const newCaption =
     `🔴 <b>СНЯТО С ПРОДАЖИ</b>\n\n` +
     `${em} <b>${escHtml(p.title)}</b>\n` +
     `📍 ${escHtml(p.city)}\n` +
+    sizeLine +
+    marketPriceLine +
     `💰 Цена была: <b>${price} сомони</b>\n\n` +
     `❓ По вопросам: ${admin}`;
 
@@ -505,7 +515,7 @@ async function notifySellerApproved(p) {
   try {
     await userBot.sendMessage(
       p.seller_chat_id,
-      `🎉 <b>Ваше объявление одобрено!</b>\n\n📦 <b>${escHtml(p.title)}</b>\n💰 ${p.price} TJS · 📍 ${escHtml(p.city)}\n\nТеперь его видят все покупатели. Удачных продаж! 🌸`,
+      `🎉 <b>Ваше объявление одобрено!</b>\n\n📦 <b>${escHtml(p.title)}</b>\n💰 ${p.price} TJS · 📍 ${escHtml(p.city)}\n${p.size ? `📏 ${escHtml(p.size)}\n` : ''}\nТеперь его видят все покупатели. Удачных продаж! 🌸`,
       {
         parse_mode: 'HTML',
         reply_markup: {
@@ -571,10 +581,17 @@ const CATS = {
 async function notifyProduct(p) {
   const url = `${getMiniAppUrl()}/#product-${p.slug || p.id}`;
 
+  const sizeLine = p.size ? `📏 Размер: <b>${escHtml(p.size)}</b>\n` : '';
+  const giftWhenLine = p.gift_when ? `🎁 Когда получили: <b>${escHtml(p.gift_when)}</b>\n` : '';
+  const marketPriceLine = p.market_price ? `🏪 Цена в магазинах: <b>${escHtml(p.market_price)} TJS</b>\n` : '';
+
   await sendToAdmins(
     `📦 <b>Новое объявление на проверке!</b>\n─────────────────\n` +
       `${CATS[p.category] || p.category}: <b>${escHtml(p.title)}</b>\n` +
       `💰 ${p.price} TJS · 📍 ${escHtml(p.city)}\n` +
+      sizeLine +
+      giftWhenLine +
+      marketPriceLine +
       `👤 ${escHtml(p.seller_name || '—')} · 📞 ${escHtml(p.seller_phone || '—')}\n` +
       `✈️ ${escHtml(p.seller_telegram || '—')}\n` +
       `🔗 <a href="${url}">Открыть объявление</a>`,
