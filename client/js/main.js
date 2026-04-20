@@ -392,6 +392,13 @@ function renderSellPhotos() {
 }
 window.removePhoto = i => { sellFiles.splice(i,1); renderSellPhotos(); };
 
+window.selectSize = (val, el) => {
+  document.querySelectorAll('#size-chips .chip').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('sell-size').value = val;
+  document.getElementById('size-error').style.display = 'none';
+};
+
 window.selectGiftWhen = (val, el) => {
   document.querySelectorAll('#gift-when-chips .chip').forEach(b => b.classList.remove('active'));
   el.classList.add('active');
@@ -402,7 +409,16 @@ window.selectGiftWhen = (val, el) => {
 window.selectCat = (el) => {
   document.querySelectorAll('.cat-sel').forEach(e => e.classList.remove('active'));
   el.classList.add('active');
-  document.getElementById('sell-cat-val').value = el.dataset.val;
+  const val = el.dataset.val;
+  document.getElementById('sell-cat-val').value = val;
+  const sizeField = document.getElementById('size-field');
+  if (sizeField) {
+    sizeField.style.display = ['bouquet','basket','bear'].includes(val) ? '' : 'none';
+    if (!['bouquet','basket','bear'].includes(val)) {
+      document.getElementById('sell-size').value = '';
+      document.querySelectorAll('#size-chips .chip').forEach(b => b.classList.remove('active'));
+    }
+  }
 };
 
 window.updatePricePreview = () => {
@@ -463,6 +479,14 @@ window.submitListing = async () => {
   const catEl = document.querySelector('.cat-sel-wrap');
   if (catEl) catEl.style.outline = category ? '' : '2px solid #dc3545';
 
+  const category2 = document.getElementById('sell-cat-val')?.value;
+  const size = document.getElementById('sell-size')?.value;
+  const needsSize = ['bouquet','basket','bear'].includes(category2);
+  if (needsSize && !size) {
+    document.getElementById('size-error').style.display = 'block';
+    document.getElementById('size-chips')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+
   const giftWhen = document.getElementById('sell-gift-when')?.value;
   if (!giftWhen) {
     document.getElementById('gift-when-error').style.display = 'block';
@@ -472,6 +496,10 @@ window.submitListing = async () => {
   if (!title||!price||!city||!phone||!category) {
     toast('Заполните все обязательные поля!','err');
     scrollToFirst(['sell-title','sell-price','sell-city','sell-phone']);
+    return;
+  }
+  if (needsSize && !size) {
+    toast('Выберите размер!','err');
     return;
   }
   if (!giftWhen) {
@@ -496,6 +524,9 @@ window.submitListing = async () => {
   fd.append('address',         document.getElementById('sell-address').value.trim());
   fd.append('pickup_time',     document.getElementById('sell-time').value.trim());
   fd.append('gift_when',        giftWhen);
+  if (size) fd.append('size', size);
+  const marketPrice = document.getElementById('sell-market-price')?.value;
+  if (marketPrice) fd.append('market_price', marketPrice);
   sellFiles.forEach(f => fd.append('photos', f));
   const tgId = getTelegramUserId();
   if (tgId) fd.append('seller_chat_id', tgId);
@@ -511,6 +542,10 @@ window.submitListing = async () => {
     document.getElementById('sell-city').value = '';
     document.getElementById('sell-gift-when').value = '';
     document.querySelectorAll('#gift-when-chips .chip').forEach(b => b.classList.remove('active'));
+    const mpEl = document.getElementById('sell-market-price'); if (mpEl) mpEl.value = '';
+    document.getElementById('sell-size').value = '';
+    document.querySelectorAll('#size-chips .chip').forEach(b => b.classList.remove('active'));
+    const sf = document.getElementById('size-field'); if (sf) sf.style.display = 'none';
     sellFiles = []; renderSellPhotos();
     setTimeout(() => goPage('catalog'), 1600);
   } catch(e) { toast('Ошибка: '+e.message,'err'); }
