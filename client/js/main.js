@@ -59,7 +59,8 @@ export async function loadConfig() {
 }
 
 // ── CATALOG ───────────────────────────────────────────────
-let filters = { category:'', city:'', max_price:'', search:'', page:1 };
+// Добавлены min_price и max_price вместо просто max_price
+let filters = { category:'', city:'', min_price:'', max_price:'', search:'', page:1 };
 
 export async function loadCatalog(extra = {}) {
   Object.assign(filters, extra, { page:1 });
@@ -89,8 +90,10 @@ function pCard(p) {
   const img = photos[0]
     ? '<img src="' + esc(imgUrl(photos[0], 400)) + '" alt="' + esc(p.title) + '" loading="lazy" decoding="async">'
     : '<div class="pcard-ph ' + (CAT_CLS[p.category]||'') + '">' + (CAT_EM[p.category]||'🌸') + '</div>';
+  // Показываем custom_id если есть, иначе обычный id
+  const idBadge = p.custom_id ? '<span style="position:absolute;top:8px;right:8px;background:rgba(139,42,63,.85);color:#fff;font-size:.65rem;font-weight:700;padding:2px 7px;border-radius:20px;backdrop-filter:blur(4px)">' + esc(p.custom_id) + '</span>' : '';
   return '<div class="pcard" onclick="openProduct(\'' + esc(p.slug||p.id) + '\')">' +
-    '<div class="pcard-img">' + img + '<span class="pbadge">' + (CAT_LABEL[p.category]||p.category) + '</span>' + timerBadge(p) + '</div>' +
+    '<div class="pcard-img" style="position:relative">' + img + '<span class="pbadge">' + (CAT_LABEL[p.category]||p.category) + '</span>' + timerBadge(p) + idBadge + '</div>' +
     '<div class="pcard-body">' +
       '<h4>' + esc(p.title) + '</h4>' +
       '<p>' + esc((p.description||'').substring(0,65)) + '...</p>' +
@@ -152,11 +155,16 @@ function renderDetail(p, el) {
     (p.pickup_time ? '<div><div class="pd-info-lbl">Время</div><div>🕐 ' + esc(p.pickup_time) + '</div></div>' : '') +
     '</div>' : '';
 
+  const customIdChip = p.custom_id
+    ? '<span class="pd-chip" style="background:#fce4ec;color:#8B2A3F;font-weight:700">🔖 ' + esc(p.custom_id) + '</span>'
+    : '';
+
   el.innerHTML =
     '<div class="pd-wrap">' +
       '<div class="pd-gallery">' + mainImg + thumbsHtml + '</div>' +
       '<div class="pd-body">' +
         '<div class="pd-chips">' +
+          customIdChip +
           '<span class="pd-chip rose">' + (CAT_LABEL[p.category]||p.category) + '</span>' +
           '<span class="pd-chip">📍 ' + esc(p.city) + '</span>' +
           '<span class="pd-chip">👁 ' + (p.view_count||0) + ' просмотров</span>' +
@@ -260,7 +268,6 @@ window.submitInquiry = async () => {
       if (el) el.value = '';
     });
 
-    // Строим готовое сообщение для администратора
     const NL = '\n';
     let msg = '🌸 Здравствуйте! Хочу купить:' + NL + NL;
     msg += '📦 ' + title + NL;
@@ -274,7 +281,6 @@ window.submitInquiry = async () => {
     const adminHandle = adminRaw.replace('https://t.me/', '').replace('@', '').trim();
     const adminUrl    = 'https://t.me/' + adminHandle + '?text=' + encodeURIComponent(msg);
 
-    // Показываем попап
     const oldP = document.getElementById('inq-popup');
     if (oldP) oldP.remove();
 
@@ -297,7 +303,6 @@ window.submitInquiry = async () => {
     ds.style.cssText = 'color:#555;font-size:.9rem;line-height:1.5;margin-bottom:22px';
     ds.textContent = 'Скопируйте готовое сообщение, откройте чат администратора и вставьте его.';
 
-    // Текстовое поле с готовым сообщением
     const ta = document.createElement('textarea');
     ta.value = msg;
     ta.readOnly = true;
@@ -349,9 +354,10 @@ window.setCat = (cat, el) => {
   loadCatalog();
 };
 window.applyFilters = () => {
-  filters.city      = document.getElementById('f-city')?.value   || '';
-  filters.max_price = document.getElementById('f-price')?.value  || '';
-  filters.search    = document.getElementById('f-search')?.value || '';
+  filters.city      = document.getElementById('f-city')?.value    || '';
+  filters.min_price = document.getElementById('f-price-min')?.value || '';
+  filters.max_price = document.getElementById('f-price-max')?.value || '';
+  filters.search    = document.getElementById('f-search')?.value  || '';
   loadCatalog();
 };
 
@@ -412,9 +418,11 @@ window.selectCat = (el) => {
   const val = el.dataset.val;
   document.getElementById('sell-cat-val').value = val;
   const sizeField = document.getElementById('size-field');
+  // Размер только для букетов, корзин и мишек — НЕ для сладостей
   if (sizeField) {
-    sizeField.style.display = ['bouquet','basket','bear'].includes(val) ? '' : 'none';
-    if (!['bouquet','basket','bear'].includes(val)) {
+    const needsSize = ['bouquet','basket','bear'].includes(val);
+    sizeField.style.display = needsSize ? '' : 'none';
+    if (!needsSize) {
       document.getElementById('sell-size').value = '';
       document.querySelectorAll('#size-chips .chip').forEach(b => b.classList.remove('active'));
     }
@@ -458,10 +466,17 @@ function scrollToFirst(ids) {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-  ['sell-title','sell-price','sell-city','sell-phone'].forEach(id => {
+  ['sell-title','sell-price','sell-city','sell-phone','sell-address'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.addEventListener('input', () => markField(id, true));
   });
+
+  // Инициализация: для bouquet/basket/bear показываем размер
+  const initialCat = document.getElementById('sell-cat-val')?.value || 'bouquet';
+  const sizeField = document.getElementById('size-field');
+  if (sizeField) {
+    sizeField.style.display = ['bouquet','basket','bear'].includes(initialCat) ? '' : 'none';
+  }
 });
 
 window.submitListing = async () => {
@@ -470,18 +485,20 @@ window.submitListing = async () => {
   const city     = document.getElementById('sell-city').value;
   const phone    = document.getElementById('sell-phone').value.trim();
   const category = document.getElementById('sell-cat-val')?.value;
+  // Адрес теперь обязательный
+  const address  = document.getElementById('sell-address').value.trim();
 
-  markField('sell-title', !!title);
-  markField('sell-price', !!price);
-  markField('sell-city',  !!city);
-  markField('sell-phone', !!phone);
+  markField('sell-title',   !!title);
+  markField('sell-price',   !!price);
+  markField('sell-city',    !!city);
+  markField('sell-phone',   !!phone);
+  markField('sell-address', !!address);
 
   const catEl = document.querySelector('.cat-sel-wrap');
   if (catEl) catEl.style.outline = category ? '' : '2px solid #dc3545';
 
-  const category2 = document.getElementById('sell-cat-val')?.value;
   const size = document.getElementById('sell-size')?.value;
-  const needsSize = ['bouquet','basket','bear'].includes(category2);
+  const needsSize = ['bouquet','basket','bear'].includes(category);
   if (needsSize && !size) {
     document.getElementById('size-error').style.display = 'block';
     document.getElementById('size-chips')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -493,9 +510,9 @@ window.submitListing = async () => {
     document.getElementById('gift-when-chips')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
   }
 
-  if (!title||!price||!city||!phone||!category) {
+  if (!title||!price||!city||!phone||!category||!address) {
     toast('Заполните все обязательные поля!','err');
-    scrollToFirst(['sell-title','sell-price','sell-city','sell-phone']);
+    scrollToFirst(['sell-title','sell-price','sell-city','sell-phone','sell-address']);
     return;
   }
   if (needsSize && !size) {
@@ -521,9 +538,9 @@ window.submitListing = async () => {
   fd.append('seller_name',     document.getElementById('sell-name').value.trim());
   fd.append('seller_phone',    phone);
   fd.append('seller_telegram', document.getElementById('sell-tg').value.trim());
-  fd.append('address',         document.getElementById('sell-address').value.trim());
+  fd.append('address',         address);
   fd.append('pickup_time',     document.getElementById('sell-time').value.trim());
-  fd.append('gift_when',        giftWhen);
+  fd.append('gift_when',       giftWhen);
   if (size) fd.append('size', size);
   const marketPrice = document.getElementById('sell-market-price')?.value;
   if (marketPrice) fd.append('market_price', marketPrice);
