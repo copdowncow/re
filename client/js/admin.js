@@ -1,6 +1,38 @@
-'use strict';
+ strict';
 import { api, setTok, clrTok, isAuth } from './api.js';
 import { esc, fmt, fmtD, toast }        from './utils.js';
+
+// ── Ключ для хранения счётчика ID ──────────────────────────
+const ID_COUNTER_KEY = 'rbt_id_counter';
+const ID_PREFIX_KEY  = 'rbt_id_prefix';
+
+function getIdCounter() {
+  return parseInt(localStorage.getItem(ID_COUNTER_KEY) || '0', 10);
+}
+function saveIdCounter(n) {
+  localStorage.setItem(ID_COUNTER_KEY, String(n));
+}
+function getIdPrefix() {
+  return localStorage.getItem(ID_PREFIX_KEY) || 'AB';
+}
+function saveIdPrefix(p) {
+  localStorage.setItem(ID_PREFIX_KEY, p.toUpperCase().replace(/[^A-Z]/g,'').substring(0,3) || 'AB');
+}
+
+// Генерирует следующий ID и сохраняет счётчик
+function generateNextCustomId() {
+  const prefix = getIdPrefix();
+  const next = getIdCounter() + 1;
+  saveIdCounter(next);
+  return prefix + '-' + String(next).padStart(4, '0');
+}
+
+// Просто читает что будет следующим ID без инкремента
+function peekNextCustomId() {
+  const prefix = getIdPrefix();
+  const next = getIdCounter() + 1;
+  return prefix + '-' + String(next).padStart(4, '0');
+}
 
 export function checkAdminAuth() {
   if (isAuth()) showDash();
@@ -14,6 +46,7 @@ window.adminLogin = async () => {
   btn.disabled=true; btn.textContent='Входим…';
   try {
     const r = await api.login(u, p);
+    // Сохраняем токен без истечения срока (сессия никогда не истекает)
     setTok(r.token);
     document.getElementById('a-welcome').textContent = 'Добро пожаловать, ' + r.admin.username + '!';
     showDash();
@@ -34,7 +67,45 @@ function showDash() {
   document.getElementById('a-dash').style.display  = '';
   loadDashStats();
   switchTab('products');
+  renderIdSettings();
 }
+
+// ── Настройки ID ─────────────────────────────────────────
+function renderIdSettings() {
+  const el = document.getElementById('id-settings');
+  if (!el) return;
+  el.innerHTML = `
+    <div style="background:#fff;border-radius:14px;padding:16px 20px;margin-bottom:16px;border:1px solid #f0e8e8">
+      <div style="font-weight:700;font-size:.9rem;margin-bottom:12px;color:var(--mid)">🔖 Настройки нумерации объявлений</div>
+      <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap">
+        <div>
+          <label style="display:block;font-size:.78rem;color:var(--gray);margin-bottom:4px">Префикс (2-3 буквы)</label>
+          <input id="id-prefix-input" type="text" value="${esc(getIdPrefix())}" maxlength="3"
+            style="width:80px;padding:8px 10px;border:1.5px solid #e8d8d0;border-radius:8px;font-size:.9rem;text-transform:uppercase;font-weight:700">
+        </div>
+        <div>
+          <label style="display:block;font-size:.78rem;color:var(--gray);margin-bottom:4px">Текущий счётчик</label>
+          <input id="id-counter-input" type="number" value="${getIdCounter()}" min="0"
+            style="width:100px;padding:8px 10px;border:1.5px solid #e8d8d0;border-radius:8px;font-size:.9rem">
+        </div>
+        <button onclick="saveIdSettings()" style="padding:8px 18px;background:var(--rose);color:#fff;border:none;border-radius:8px;font-weight:700;cursor:pointer;font-size:.85rem">
+          💾 Сохранить
+        </button>
+        <div style="font-size:.82rem;color:var(--gray);align-self:center">
+          Следующий ID: <b style="color:var(--rose-d)">${peekNextCustomId()}</b>
+        </div>
+      </div>
+    </div>`;
+}
+
+window.saveIdSettings = () => {
+  const prefix  = document.getElementById('id-prefix-input')?.value || 'AB';
+  const counter = parseInt(document.getElementById('id-counter-input')?.value || '0', 10);
+  saveIdPrefix(prefix);
+  saveIdCounter(isNaN(counter) ? 0 : counter);
+  toast('Настройки сохранены','ok');
+  renderIdSettings();
+};
 
 async function loadDashStats() {
   try {
@@ -104,7 +175,8 @@ async function renderProducts() {
         (p.title||'').toLowerCase().includes(q) ||
         (p.seller_name||'').toLowerCase().includes(q) ||
         (p.seller_phone||'').toLowerCase().includes(q) ||
-        (p.city||'').toLowerCase().includes(q)
+        (p.city||'').toLowerCase().includes(q) ||
+        (p.custom_id||'').toLowerCase().includes(q)
       );
     }
     if (!rows.length) { t.innerHTML='<div class="empty"><span>📭</span><h3>Нет объявлений</h3></div>'; return; }
@@ -115,6 +187,9 @@ async function renderProducts() {
     t.innerHTML = rows.map(p => {
       const photos = (p.photos||[]).slice(0,4);
       const statusDot = `<span class="${BD[p.status]||'bd-y'}" style="font-size:.72rem">${BL[p.status]||p.status}</span>`;
+      const customIdBadge = p.custom_id
+        ? `<span style="background:#fce4ec;color:#8B2A3F;font-size:.72rem;font-weight:700;padding:2px 8px;border-radius:20px">🔖 ${esc(p.custom_id)}</span>`
+        : '';
 
       return `<div class="acard">
         <div class="acard-top">
@@ -122,6 +197,7 @@ async function renderProducts() {
             <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:4px">
               <span style="font-size:.75rem;color:var(--gray)">${CAT[p.category]||p.category}</span>
               ${statusDot}
+              ${customIdBadge}
             </div>
             <div class="acard-title">${esc(p.title)}</div>
             <div style="font-size:.78rem;color:var(--gray);margin-top:2px">${fmtD(p.created_at)}</div>
@@ -159,13 +235,30 @@ async function renderProducts() {
   } catch(e) { document.getElementById('p-table').innerHTML=`<div class="empty"><h3>${e.message}</h3></div>`; }
 }
 
-window.pAct = async (id,status) => {
+// При одобрении — генерируем custom_id и сохраняем
+window.pAct = async (id, status) => {
   try {
-    const fd = new FormData(); fd.append('status',status);
-    await api.updateProduct(id,fd);
-    toast('Обновлено','ok'); renderProducts(); loadDashStats();
+    const fd = new FormData();
+    fd.append('status', status);
+
+    // Если одобряем — присваиваем следующий ID
+    if (status === 'active') {
+      const product = _productsCache.find(x => x.id === id);
+      // Присваиваем ID только если у него ещё нет custom_id
+      if (!product?.custom_id) {
+        const newCustomId = generateNextCustomId();
+        fd.append('custom_id', newCustomId);
+        renderIdSettings(); // обновляем отображение следующего ID
+      }
+    }
+
+    await api.updateProduct(id, fd);
+    toast('Обновлено','ok');
+    renderProducts();
+    loadDashStats();
   } catch(e) { toast(e.message,'err'); }
 };
+
 window.pDel = async id => {
   if (!confirm('Удалить объявление?')) return;
   try { await api.deleteProduct(id); toast('Удалено','ok'); renderProducts(); loadDashStats(); }
@@ -180,7 +273,6 @@ window.openEditModal = (id) => {
   const p = _productsCache.find(x => x.id === id);
   if (!p) { toast('Объявление не найдено', 'err'); return; }
 
-  // Создаём модальное окно если его ещё нет
   let modal = document.getElementById('edit-modal');
   if (!modal) {
     modal = document.createElement('div');
@@ -190,6 +282,9 @@ window.openEditModal = (id) => {
     document.body.appendChild(modal);
   }
 
+  // Размер показываем только для букет/корзина/мишка
+  const showSize = ['bouquet','basket','bear'].includes(p.category);
+
   modal.innerHTML = `
     <div style="background:#fff;border-radius:16px;padding:28px;width:100%;max-width:500px;max-height:90vh;overflow-y:auto;position:relative">
       <button onclick="document.getElementById('edit-modal').remove()" style="position:absolute;top:14px;right:16px;background:none;border:none;font-size:1.3rem;cursor:pointer;color:var(--gray)">✕</button>
@@ -197,6 +292,10 @@ window.openEditModal = (id) => {
 
       <input type="hidden" id="em-id" value="${esc(p.id)}">
       <input type="hidden" id="em-status" value="${esc(p.status)}">
+
+      ${p.custom_id ? `<div style="margin-bottom:14px;background:#fce4ec;border-radius:9px;padding:10px 14px;font-size:.88rem">
+        🔖 ID объявления: <b style="color:#8B2A3F">${esc(p.custom_id)}</b>
+      </div>` : ''}
 
       <div style="margin-bottom:14px">
         <label style="display:block;font-size:.82rem;font-weight:600;margin-bottom:5px;color:var(--gray)">Категория</label>
@@ -220,8 +319,14 @@ window.openEditModal = (id) => {
 
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px">
         <div>
-          <label style="display:block;font-size:.82rem;font-weight:600;margin-bottom:5px;color:var(--gray)">Цена (TJS)</label>
+          <label style="display:block;font-size:.82rem;font-weight:600;margin-bottom:5px;color:var(--gray)">
+            Цена (TJS) — без комиссии
+            <span style="font-weight:400;color:#888;font-size:.75rem"> (покупатель платит +20%)</span>
+          </label>
           <input id="em-price" type="number" value="${p.price}" style="width:100%;padding:10px 12px;border:1.5px solid #e8d8d0;border-radius:9px;font-size:.95rem;box-sizing:border-box">
+          <div id="em-price-preview" style="margin-top:6px;font-size:.78rem;color:var(--gray)">
+            Покупатель заплатит: <b id="em-price-total" style="color:var(--rose-d)"></b>
+          </div>
         </div>
         <div>
           <label style="display:block;font-size:.82rem;font-weight:600;margin-bottom:5px;color:var(--gray)">Город</label>
@@ -233,7 +338,7 @@ window.openEditModal = (id) => {
       </div>
 
       <div style="margin-bottom:14px">
-        <label style="display:block;font-size:.82rem;font-weight:600;margin-bottom:5px;color:var(--gray)">Адрес</label>
+        <label style="display:block;font-size:.82rem;font-weight:600;margin-bottom:5px;color:var(--gray)">Адрес *</label>
         <input id="em-address" type="text" value="${esc(p.address||'')}" placeholder="Адрес получения" style="width:100%;padding:10px 12px;border:1.5px solid #e8d8d0;border-radius:9px;font-size:.95rem;box-sizing:border-box">
       </div>
 
@@ -241,6 +346,16 @@ window.openEditModal = (id) => {
         <label style="display:block;font-size:.82rem;font-weight:600;margin-bottom:5px;color:var(--gray)">Время получения</label>
         <input id="em-pickup_time" type="text" value="${esc(p.pickup_time||'')}" placeholder="Например: с 10:00 до 18:00" style="width:100%;padding:10px 12px;border:1.5px solid #e8d8d0;border-radius:9px;font-size:.95rem;box-sizing:border-box">
       </div>
+
+      ${showSize ? `<div style="margin-bottom:14px">
+        <label style="display:block;font-size:.82rem;font-weight:600;margin-bottom:5px;color:var(--gray)">Размер</label>
+        <select id="em-size" style="width:100%;padding:10px 12px;border:1.5px solid #e8d8d0;border-radius:9px;font-size:.95rem">
+          <option value="">— Не указан —</option>
+          <option value="Маленький" ${p.size==='Маленький'?'selected':''}>🟢 Маленький</option>
+          <option value="Средний"   ${p.size==='Средний'  ?'selected':''}>🟡 Средний</option>
+          <option value="Большой"   ${p.size==='Большой'  ?'selected':''}>🔴 Большой</option>
+        </select>
+      </div>` : ''}
 
       <div style="display:flex;gap:10px;margin-top:20px">
         <button onclick="saveEdit(false)" style="flex:1;padding:12px;background:#f0f0f0;border:none;border-radius:10px;font-size:.95rem;cursor:pointer;font-weight:600">
@@ -252,6 +367,24 @@ window.openEditModal = (id) => {
         </button>` : ''}
       </div>
     </div>`;
+
+  // Подключаем предпросмотр цены в модалке
+  const priceInput = document.getElementById('em-price');
+  function updateModalPricePreview() {
+    const val = Number(priceInput?.value || 0);
+    const totalEl = document.getElementById('em-price-total');
+    if (!totalEl) return;
+    if (val > 0) {
+      const total = Math.ceil(val * 1.20 / 10) * 10;
+      totalEl.textContent = total.toLocaleString('ru-RU') + ' TJS';
+    } else {
+      totalEl.textContent = '—';
+    }
+  }
+  if (priceInput) {
+    priceInput.addEventListener('input', updateModalPricePreview);
+    updateModalPricePreview();
+  }
 };
 
 window.saveEdit = async (andApprove = false) => {
@@ -259,23 +392,37 @@ window.saveEdit = async (andApprove = false) => {
   const title       = document.getElementById('em-title').value.trim();
   const description = document.getElementById('em-description').value.trim();
   const category    = document.getElementById('em-category').value;
+  // Цена в редакторе — это ЦЕНА ПРОДАВЦА, без комиссии
   const price       = document.getElementById('em-price').value;
   const city        = document.getElementById('em-city').value;
+  const address     = document.getElementById('em-address')?.value.trim() || '';
 
   if (!title || !price) { toast('Заполните название и цену','err'); return; }
+  if (!address) { toast('Укажите адрес!','err'); return; }
 
   const fd = new FormData();
-  const address     = document.getElementById('em-address')?.value.trim() || '';
   const pickup_time = document.getElementById('em-pickup_time')?.value.trim() || '';
+  const size        = document.getElementById('em-size')?.value || '';
 
   fd.append('title',       title);
   fd.append('description', description);
   fd.append('category',    category);
-  fd.append('price',       price);
+  fd.append('price',       price);  // сохраняем цену БЕЗ комиссии
   fd.append('city',        city);
   fd.append('address',     address);
   fd.append('pickup_time', pickup_time);
-  if (andApprove) fd.append('status', 'active');
+  if (size) fd.append('size', size);
+
+  if (andApprove) {
+    fd.append('status', 'active');
+    // Если одобряем через "Сохранить и одобрить" — тоже присваиваем ID
+    const product = _productsCache.find(x => x.id === id);
+    if (!product?.custom_id) {
+      const newCustomId = generateNextCustomId();
+      fd.append('custom_id', newCustomId);
+      renderIdSettings();
+    }
+  }
 
   try {
     await api.updateProduct(id, fd);
@@ -325,7 +472,7 @@ async function renderInquiries() {
             ${inq.note?`<div>📝 ${esc(inq.note)}</div>`:''}
           </div>
           <div>
-            ${prod?`<div>📦 <b>${esc(prod.title)}</b></div><div>💰 ${fmt(prod.price)}</div>`:'<div>Без привязки к товару</div>'}
+            ${prod?`<div>📦 <b>${esc(prod.title)}</b>${prod.custom_id?' <span style="color:#8B2A3F;font-size:.78rem">('+esc(prod.custom_id)+')</span>':''}</div><div>💰 ${fmt(prod.price)}</div>`:'<div>Без привязки к товару</div>'}
           </div>
         </div>
         ${inq.status==='new'?`<div style="display:flex;gap:7px;padding-top:10px;border-top:1px solid #f0f0f0">
