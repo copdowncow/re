@@ -59,7 +59,6 @@ export async function loadConfig() {
 }
 
 // ── CATALOG ───────────────────────────────────────────────
-// Добавлены min_price и max_price вместо просто max_price
 let filters = { category:'', city:'', min_price:'', max_price:'', search:'', page:1 };
 
 export async function loadCatalog(extra = {}) {
@@ -90,10 +89,8 @@ function pCard(p) {
   const img = photos[0]
     ? '<img src="' + esc(imgUrl(photos[0], 400)) + '" alt="' + esc(p.title) + '" loading="lazy" decoding="async">'
     : '<div class="pcard-ph ' + (CAT_CLS[p.category]||'') + '">' + (CAT_EM[p.category]||'🌸') + '</div>';
-  // Показываем custom_id если есть, иначе обычный id
-  const idBadge = p.custom_id ? '<span style="position:absolute;top:8px;right:8px;background:rgba(139,42,63,.85);color:#fff;font-size:.65rem;font-weight:700;padding:2px 7px;border-radius:20px;backdrop-filter:blur(4px)">' + esc(p.custom_id) + '</span>' : '';
   return '<div class="pcard" onclick="openProduct(\'' + esc(p.slug||p.id) + '\')">' +
-    '<div class="pcard-img" style="position:relative">' + img + '<span class="pbadge">' + (CAT_LABEL[p.category]||p.category) + '</span>' + timerBadge(p) + idBadge + '</div>' +
+    '<div class="pcard-img">' + img + '<span class="pbadge">' + (CAT_LABEL[p.category]||p.category) + '</span>' + timerBadge(p) + '</div>' +
     '<div class="pcard-body">' +
       '<h4>' + esc(p.title) + '</h4>' +
       '<p>' + esc((p.description||'').substring(0,65)) + '...</p>' +
@@ -155,20 +152,18 @@ function renderDetail(p, el) {
     (p.pickup_time ? '<div><div class="pd-info-lbl">Время</div><div>🕐 ' + esc(p.pickup_time) + '</div></div>' : '') +
     '</div>' : '';
 
-  const customIdChip = p.custom_id
-    ? '<span class="pd-chip" style="background:#fce4ec;color:#8B2A3F;font-weight:700">🔖 ' + esc(p.custom_id) + '</span>'
-    : '';
+  const codeHtml = p.code ? '<span class="pd-chip" style="background:#f0f0f0;color:#555;font-family:monospace">🆔 ' + esc(p.code) + '</span>' : '';
 
   el.innerHTML =
     '<div class="pd-wrap">' +
       '<div class="pd-gallery">' + mainImg + thumbsHtml + '</div>' +
       '<div class="pd-body">' +
         '<div class="pd-chips">' +
-          customIdChip +
           '<span class="pd-chip rose">' + (CAT_LABEL[p.category]||p.category) + '</span>' +
           '<span class="pd-chip">📍 ' + esc(p.city) + '</span>' +
           '<span class="pd-chip">👁 ' + (p.view_count||0) + ' просмотров</span>' +
           expiryChip(p) +
+          codeHtml +
         '</div>' +
         '<h2>' + esc(p.title) + '</h2>' +
         '<div class="pd-price">' + fmtPrice(priceWithCommission(p.price)) + '</div>' +
@@ -353,10 +348,11 @@ window.setCat = (cat, el) => {
   filters.category = map[cat] || '';
   loadCatalog();
 };
+
 window.applyFilters = () => {
   filters.city      = document.getElementById('f-city')?.value    || '';
-  filters.min_price = document.getElementById('f-price-min')?.value || '';
-  filters.max_price = document.getElementById('f-price-max')?.value || '';
+  filters.min_price = document.getElementById('f-min-price')?.value || '';
+  filters.max_price = document.getElementById('f-max-price')?.value || '';
   filters.search    = document.getElementById('f-search')?.value  || '';
   loadCatalog();
 };
@@ -417,10 +413,11 @@ window.selectCat = (el) => {
   el.classList.add('active');
   const val = el.dataset.val;
   document.getElementById('sell-cat-val').value = val;
+
   const sizeField = document.getElementById('size-field');
-  // Размер только для букетов, корзин и мишек — НЕ для сладостей
   if (sizeField) {
-    const needsSize = ['bouquet','basket','bear'].includes(val);
+    // Размер только для букетов, корзин и мишек — НЕ для сладостей
+    const needsSize = ['bouquet', 'basket', 'bear'].includes(val);
     sizeField.style.display = needsSize ? '' : 'none';
     if (!needsSize) {
       document.getElementById('sell-size').value = '';
@@ -470,13 +467,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const el = document.getElementById(id);
     if (el) el.addEventListener('input', () => markField(id, true));
   });
-
-  // Инициализация: для bouquet/basket/bear показываем размер
-  const initialCat = document.getElementById('sell-cat-val')?.value || 'bouquet';
-  const sizeField = document.getElementById('size-field');
-  if (sizeField) {
-    sizeField.style.display = ['bouquet','basket','bear'].includes(initialCat) ? '' : 'none';
-  }
 });
 
 window.submitListing = async () => {
@@ -484,9 +474,8 @@ window.submitListing = async () => {
   const price    = document.getElementById('sell-price').value;
   const city     = document.getElementById('sell-city').value;
   const phone    = document.getElementById('sell-phone').value.trim();
-  const category = document.getElementById('sell-cat-val')?.value;
-  // Адрес теперь обязательный
   const address  = document.getElementById('sell-address').value.trim();
+  const category = document.getElementById('sell-cat-val')?.value;
 
   markField('sell-title',   !!title);
   markField('sell-price',   !!price);
@@ -497,8 +486,9 @@ window.submitListing = async () => {
   const catEl = document.querySelector('.cat-sel-wrap');
   if (catEl) catEl.style.outline = category ? '' : '2px solid #dc3545';
 
+  // Размер обязателен для bouquet/basket/bear, НЕ для sweets
   const size = document.getElementById('sell-size')?.value;
-  const needsSize = ['bouquet','basket','bear'].includes(category);
+  const needsSize = ['bouquet', 'basket', 'bear'].includes(category);
   if (needsSize && !size) {
     document.getElementById('size-error').style.display = 'block';
     document.getElementById('size-chips')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -510,9 +500,14 @@ window.submitListing = async () => {
     document.getElementById('gift-when-chips')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
   }
 
-  if (!title||!price||!city||!phone||!category||!address) {
+  if (!title || !price || !city || !phone || !category) {
     toast('Заполните все обязательные поля!','err');
     scrollToFirst(['sell-title','sell-price','sell-city','sell-phone','sell-address']);
+    return;
+  }
+  if (!address) {
+    toast('Укажите адрес!','err');
+    document.getElementById('sell-address')?.scrollIntoView({ behavior:'smooth', block:'center' });
     return;
   }
   if (needsSize && !size) {
@@ -535,13 +530,13 @@ window.submitListing = async () => {
   fd.append('category',        category);
   fd.append('price',           price);
   fd.append('city',            city);
+  fd.append('address',         address);
   fd.append('seller_name',     document.getElementById('sell-name').value.trim());
   fd.append('seller_phone',    phone);
   fd.append('seller_telegram', document.getElementById('sell-tg').value.trim());
-  fd.append('address',         address);
   fd.append('pickup_time',     document.getElementById('sell-time').value.trim());
   fd.append('gift_when',       giftWhen);
-  if (size) fd.append('size', size);
+  if (needsSize && size) fd.append('size', size);
   const marketPrice = document.getElementById('sell-market-price')?.value;
   if (marketPrice) fd.append('market_price', marketPrice);
   sellFiles.forEach(f => fd.append('photos', f));
