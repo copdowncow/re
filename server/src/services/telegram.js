@@ -1,3 +1,4 @@
+
 'use strict';
 
 const TG = require('node-telegram-bot-api');
@@ -38,13 +39,11 @@ function getDb() {
   if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_KEY) {
     throw new Error('SUPABASE_URL или SUPABASE_SERVICE_KEY не заданы');
   }
-
   return createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
 }
 
 async function getFreshProductById(id) {
   if (!id) return null;
-
   try {
     const db = getDb();
     const { data, error } = await db
@@ -52,12 +51,10 @@ async function getFreshProductById(id) {
       .select('*')
       .eq('id', id)
       .single();
-
     if (error) {
       console.log('[getFreshProductById] error:', error.message);
       return null;
     }
-
     return data || null;
   } catch (e) {
     console.log('[getFreshProductById] exception:', e.message);
@@ -75,7 +72,7 @@ function normalizeProduct(input, fresh = null) {
 function initBots() {
   if (process.env.ADMIN_CHAT_ID_1) adminChatIds.add(String(process.env.ADMIN_CHAT_ID_1));
   if (process.env.ADMIN_CHAT_ID_2) adminChatIds.add(String(process.env.ADMIN_CHAT_ID_2));
-  if (process.env.ADMIN_CHAT_ID) adminChatIds.add(String(process.env.ADMIN_CHAT_ID));
+  if (process.env.ADMIN_CHAT_ID)   adminChatIds.add(String(process.env.ADMIN_CHAT_ID));
 
   initUserBot();
   initAdminBot();
@@ -95,9 +92,9 @@ function initUserBot() {
 
   userBot.onText(/\/start(?:\s+(.+))?/, async (msg, match) => {
     try {
-      const name = msg.from?.first_name || 'друг';
+      const name   = msg.from?.first_name || 'друг';
       const appUrl = getMiniAppUrl();
-      const param = ((match && match[1]) || '').trim();
+      const param  = ((match && match[1]) || '').trim();
 
       console.log('[bot /start] param:', JSON.stringify(param.substring(0, 50)));
 
@@ -122,7 +119,6 @@ function initUserBot() {
         }
 
         const adminUrl = 'https://t.me/' + adminHandle + '?text=' + encodeURIComponent(readyText);
-        console.log('[bot] inquiry start, adminUrl:', adminUrl.substring(0, 100));
 
         await userBot.sendMessage(
           msg.chat.id,
@@ -132,24 +128,6 @@ function initUserBot() {
             reply_markup: {
               inline_keyboard: [[
                 { text: '✈️ Отправить заказ администратору', url: adminUrl }
-              ]]
-            }
-          }
-        );
-        return;
-      }
-
-      if (param === 'inquiry_OLDCODE') {
-        const adminUrl = process.env.ADMIN_TELEGRAM || 'https://t.me/Rebuket_admin';
-
-        await userBot.sendMessage(
-          msg.chat.id,
-          `🌸 <b>Привет, ${escHtml(name)}!</b>\n\nВаша заявка успешно отправлена администратору.\n\nЧтобы уточнить детали заказа — напишите администратору напрямую:`,
-          {
-            parse_mode: 'HTML',
-            reply_markup: {
-              inline_keyboard: [[
-                { text: '✈️ Написать администратору', url: adminUrl }
               ]]
             }
           }
@@ -234,7 +212,6 @@ function initUserBot() {
   userBot.on('message', async (msg) => {
     try {
       if (msg.text?.startsWith('/')) return;
-
       await userBot.sendMessage(
         msg.chat.id,
         `Нажмите кнопку ниже чтобы открыть ReBuket 🌸`,
@@ -275,7 +252,7 @@ function initAdminBot() {
   adminBot.onText(/\/start/, async (msg) => {
     try {
       const chatId = String(msg.chat.id);
-      const isNew = !adminChatIds.has(chatId);
+      const isNew  = !adminChatIds.has(chatId);
 
       adminChatIds.add(chatId);
 
@@ -327,13 +304,12 @@ async function sendToAdmins(text, opts = {}) {
 
 // ─────────────────────────────────────────────
 // Публикация в канал при одобрении
-// Берём данные только из БД
 // ─────────────────────────────────────────────
 async function publishToChannel(p) {
   const fresh = await getFreshProductById(p?.id);
   p = normalizeProduct(p, fresh);
 
-  const city = String(p.city || '').toLowerCase().trim();
+  const city      = String(p.city || '').toLowerCase().trim();
   const isKhujand = KHUJAND_CITIES.includes(city);
 
   const channelId = isKhujand
@@ -353,21 +329,18 @@ async function publishToChannel(p) {
     return null;
   }
 
-  const EMOJIS = {
-    bouquet: '💐',
-    basket: '🧺',
-    bear: '🧸',
-    sweets: '🍰'
-  };
+  const EMOJIS = { bouquet: '💐', basket: '🧺', bear: '🧸', sweets: '🍰' };
 
-  const em = EMOJIS[p.category] || '🌸';
-  const desc = p.description
+  const em          = EMOJIS[p.category] || '🌸';
+  const desc        = p.description
     ? p.description.substring(0, 200) + (p.description.length > 200 ? '…' : '')
     : '';
-  const size = p.size || null;
-  const giftWhen = p.gift_when || null;
+  const size        = p.size        || null;
+  const giftWhen    = p.gift_when   || null;
   const marketPrice = p.market_price || null;
-  const code = p.code || null;
+  const code        = p.code        || null;
+
+  // Цена уже хранится без комиссии — добавляем 20% для отображения покупателю
   const price = Number(p.price)
     ? (Math.ceil(Number(p.price) * 1.20 / 10) * 10).toLocaleString('ru-RU')
     : '0';
@@ -376,15 +349,15 @@ async function publishToChannel(p) {
     ? process.env.ADMIN_TELEGRAM.replace('https://t.me/', '@')
     : '@rebuket_admin';
 
-  const url = `${getMiniAppUrl()}/#product-${p.slug || p.id}`;
+  const url    = `${getMiniAppUrl()}/#product-${p.slug || p.id}`;
   const photos = Array.isArray(p.photos)
-    ? p.photos.filter(Boolean).map((ph) => String(ph).split('?')[0])
+    ? p.photos.filter(Boolean).map(ph => String(ph).split('?')[0])
     : [];
 
-  const sizeLine = size ? `📏 Размер: <b>${escHtml(size)}</b>\n` : '';
-  const giftWhenLine = giftWhen ? `🎁 Когда получили: <b>${escHtml(giftWhen)}</b>\n` : '';
-  const marketPriceLine = marketPrice ? `🏪 Цена в магазинах: <b>${escHtml(marketPrice)} сомони</b>\n` : '';
-  const codeLine = code ? `🆔 ${escHtml(code)}\n` : '';
+  const codeLine        = code        ? `🆔 ${escHtml(code)}\n`                                              : '';
+  const sizeLine        = size        ? `📏 Размер: <b>${escHtml(size)}</b>\n`                               : '';
+  const giftWhenLine    = giftWhen    ? `🎁 Когда получили: <b>${escHtml(giftWhen)}</b>\n`                   : '';
+  const marketPriceLine = marketPrice ? `🏪 Цена в магазинах: <b>${escHtml(marketPrice)} сомони</b>\n`       : '';
 
   const caption =
     `${em} <b>${escHtml(p.title)}</b>\n` +
@@ -411,14 +384,12 @@ async function publishToChannel(p) {
         media: ph,
         ...(i === 0 ? { caption, parse_mode: 'HTML' } : {})
       }));
-
       const results = await bot.sendMediaGroup(channelId, media);
       sent = Array.isArray(results) ? results[0] : results;
     }
 
     try {
       const db = getDb();
-
       if (sent?.message_id) {
         await db
           .from('products')
@@ -429,7 +400,7 @@ async function publishToChannel(p) {
           .eq('id', p.id);
 
         p.channel_message_id = sent.message_id;
-        p.channel_name = isKhujand ? 'khujand' : 'dushanbe';
+        p.channel_name       = isKhujand ? 'khujand' : 'dushanbe';
       }
     } catch (e) {
       console.log('Не удалось сохранить message_id:', e.message);
@@ -445,7 +416,6 @@ async function publishToChannel(p) {
 
 // ─────────────────────────────────────────────
 // Пометить истёкшие посты в канале
-// Берём данные только из БД
 // ─────────────────────────────────────────────
 async function markExpiredInChannel(p) {
   const fresh = await getFreshProductById(p?.id);
@@ -460,17 +430,13 @@ async function markExpiredInChannel(p) {
 
   if (!channelId) return;
 
-  const EMOJIS = {
-    bouquet: '💐',
-    basket: '🧺',
-    bear: '🧸',
-    sweets: '🍰'
-  };
+  const EMOJIS = { bouquet: '💐', basket: '🧺', bear: '🧸', sweets: '🍰' };
 
-  const em = EMOJIS[p.category] || '🌸';
-  const size = p.size || null;
+  const em          = EMOJIS[p.category] || '🌸';
+  const size        = p.size        || null;
   const marketPrice = p.market_price || null;
-  const code = p.code || null;
+  const code        = p.code        || null;
+
   const price = Number(p.price)
     ? (Math.ceil(Number(p.price) * 1.20 / 10) * 10).toLocaleString('ru-RU')
     : '0';
@@ -479,9 +445,9 @@ async function markExpiredInChannel(p) {
     ? process.env.ADMIN_TELEGRAM.replace('https://t.me/', '@')
     : '@rebuket_admin';
 
-  const sizeLine = size ? `📏 Размер был: <b>${escHtml(size)}</b>\n` : '';
+  const codeLine        = code        ? `🆔 ${escHtml(code)}\n`                                        : '';
+  const sizeLine        = size        ? `📏 Размер был: <b>${escHtml(size)}</b>\n`                      : '';
   const marketPriceLine = marketPrice ? `🏪 Цена в магазинах была: <b>${escHtml(marketPrice)} сомони</b>\n` : '';
-  const codeLine = code ? `🆔 ${escHtml(code)}\n` : '';
 
   const newCaption =
     `🔴 <b>СНЯТО С ПРОДАЖИ</b>\n\n` +
@@ -495,11 +461,10 @@ async function markExpiredInChannel(p) {
 
   try {
     await bot.editMessageCaption(newCaption, {
-      chat_id: channelId,
+      chat_id:    channelId,
       message_id: p.channel_message_id,
       parse_mode: 'HTML'
     });
-
     console.log(`🔴 Пост помечен как снято: ${p.title}`);
   } catch (e) {
     console.log('Ошибка редактирования поста:', e.message);
@@ -508,7 +473,6 @@ async function markExpiredInChannel(p) {
 
 // ─────────────────────────────────────────────
 // Уведомление продавцу — одобрено
-// Берём данные только из БД
 // ─────────────────────────────────────────────
 async function notifySellerApproved(p) {
   const fresh = await getFreshProductById(p?.id);
@@ -528,8 +492,8 @@ async function notifySellerApproved(p) {
   const url = `${getMiniAppUrl()}/#product-${p.slug || p.id}`;
 
   try {
-    const sizeLine = p.size ? `📏 ${escHtml(p.size)}\n` : '';
-    const codeLine = p.code ? `🆔 ${escHtml(p.code)}\n` : '';
+    const codeLine = p.code ? `🆔 Ваш код: <b>${escHtml(p.code)}</b>\n` : '';
+    const sizeLine = p.size ? `📏 ${escHtml(p.size)}\n`                 : '';
 
     await userBot.sendMessage(
       p.seller_chat_id,
@@ -596,13 +560,12 @@ async function notifySellerRejected(p) {
 
 // ─────────────────────────────────────────────
 // Уведомление — новое объявление (для админов)
-// Берём данные только из БД
 // ─────────────────────────────────────────────
 const CATS = {
   bouquet: '💐 Букет',
-  basket: '🧺 Корзина',
-  bear: '🧸 Игрушки',
-  sweets: '🍰 Сладости'
+  basket:  '🧺 Корзина',
+  bear:    '🧸 Игрушки',
+  sweets:  '🍰 Сладости'
 };
 
 async function notifyProduct(p) {
@@ -611,10 +574,10 @@ async function notifyProduct(p) {
 
   const url = `${getMiniAppUrl()}/#product-${p.slug || p.id}`;
 
-  const sizeLine = p.size ? `📏 Размер: <b>${escHtml(p.size)}</b>\n` : '';
-  const giftWhenLine = p.gift_when ? `🎁 Когда получили: <b>${escHtml(p.gift_when)}</b>\n` : '';
-  const marketPriceLine = p.market_price ? `🏪 Цена в магазинах: <b>${escHtml(p.market_price)} TJS</b>\n` : '';
-  const codeLine = p.code ? `🆔 ${escHtml(p.code)}\n` : '';
+  const sizeLine        = p.size         ? `📏 Размер: <b>${escHtml(p.size)}</b>\n`                        : '';
+  const giftWhenLine    = p.gift_when    ? `🎁 Когда получили: <b>${escHtml(p.gift_when)}</b>\n`            : '';
+  const marketPriceLine = p.market_price ? `🏪 Цена в магазинах: <b>${escHtml(p.market_price)} TJS</b>\n`  : '';
+  const addressLine     = p.address      ? `🏠 Адрес: ${escHtml(p.address)}\n`                              : '';
 
   await sendToAdmins(
     `📦 <b>Новое объявление на проверке!</b>\n─────────────────\n` +
@@ -623,7 +586,7 @@ async function notifyProduct(p) {
       sizeLine +
       giftWhenLine +
       marketPriceLine +
-      codeLine +
+      addressLine +
       `👤 ${escHtml(p.seller_name || '—')} · 📞 ${escHtml(p.seller_phone || '—')}\n` +
       `✈️ ${escHtml(p.seller_telegram || '—')}\n` +
       `🔗 <a href="${url}">Открыть объявление</a>`,
@@ -684,34 +647,18 @@ function setupCallbacks(onApprove, onReject) {
       if (action === 'approve') {
         await onApprove(id);
         await adminBot.answerCallbackQuery(q.id, { text: '✅ Одобрено!' });
-
         await adminBot.editMessageReplyMarkup(
-          {
-            inline_keyboard: [[
-              { text: '✅ Одобрено', callback_data: 'done' }
-            ]]
-          },
-          {
-            chat_id: q.message.chat.id,
-            message_id: q.message.message_id
-          }
+          { inline_keyboard: [[{ text: '✅ Одобрено', callback_data: 'done' }]] },
+          { chat_id: q.message.chat.id, message_id: q.message.message_id }
         ).catch(() => {});
       }
 
       if (action === 'reject') {
         await onReject(id);
         await adminBot.answerCallbackQuery(q.id, { text: '❌ Отклонено' });
-
         await adminBot.editMessageReplyMarkup(
-          {
-            inline_keyboard: [[
-              { text: '❌ Отклонено', callback_data: 'done' }
-            ]]
-          },
-          {
-            chat_id: q.message.chat.id,
-            message_id: q.message.message_id
-          }
+          { inline_keyboard: [[{ text: '❌ Отклонено', callback_data: 'done' }]] },
+          { chat_id: q.message.chat.id, message_id: q.message.message_id }
         ).catch(() => {});
       }
     } catch (e) {
@@ -727,7 +674,7 @@ async function notifyBuyerInquirySent(d) {
   if (!userBot || !d.customer_chat_id) return;
 
   try {
-    const COMM = 0.20;
+    const COMM  = 0.20;
     const price = d.productPrice
       ? (Math.ceil(Number(d.productPrice) * (1 + COMM) / 10) * 10).toLocaleString('ru-RU') + ' сомони'
       : null;
@@ -748,14 +695,14 @@ async function notifyBuyerInquirySent(d) {
       '📞 Мой телефон: ' + (d.customer_phone || '—')
     ];
 
-    if (d.customer_name) parts.push('👤 Имя: ' + d.customer_name);
-    if (d.customer_telegram) parts.push('✈️ Telegram: ' + d.customer_telegram);
-    if (d.note) parts.push('📝 Комментарий: ' + d.note);
+    if (d.customer_name)     parts.push('👤 Имя: '          + d.customer_name);
+    if (d.customer_telegram) parts.push('✈️ Telegram: '     + d.customer_telegram);
+    if (d.note)              parts.push('📝 Комментарий: '  + d.note);
 
     parts.push('', '🔗 ' + url);
 
     const readyText = parts.join('\n');
-    const tgLink = 'https://t.me/' + adminHandle + '?text=' + encodeURIComponent(readyText);
+    const tgLink    = 'https://t.me/' + adminHandle + '?text=' + encodeURIComponent(readyText);
 
     const text =
       `✅ <b>Ваша заявка принята!</b>\n\n` +
