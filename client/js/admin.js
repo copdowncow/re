@@ -1,4 +1,4 @@
- strict';
+' strict';
 import { api, setTok, clrTok, isAuth } from './api.js';
 import { esc, fmt, fmtD, toast }        from './utils.js';
 
