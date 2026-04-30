@@ -160,6 +160,20 @@ async function sendToAdmins(text, opts = {}) {
 // ─────────────────────────────────────────────
 //  Публикация в канал при одобрении
 // ─────────────────────────────────────────────
+async function getNextSerial(channel) {
+  try {
+    const { createClient } = require('@supabase/supabase-js');
+    const db = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
+    const { data, error } = await db.rpc('increment_counter', { ch: channel });
+    if (error) throw new Error(error.message);
+    console.log('[getNextSerial] channel=' + channel + ' next=' + data);
+    return data;
+  } catch(e) {
+    console.log('[getNextSerial] Error:', e.message);
+    return null;
+  }
+}
+
 async function publishToChannel(p) {
   const city      = (p.city || '').toLowerCase().trim();
   const isKhujand = KHUJAND_CITIES.includes(city);
