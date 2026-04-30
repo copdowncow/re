@@ -59,7 +59,7 @@ export async function loadConfig() {
 }
 
 // ── CATALOG ───────────────────────────────────────────────
-let filters = { category:'', city:'', min_price:'', max_price:'', search:'', page:1 };
+let filters = { category:'', city:'', max_price:'', search:'', page:1 };
 
 export async function loadCatalog(extra = {}) {
   Object.assign(filters, extra, { page:1 });
@@ -152,8 +152,6 @@ function renderDetail(p, el) {
     (p.pickup_time ? '<div><div class="pd-info-lbl">Время</div><div>🕐 ' + esc(p.pickup_time) + '</div></div>' : '') +
     '</div>' : '';
 
-  const codeHtml = p.code ? '<span class="pd-chip" style="background:#f0f0f0;color:#555;font-family:monospace">🆔 ' + esc(p.code) + '</span>' : '';
-
   el.innerHTML =
     '<div class="pd-wrap">' +
       '<div class="pd-gallery">' + mainImg + thumbsHtml + '</div>' +
@@ -163,7 +161,6 @@ function renderDetail(p, el) {
           '<span class="pd-chip">📍 ' + esc(p.city) + '</span>' +
           '<span class="pd-chip">👁 ' + (p.view_count||0) + ' просмотров</span>' +
           expiryChip(p) +
-          codeHtml +
         '</div>' +
         '<h2>' + esc(p.title) + '</h2>' +
         '<div class="pd-price">' + fmtPrice(priceWithCommission(p.price)) + '</div>' +
@@ -263,6 +260,7 @@ window.submitInquiry = async () => {
       if (el) el.value = '';
     });
 
+    // Строим готовое сообщение для администратора
     const NL = '\n';
     let msg = '🌸 Здравствуйте! Хочу купить:' + NL + NL;
     msg += '📦 ' + title + NL;
@@ -276,6 +274,7 @@ window.submitInquiry = async () => {
     const adminHandle = adminRaw.replace('https://t.me/', '').replace('@', '').trim();
     const adminUrl    = 'https://t.me/' + adminHandle + '?text=' + encodeURIComponent(msg);
 
+    // Показываем попап
     const oldP = document.getElementById('inq-popup');
     if (oldP) oldP.remove();
 
@@ -298,6 +297,7 @@ window.submitInquiry = async () => {
     ds.style.cssText = 'color:#555;font-size:.9rem;line-height:1.5;margin-bottom:22px';
     ds.textContent = 'Скопируйте готовое сообщение, откройте чат администратора и вставьте его.';
 
+    // Текстовое поле с готовым сообщением
     const ta = document.createElement('textarea');
     ta.value = msg;
     ta.readOnly = true;
@@ -348,12 +348,11 @@ window.setCat = (cat, el) => {
   filters.category = map[cat] || '';
   loadCatalog();
 };
-
 window.applyFilters = () => {
-  filters.city      = document.getElementById('f-city')?.value    || '';
-  filters.min_price = document.getElementById('f-min-price')?.value || '';
-  filters.max_price = document.getElementById('f-max-price')?.value || '';
-  filters.search    = document.getElementById('f-search')?.value  || '';
+  filters.city      = document.getElementById('f-city')?.value      || '';
+  filters.min_price = document.getElementById('f-price-min')?.value || '';
+  filters.max_price = document.getElementById('f-price-max')?.value || '';
+  filters.search    = document.getElementById('f-search')?.value    || '';
   loadCatalog();
 };
 
@@ -413,13 +412,10 @@ window.selectCat = (el) => {
   el.classList.add('active');
   const val = el.dataset.val;
   document.getElementById('sell-cat-val').value = val;
-
   const sizeField = document.getElementById('size-field');
   if (sizeField) {
-    // Размер только для букетов, корзин и мишек — НЕ для сладостей
-    const needsSize = ['bouquet', 'basket', 'bear'].includes(val);
-    sizeField.style.display = needsSize ? '' : 'none';
-    if (!needsSize) {
+    sizeField.style.display = ['bouquet','basket','bear'].includes(val) ? '' : 'none';
+    if (!['bouquet','basket','bear'].includes(val)) {
       document.getElementById('sell-size').value = '';
       document.querySelectorAll('#size-chips .chip').forEach(b => b.classList.remove('active'));
     }
@@ -474,21 +470,19 @@ window.submitListing = async () => {
   const price    = document.getElementById('sell-price').value;
   const city     = document.getElementById('sell-city').value;
   const phone    = document.getElementById('sell-phone').value.trim();
-  const address  = document.getElementById('sell-address').value.trim();
   const category = document.getElementById('sell-cat-val')?.value;
 
-  markField('sell-title',   !!title);
-  markField('sell-price',   !!price);
-  markField('sell-city',    !!city);
-  markField('sell-phone',   !!phone);
-  markField('sell-address', !!address);
+  markField('sell-title', !!title);
+  markField('sell-price', !!price);
+  markField('sell-city',  !!city);
+  markField('sell-phone', !!phone);
 
   const catEl = document.querySelector('.cat-sel-wrap');
   if (catEl) catEl.style.outline = category ? '' : '2px solid #dc3545';
 
-  // Размер обязателен для bouquet/basket/bear, НЕ для sweets
+  const category2 = document.getElementById('sell-cat-val')?.value;
   const size = document.getElementById('sell-size')?.value;
-  const needsSize = ['bouquet', 'basket', 'bear'].includes(category);
+  const needsSize = ['bouquet','basket','bear'].includes(category2);
   if (needsSize && !size) {
     document.getElementById('size-error').style.display = 'block';
     document.getElementById('size-chips')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -500,14 +494,12 @@ window.submitListing = async () => {
     document.getElementById('gift-when-chips')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
   }
 
-  if (!title || !price || !city || !phone || !category) {
+  const address = document.getElementById('sell-address').value.trim();
+  markField('sell-address', !!address);
+
+  if (!title||!price||!city||!phone||!category||!address) {
     toast('Заполните все обязательные поля!','err');
     scrollToFirst(['sell-title','sell-price','sell-city','sell-phone','sell-address']);
-    return;
-  }
-  if (!address) {
-    toast('Укажите адрес!','err');
-    document.getElementById('sell-address')?.scrollIntoView({ behavior:'smooth', block:'center' });
     return;
   }
   if (needsSize && !size) {
@@ -530,13 +522,13 @@ window.submitListing = async () => {
   fd.append('category',        category);
   fd.append('price',           price);
   fd.append('city',            city);
-  fd.append('address',         address);
   fd.append('seller_name',     document.getElementById('sell-name').value.trim());
   fd.append('seller_phone',    phone);
   fd.append('seller_telegram', document.getElementById('sell-tg').value.trim());
+  fd.append('address',         document.getElementById('sell-address').value.trim());
   fd.append('pickup_time',     document.getElementById('sell-time').value.trim());
-  fd.append('gift_when',       giftWhen);
-  if (needsSize && size) fd.append('size', size);
+  fd.append('gift_when',        giftWhen);
+  if (size) fd.append('size', size);
   const marketPrice = document.getElementById('sell-market-price')?.value;
   if (marketPrice) fd.append('market_price', marketPrice);
   sellFiles.forEach(f => fd.append('photos', f));
