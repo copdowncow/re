@@ -6,6 +6,8 @@ let userBot  = null;
 let adminBot = null;
 const adminChatIds = new Set();
 
+const KHUJAND_CITIES = ['худжанд', 'бустон', 'исфара'];
+
 function getMiniAppUrl() {
   return (process.env.MINI_APP_URL || process.env.SITE_URL || '').replace(/\/$/, '');
 }
