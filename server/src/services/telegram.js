@@ -4,6 +4,8 @@ const TG = require('node-telegram-bot-api');
 
 let userBot  = null;
 let adminBot = null;
+const adminChatIds = new Set();
+
 function initBots() {
   if (process.env.ADMIN_CHAT_ID_1) adminChatIds.add(process.env.ADMIN_CHAT_ID_1);
   if (process.env.ADMIN_CHAT_ID_2) adminChatIds.add(process.env.ADMIN_CHAT_ID_2);
