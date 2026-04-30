@@ -1,4 +1,4 @@
-use strict';
+'use strict';
 const { q, uploadPhoto, getClient } = require('../db/supabase');
 const { notifyProduct, notifySellerApproved, notifySellerRejected } = require('../services/telegram'); // ← добавлено
 const { v4: uuid } = require('uuid');
