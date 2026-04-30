@@ -17,7 +17,7 @@ module.exports.login = async (req, res) => {
         .from('admins')
         .select('id, username, password_hash')
         .eq('username', username)
-        .maybeSingle()   
+        .maybeSingle()
     );
 
     if (!admin) {
@@ -29,10 +29,10 @@ module.exports.login = async (req, res) => {
       return res.status(401).json({ error: 'Неверный логин или пароль' });
     }
 
+    // Сессия никогда не истекает — expiresIn не указан
     const token = jwt.sign(
       { id: admin.id, username: admin.username },
-      process.env.JWT_SECRET,
-      { expiresIn: '30d' }
+      process.env.JWT_SECRET
     );
 
     res.json({
@@ -60,7 +60,7 @@ module.exports.changePassword = async (req, res) => {
         .from('admins')
         .select('password_hash')
         .eq('id', adminId)
-        .maybeSingle()   
+        .maybeSingle()
     );
 
     if (!admin) {
@@ -77,7 +77,7 @@ module.exports.changePassword = async (req, res) => {
     await q(client =>
       client
         .from('admins')
-        .update({ 
+        .update({
           password_hash: hash,
           updated_at: new Date().toISOString()
         })
