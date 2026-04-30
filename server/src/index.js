@@ -42,6 +42,19 @@ app.get('/api/config', (req, res) => res.json({
 
 app.use('/api', routes);
 
+// ── Счётчики ID ──────────────────────────────────────────
+app.post('/api/admin/counter', async (req, res) => {
+  try {
+    const { channel, value } = req.body;
+    if (!channel || value === undefined) return res.status(400).json({ error: 'channel и value обязательны' });
+    const { error } = await getClient()
+      .from('channel_counters')
+      .upsert({ channel, value: Number(value) }, { onConflict: 'channel' });
+    if (error) throw new Error(error.message);
+    res.json({ ok: true, channel, value });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
 // ── User Bot авторизация (одноразовая) ────────────────────
 const _authState = {};
 app.get('/api/userbot/auth', async (req, res) => {
