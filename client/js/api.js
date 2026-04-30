@@ -33,9 +33,7 @@ async function req(method, url, body = null, isForm = false, skipAuthError = fal
   }
 
   let d = {};
-  try {
-    d = await res.json();
-  } catch (e) {}
+  try { d = await res.json(); } catch (e) {}
 
   if (!res.ok) {
     throw new Error(d.error || d.message || 'Ошибка сервера');
@@ -52,23 +50,26 @@ const qs = (params) => {
 };
 
 export const api = {
-  config: () => req('GET', '/config'),
-  products: (p = {}) => req('GET', '/products' + qs(p)),
-  product: (id) => req('GET', '/products/' + id),
-  cities: () => req('GET', '/cities'),
-  addProduct: (fd) => req('POST', '/products', fd, true),
-  inquiry: (d) => req('POST', '/inquiries', d),
+  config:     ()        => req('GET',    '/config'),
+  products:   (p = {})  => req('GET',    '/products' + qs(p)),
+  product:    (id)      => req('GET',    '/products/' + id),
+  cities:     ()        => req('GET',    '/cities'),
+  addProduct: (fd)      => req('POST',   '/products', fd, true),
+  inquiry:    (d)       => req('POST',   '/inquiries', d),
 
-  login: (u, p) => req('POST', '/admin/login', { username: u, password: p }, false, true),
-  changePwd: (c, n) => req('POST', '/admin/change-password', { current_password: c, new_password: n }),
+  login:      (u, p)    => req('POST',   '/admin/login', { username: u, password: p }, false, true),
+  changePwd:  (c, n)    => req('POST',   '/admin/change-password', { current_password: c, new_password: n }),
 
-  adminProducts: (p = {}) => req('GET', '/admin/products' + qs(p)),
-  adminProduct: (id) => req('GET', '/admin/products/' + id),
-  updateProduct: (id, fd) => req('PUT', '/admin/products/' + id, fd, true),
-  deleteProduct: (id) => req('DELETE', '/admin/products/' + id),
+  adminProducts: (p = {}) => req('GET',  '/admin/products' + qs(p)),
+  adminProduct:  (id)     => req('GET',  '/admin/products/' + id),
+  updateProduct: (id, fd) => req('PUT',  '/admin/products/' + id, fd, true),
+  deleteProduct: (id)     => req('DELETE','/admin/products/' + id),
 
-  inquiries: (p = {}) => req('GET', '/admin/inquiries' + qs(p)),
-  updInquiry: (id, status) => req('PATCH', '/admin/inquiries/' + id + '/status', { status }),
+  inquiries:  (p = {})  => req('GET',    '/admin/inquiries' + qs(p)),
+  updInquiry: (id, s)   => req('PATCH',  '/admin/inquiries/' + id + '/status', { status: s }),
 
-  stats: () => req('GET', '/admin/stats'),
+  stats:      ()        => req('GET',    '/admin/stats'),
+
+  // Счётчики ID публикаций
+  setCounter: (channel, value) => req('POST', '/admin/counter', { channel, value }),
 };
