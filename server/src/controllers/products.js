@@ -1,6 +1,6 @@
-'use strict';
+use strict';
 const { q, uploadPhoto, getClient } = require('../db/supabase');
-const { notifyProduct, notifySellerApproved, notifySellerRejected } = require('../services/telegram');
+const { notifyProduct, notifySellerApproved, notifySellerRejected } = require('../services/telegram'); // ← добавлено
 const { v4: uuid } = require('uuid');
 
 function toSlug(str) {
@@ -36,54 +36,15 @@ async function uniqueSlug(base) {
   }
 }
 
-// ─────────────────────────────────────────────
-// Генерация кода AB-XXXX
-// Счётчик хранится в таблице app_settings
-// ─────────────────────────────────────────────
-async function getNextProductCode() {
-  const db = getClient();
-
-  // Читаем текущий счётчик
-  const { data, error } = await db
-    .from('app_settings')
-    .select('value')
-    .eq('key', 'product_counter')
-    .single();
-
-  let counter = 0;
-
-  if (error || !data) {
-    // Если записи нет — создаём с нуля
-    await db.from('app_settings').upsert({ key: 'product_counter', value: '0' });
-    counter = 0;
-  } else {
-    counter = parseInt(data.value, 10) || 0;
-  }
-
-  counter += 1;
-
-  // Сохраняем новый счётчик
-  await db
-    .from('app_settings')
-    .upsert({ key: 'product_counter', value: String(counter) });
-
-  // Форматируем: AB-0001
-  const padded = String(counter).padStart(4, '0');
-  return `AB-${padded}`;
-}
-
 function publicProduct(p) {
   if (!p) return null;
-  const { seller_phone, seller_telegram, seller_name, seller_chat_id, ...pub } = p;
+  const { seller_phone, seller_telegram, seller_name, seller_chat_id, ...pub } = p; // ← seller_chat_id тоже скрываем
   return {
     ...pub,
     status: p.status || 'unknown'
   };
 }
 
-// ─────────────────────────────────────────────
-// GET /products — публичный каталог
-// ─────────────────────────────────────────────
 exports.getProducts = async (req, res) => {
   try {
     const { category, city, min_price, max_price, search, page = 1, limit = 20 } = req.query;
@@ -143,6 +104,7 @@ exports.getProduct = async (req, res) => {
       return res.status(404).json({ error: 'Товар не найден, не активен или на модерации' });
     }
 
+    // Считаем просмотр только раз в 30 минут с одного IP
     const ip      = req.headers['x-forwarded-for']?.split(',')[0] || req.socket.remoteAddress || 'unknown';
     const cacheKey = ip + ':' + data.id;
     const lastView = _viewCache.get(cacheKey);
@@ -188,32 +150,17 @@ exports.getCities = async (req, res) => {
   }
 };
 
-// ─────────────────────────────────────────────
-// POST /products — создать объявление
-// ─────────────────────────────────────────────
 exports.createProduct = async (req, res) => {
   try {
     const {
       title, description, category, price, city,
       seller_name, seller_phone, seller_telegram,
       address, pickup_time, gift_when, market_price, size,
-      seller_chat_id
+      seller_chat_id  // ← добавлено: chat_id продавца из Telegram
     } = req.body;
 
-    // Обязательные поля
     if (!title || !category || !price || !city || !seller_phone) {
       return res.status(400).json({ error: 'Заполните все обязательные поля' });
-    }
-
-    // Адрес обязателен
-    if (!address || !String(address).trim()) {
-      return res.status(400).json({ error: 'Адрес обязателен для заполнения' });
-    }
-
-    // Размер обязателен для bouquet, basket, bear — не для sweets
-    const needsSize = ['bouquet', 'basket', 'bear'].includes(category);
-    if (needsSize && (!size || !String(size).trim())) {
-      return res.status(400).json({ error: 'Укажите размер' });
     }
 
     const files = req.files || [];
@@ -223,43 +170,43 @@ exports.createProduct = async (req, res) => {
 
     const slug = await uniqueSlug(toSlug(title));
 
-    // Код НЕ генерируется при создании — только при одобрении
+    // Сначала создаём объявление с пустыми фото — отвечаем клиенту быстро
     const { data, error } = await getClient()
       .from('products')
       .insert({
         title,
-        description:     description     || null,
+        description: description || null,
         category,
-        price:           Number(price),
+        price: Number(price),
         city,
         seller_name:     seller_name     || null,
         seller_phone,
         seller_telegram: seller_telegram || null,
-        address:         String(address).trim(),
+        address:         address         || null,
         pickup_time:     pickup_time     || null,
-        gift_when:       gift_when       || null,
+        gift_when:       req.body.gift_when || null,
         market_price:    market_price ? Number(market_price) : null,
-        size:            needsSize ? (size || null) : null,
+        size:            req.body.size || null,
         seller_chat_id:  seller_chat_id  || null,
-        photos:          [],
+        photos: [],
         slug,
-        status:          'pending',
-        code:            null  // код присвоится при одобрении
+        status: 'pending'
       })
       .select()
       .single();
 
     if (error) throw error;
 
+    // Отвечаем клиенту сразу не ожидая загрузки фото
     res.status(201).json({
-      id:         data.id,
-      slug:       data.slug,
-      status:     data.status,
-      message:    'Объявление подано! Ждёт проверки.',
+      id: data.id,
+      slug: data.slug,
+      status: data.status,
+      message: 'Объявление подано! Ждёт проверки.',
       previewUrl: `/products/${data.slug}`
     });
 
-    // Загружаем фото и уведомляем в фоне
+    // Загружаем фото в фоне
     Promise.all(files.map(f => uploadPhoto(f.buffer, f.originalname, f.mimetype)))
       .then(photos => getClient().from('products').update({ photos }).eq('id', data.id))
       .then(() => notifyProduct({ ...data }))
@@ -270,9 +217,6 @@ exports.createProduct = async (req, res) => {
   }
 };
 
-// ─────────────────────────────────────────────
-// GET /admin/products — список для админа
-// ─────────────────────────────────────────────
 exports.adminList = async (req, res) => {
   try {
     const { status, page = 1, limit = 50 } = req.query;
@@ -304,10 +248,10 @@ exports.adminList = async (req, res) => {
     }
 
     res.json({
-      data:        data || [],
-      total:       count || 0,
-      page:        Number(page),
-      limit:       lim,
+      data: data || [],
+      total: count || 0,
+      page: Number(page),
+      limit: lim,
       total_pages: Math.ceil((count || 0) / lim)
     });
   } catch (e) {
@@ -335,10 +279,6 @@ exports.adminGet = async (req, res) => {
   }
 };
 
-// ─────────────────────────────────────────────
-// PATCH /admin/products/:id — обновить
-// Цена от админа сохраняется БЕЗ комиссии
-// ─────────────────────────────────────────────
 exports.adminUpdate = async (req, res) => {
   try {
     const id = req.params.id;
@@ -355,24 +295,17 @@ exports.adminUpdate = async (req, res) => {
 
     const updates = {};
     const fields = [
-      'title', 'description', 'category', 'city',
+      'title', 'description', 'category', 'price', 'city',
       'seller_name', 'seller_phone', 'seller_telegram',
-      'address', 'pickup_time', 'status', 'size'
+      'address', 'pickup_time', 'status'
     ];
 
     for (const f of fields) {
       if (req.body[f] !== undefined) updates[f] = req.body[f];
     }
 
-    // Цена от админа — сохраняем как есть, БЕЗ добавления комиссии
-    if (req.body.price !== undefined) {
-      updates.price = Number(req.body.price);
-    }
-
-    // Если меняется категория на sweets — убираем размер
-    const newCategory = updates.category || existing.category;
-    if (newCategory === 'sweets') {
-      updates.size = null;
+    if (updates.price !== undefined) {
+      updates.price = Number(updates.price);
     }
 
     if (req.files?.length) {
@@ -380,18 +313,6 @@ exports.adminUpdate = async (req, res) => {
         req.files.map(f => uploadPhoto(f.buffer, f.originalname, f.mimetype))
       );
       updates.photos = [...(existing.photos || []), ...newUrls];
-    }
-
-    // ── Одобрение: присваиваем код AB-XXXX ─────────────────
-    const isBeingApproved = updates.status === 'active' && existing.status !== 'active';
-
-    if (isBeingApproved && !existing.code) {
-      try {
-        updates.code = await getNextProductCode();
-      } catch (codeErr) {
-        console.error('[adminUpdate] Ошибка генерации кода:', codeErr.message);
-        // Не блокируем одобрение если код не удалось сгенерировать
-      }
     }
 
     const { data, error } = await getClient()
@@ -404,7 +325,7 @@ exports.adminUpdate = async (req, res) => {
     if (error) throw error;
 
     // ── Уведомляем продавца при смене статуса ──────────────
-    if (isBeingApproved) {
+    if (updates.status === 'active' && existing.status !== 'active') {
       // Букеты и корзины — срок 2 дня
       if (['bouquet', 'basket'].includes(data.category)) {
         const expiresAt = new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString();
@@ -413,7 +334,6 @@ exports.adminUpdate = async (req, res) => {
       }
       notifySellerApproved(data).catch(() => {});
     }
-
     if (updates.status === 'hidden' && existing.status === 'pending') {
       notifySellerRejected(data).catch(() => {});
     }
