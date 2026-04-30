@@ -6,6 +6,22 @@ let userBot  = null;
 let adminBot = null;
 const adminChatIds = new Set();
 
+function getMiniAppUrl() {
+  return (process.env.MINI_APP_URL || process.env.SITE_URL || '').replace(/\/$/, '');
+}
+
+function escHtml(s) {
+  return String(s || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+}
+
+function getProductCode(num, prefix) {
+  if (!num) return null;
+  return prefix + '-' + String(Number(num)).padStart(4, '0');
+}
+
 function initBots() {
   if (process.env.ADMIN_CHAT_ID_1) adminChatIds.add(process.env.ADMIN_CHAT_ID_1);
   if (process.env.ADMIN_CHAT_ID_2) adminChatIds.add(process.env.ADMIN_CHAT_ID_2);
