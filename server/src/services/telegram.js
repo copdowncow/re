@@ -209,13 +209,15 @@ async function publishToChannel(p) {
   const code      = getProductCode(serialNum, isKhujand ? 'AK' : 'AB');
 
   const caption =
-    `${em} <b>${escHtml(p.title)}</b>\n` +
+    `${em} ${escHtml(p.title)}\n` +
     `📍 ${escHtml(p.city)}\n` +
-    (desc ? `🌸 ${escHtml(desc)}\n` : '') +
-    `💰 Наша цена: <b>${price} сомони</b>\n` +
+    (p.size     ? `📏 Размер: ${escHtml(p.size)}\n` : '') +
+    (p.gift_when ? `🎁 Когда получили: ${escHtml(p.gift_when)}\n` : '') +
+    (p.market_price ? `🏪 Цена в магазинах: ${(Math.ceil(Number(p.market_price) / 10) * 10).toLocaleString('ru-RU')} сомони\n` : '') +
+    `💰 Наша цена: ${price} сомони\n` +
     `❓ По вопросам: ${admin}\n` +
-    (code ? `🆔 ${code}` : '') +
-    `\n\n<a href="${url}">Смотреть объявление на ReBuket</a>`;
+    (code ? `🆔 ${code}\n` : '') +
+    `\n<a href="${url}">Смотреть объявление на ReBuket</a>`;
 
   try {
     let sent = null;
