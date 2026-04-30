@@ -463,6 +463,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const el = document.getElementById(id);
     if (el) el.addEventListener('input', () => markField(id, true));
   });
+
+  // Показываем поле размера если категория уже выбрана
+  const catVal = document.getElementById('sell-cat-val')?.value;
+  const sizeField = document.getElementById('size-field');
+  if (sizeField && catVal && ['bouquet','basket','bear'].includes(catVal)) {
+    sizeField.style.display = '';
+  }
 });
 
 window.submitListing = async () => {
