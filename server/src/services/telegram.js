@@ -1,4 +1,4 @@
-'use strict';
+use strict';
 
 const TG = require('node-telegram-bot-api');
 
@@ -43,7 +43,6 @@ function initUserBot() {
     const param  = (match && match[1] || '').trim();
     console.log('[bot /start] param:', JSON.stringify(param.substring(0,50)));
 
-    // Пользователь пришёл после оставления заявки
     if (param === 'inquiry' || param.startsWith('inq_')) {
       const adminHandle = (process.env.ADMIN_TELEGRAM || 'https://t.me/Rebuket_admin')
         .replace('https://t.me/', '').replace('@', '').trim();
@@ -59,24 +58,10 @@ function initUserBot() {
       }
 
       const adminUrl = 'https://t.me/' + adminHandle + '?text=' + encodeURIComponent(readyText);
-      console.log('[bot] inquiry start, adminUrl:', adminUrl.substring(0, 100));
 
       await userBot.sendMessage(msg.chat.id,
         '✅ <b>Заявка принята!</b>\n\nДля полного оформления заказа — нажмите кнопку ниже, откроется чат с готовым сообщением — останется нажать Отправить 👇',
         { parse_mode: 'HTML', reply_markup: { inline_keyboard: [[{ text: '✈️ Отправить заказ администратору', url: adminUrl }]] } }
-      );
-      return;
-    }
-
-    if (param === 'inquiry_OLDCODE') {
-      const adminUrl = process.env.ADMIN_TELEGRAM || 'https://t.me/Rebuket_admin';
-      await userBot.sendMessage(msg.chat.id,
-        `🌸 <b>Привет, ${escHtml(name)}!</b>
-
-Ваша заявка успешно отправлена администратору.
-
-Чтобы уточнить детали заказа — напишите администратору напрямую:`,
-        { parse_mode: 'HTML', reply_markup: { inline_keyboard: [[{ text: '✈️ Написать администратору', url: adminUrl }]] } }
       );
       return;
     }
@@ -174,6 +159,11 @@ async function getNextSerial(channel) {
   }
 }
 
+// ─────────────────────────────────────────────
+//  ГЛАВНАЯ функция публикации в канал
+//  Цена p.price — это УЖЕ финальная цена (без умножения на комиссию).
+//  Жирный шрифт для размера, когда получили и цены.
+// ─────────────────────────────────────────────
 async function publishToChannel(p) {
   const city      = (p.city || '').toLowerCase().trim();
   const isKhujand = KHUJAND_CITIES.includes(city);
@@ -181,24 +171,26 @@ async function publishToChannel(p) {
     ? (process.env.CHANNEL_ID_KHUJAND || '-1003818624807')
     : process.env.CHANNEL_ID;
 
-  console.log(`[publishToChannel] city="${city}" isKhujand=${isKhujand} channelId=${channelId}`);
+  console.log(`[publishToChannel] city="${city}" isKhujand=${isKhujand} channelId=${channelId} productId=${p.id}`);
 
   if (!channelId) {
-    console.log('[publishToChannel] CHANNEL_ID не задан в .env');
-    return;
+    console.log('[publishToChannel] CHANNEL_ID не задан в .env — пропускаем');
+    return null;
   }
 
+  // Берём любой доступный бот
   const bot = userBot || adminBot;
   if (!bot) {
-    console.log('[publishToChannel] Нет активного бота');
-    return;
+    console.log('[publishToChannel] Нет активного бота — пропускаем');
+    return null;
   }
 
   const EMOJIS = { bouquet:'💐', basket:'🧺', bear:'🧸', sweets:'🍰' };
   const em     = EMOJIS[p.category] || '🌸';
-  const desc     = p.description ? p.description.substring(0, 200) + (p.description.length > 200 ? '...' : '') : '';
-  const giftWhen = p.gift_when || null;
-  const price  = (Math.ceil(Number(p.price) * 1.20 / 10) * 10).toLocaleString('ru-RU');
+
+  // Цена p.price — финальная (то что заплатит покупатель), НЕ умножаем на комиссию
+  const finalPrice = Math.round(Number(p.price)).toLocaleString('ru-RU');
+
   const admin  = process.env.ADMIN_TELEGRAM
     ? process.env.ADMIN_TELEGRAM.replace('https://t.me/', '@')
     : '@rebuket_admin';
@@ -208,50 +200,68 @@ async function publishToChannel(p) {
   const serialNum = await getNextSerial(isKhujand ? 'khujand' : 'dushanbe');
   const code      = getProductCode(serialNum, isKhujand ? 'AK' : 'AB');
 
+  // Жирный шрифт для размера, когда получили и цены (пункты 2 и 4)
   const caption =
     `${em} ${escHtml(p.title)}\n` +
     `📍 ${escHtml(p.city)}\n` +
-    (p.size     ? `📏 Размер: ${escHtml(p.size)}\n` : '') +
-    (p.gift_when ? `🎁 Когда получили: ${escHtml(p.gift_when)}\n` : '') +
-    (p.market_price ? `🏪 Цена в магазинах: ${(Math.ceil(Number(p.market_price) / 10) * 10).toLocaleString('ru-RU')} сомони\n` : '') +
-    `💰 Наша цена: ${price} сомони\n` +
+    (p.size      ? `📏 Размер: <b>${escHtml(p.size)}</b>\n` : '') +
+    (p.gift_when ? `🎁 Когда получили: <b>${escHtml(p.gift_when)}</b>\n` : '') +
+    (p.market_price ? `🏪 Цена в магазинах: ${(Math.round(Number(p.market_price))).toLocaleString('ru-RU')} сомони\n` : '') +
+    `💰 Наша цена: <b>${finalPrice} сомони</b>\n` +
     `❓ По вопросам: ${admin}\n` +
     (code ? `🆔 ${code}\n` : '') +
     `\n<a href="${url}">Смотреть объявление на ReBuket</a>`;
 
-  try {
-    let sent = null;
-    if (photos.length === 0) {
-      sent = await bot.sendMessage(channelId, caption, { parse_mode: 'HTML' });
-    } else if (photos.length === 1) {
-      sent = await bot.sendPhoto(channelId, photos[0], { caption, parse_mode: 'HTML' });
-    } else {
-      const media = photos.slice(0, 10).map((ph, i) => ({
-        type: 'photo',
-        media: ph,
-        ...(i === 0 ? { caption, parse_mode: 'HTML' } : {})
-      }));
-      const results = await bot.sendMediaGroup(channelId, media);
-      sent = Array.isArray(results) ? results[0] : results;
-    }
+  let sent = null;
+  let attempts = 0;
+  const maxAttempts = 3;
 
+  while (attempts < maxAttempts) {
+    attempts++;
+    try {
+      if (photos.length === 0) {
+        sent = await bot.sendMessage(channelId, caption, { parse_mode: 'HTML' });
+      } else if (photos.length === 1) {
+        sent = await bot.sendPhoto(channelId, photos[0], { caption, parse_mode: 'HTML' });
+      } else {
+        const media = photos.slice(0, 10).map((ph, i) => ({
+          type: 'photo',
+          media: ph,
+          ...(i === 0 ? { caption, parse_mode: 'HTML' } : {})
+        }));
+        const results = await bot.sendMediaGroup(channelId, media);
+        sent = Array.isArray(results) ? results[0] : results;
+      }
+      // Успешно отправлено — выходим из цикла
+      console.log(`📢 Опубликовано в канал: ${p.title} [${code}] attempt=${attempts}`);
+      break;
+    } catch(e) {
+      console.log(`[publishToChannel] Попытка ${attempts}/${maxAttempts} не удалась:`, e.message);
+      if (attempts < maxAttempts) {
+        // Ждём 2 секунды перед следующей попыткой
+        await new Promise(r => setTimeout(r, 2000));
+      } else {
+        console.log('[publishToChannel] Все попытки исчерпаны для:', p.title);
+      }
+    }
+  }
+
+  // Сохраняем message_id в базу
+  if (sent?.message_id) {
     try {
       const { createClient } = require('@supabase/supabase-js');
       const db = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
-      if (sent?.message_id) {
-        await db.from('products').update({
-          channel_message_id: sent.message_id,
-          channel_name: isKhujand ? 'khujand' : 'dushanbe'
-        }).eq('id', p.id);
-      }
+      await db.from('products').update({
+        channel_message_id: sent.message_id,
+        channel_name: isKhujand ? 'khujand' : 'dushanbe',
+        custom_id: code || p.custom_id || null,
+      }).eq('id', p.id);
     } catch(e) {
       console.log('Не удалось сохранить message_id:', e.message);
     }
-
-    console.log(`📢 Опубликовано в канал: ${p.title} [${code}]`);
-  } catch(e) {
-    console.log('[publishToChannel] Ошибка:', e.message);
   }
+
+  return sent;
 }
 
 // ─────────────────────────────────────────────
@@ -268,7 +278,8 @@ async function markExpiredInChannel(p) {
 
   const EMOJIS = { bouquet:'💐', basket:'🧺', bear:'🧸', sweets:'🍰' };
   const em     = EMOJIS[p.category] || '🌸';
-  const price  = (Math.ceil(Number(p.price) * 1.20 / 10) * 10).toLocaleString('ru-RU');
+  // Финальная цена — уже хранится как есть
+  const finalPrice = Math.round(Number(p.price)).toLocaleString('ru-RU');
   const admin  = process.env.ADMIN_TELEGRAM
     ? process.env.ADMIN_TELEGRAM.replace('https://t.me/', '@')
     : '@rebuket_admin';
@@ -277,7 +288,7 @@ async function markExpiredInChannel(p) {
     `🔴 <b>СНЯТО С ПРОДАЖИ</b>\n\n` +
     `${em} <b>${escHtml(p.title)}</b>\n` +
     `📍 ${escHtml(p.city)}\n` +
-    `💰 Цена была: <b>${price} сомони</b>\n\n` +
+    `💰 Цена была: <b>${finalPrice} сомони</b>\n\n` +
     `❓ По вопросам: ${admin}`;
 
   try {
@@ -294,33 +305,42 @@ async function markExpiredInChannel(p) {
 
 // ─────────────────────────────────────────────
 //  Уведомление продавцу — одобрено
+//  Публикация в канал гарантирована — она происходит
+//  НЕЗАВИСИМО от наличия seller_chat_id
 // ─────────────────────────────────────────────
 async function notifySellerApproved(p) {
-  // Публикуем в канал и ждём чтобы получить message_id
+  // 1. Публикуем в канал — всегда, независимо от продавца
+  let channelSent = null;
   try {
-    await publishToChannel(p);
+    channelSent = await publishToChannel(p);
   } catch(e) {
-    console.log('Channel publish error:', e.message);
+    console.log('Channel publish error (notifySellerApproved):', e.message);
   }
 
-  if (!userBot || !p.seller_chat_id) return;
+  // 2. Уведомляем продавца если есть chat_id
+  if (!userBot || !p.seller_chat_id) {
+    console.log('[notifySellerApproved] seller_chat_id отсутствует — пропускаем уведомление продавцу');
+    return;
+  }
 
   const url = `${getMiniAppUrl()}/#product-${p.slug || p.id}`;
   try {
-    // Сначала шлём текстовое уведомление
     await userBot.sendMessage(p.seller_chat_id,
       `🎉 <b>Ваше объявление одобрено!</b>\n\n📦 <b>${escHtml(p.title)}</b>\n💰 ${p.price} TJS · 📍 ${escHtml(p.city)}\n\nТеперь его видят все покупатели. Удачных продаж! 🌸`,
       { parse_mode: 'HTML', reply_markup: { inline_keyboard: [[{ text: '🔗 Открыть моё объявление', web_app: { url } }]] } }
     );
 
-    // Пересылаем пост из канала продавцу через бот
-    if (p.channel_message_id && p.channel_name && userBot) {
-      const channelId = p.channel_name === 'khujand'
+    // Пересылаем пост из канала продавцу
+    // Берём свежие данные о message_id после publishToChannel
+    if (p.channel_message_id || channelSent?.message_id) {
+      const msgId = channelSent?.message_id || p.channel_message_id;
+      const channelName = p.channel_name || ((KHUJAND_CITIES.includes((p.city||'').toLowerCase().trim())) ? 'khujand' : 'dushanbe');
+      const channelId = channelName === 'khujand'
         ? (process.env.CHANNEL_ID_KHUJAND || '-1003818624807')
         : process.env.CHANNEL_ID;
-      if (channelId) {
+      if (channelId && msgId) {
         try {
-          await userBot.forwardMessage(p.seller_chat_id, channelId, p.channel_message_id);
+          await userBot.forwardMessage(p.seller_chat_id, channelId, msgId);
         } catch(fe) {
           console.log('forwardMessage error:', fe.message);
         }
@@ -417,11 +437,6 @@ function setupCallbacks(onApprove, onReject) {
 async function notifyBuyerInquirySent(d) {
   if (!userBot || !d.customer_chat_id) return;
   try {
-    const COMM = 0.20;
-    const price = d.productPrice
-      ? (Math.ceil(Number(d.productPrice) * (1 + COMM) / 10) * 10).toLocaleString('ru-RU') + ' сомони'
-      : null;
-
     const url = (d.productSlug || d.productId)
       ? getMiniAppUrl() + '/#product-' + (d.productSlug || d.productId)
       : getMiniAppUrl();
@@ -430,29 +445,34 @@ async function notifyBuyerInquirySent(d) {
       .replace('https://t.me/', '').replace('@', '').trim();
 
     const parts = [
-      '\u{1F338} \u0417\u0434\u0440\u0430\u0432\u0441\u0442\u0432\u0443\u0439\u0442\u0435! \u0425\u043E\u0447\u0443 \u043A\u0443\u043F\u0438\u0442\u044C:',
+      '🌸 Здравствуйте! Хочу купить:',
       '',
-      '\u{1F4E6} ' + (d.productTitle || '—'),
-      '\u{1F4DE} \u041C\u043E\u0439 \u0442\u0435\u043B\u0435\u0444\u043E\u043D: ' + d.customer_phone
+      '📦 ' + (d.productTitle || '—'),
+      '📞 Мой телефон: ' + d.customer_phone
     ];
-    if (d.customer_name)     parts.push('\u{1F464} \u0418\u043C\u044F: ' + d.customer_name);
-    if (d.customer_telegram) parts.push('\u2708\uFE0F Telegram: ' + d.customer_telegram);
-    if (d.note)              parts.push('\u{1F4DD} \u041A\u043E\u043C\u043C\u0435\u043D\u0442\u0430\u0440\u0438\u0439: ' + d.note);
-    parts.push('', '\u{1F517} ' + url);
+    if (d.customer_name)     parts.push('👤 Имя: ' + d.customer_name);
+    if (d.customer_telegram) parts.push('✈️ Telegram: ' + d.customer_telegram);
+    if (d.note)              parts.push('📝 Комментарий: ' + d.note);
+    parts.push('', '🔗 ' + url);
 
     const readyText = parts.join('\n');
     const tgLink = 'https://t.me/' + adminHandle + '?text=' + encodeURIComponent(readyText);
 
-    const text = '\u2705 <b>\u0412\u0430\u0448\u0430 \u0437\u0430\u044F\u0432\u043A\u0430 \u043F\u0440\u0438\u043D\u044F\u0442\u0430!</b>\n\n' +
-      '\u{1F4E6} ' + escHtml(d.productTitle || '—') + '\n' +
-      (price ? '\u{1F4B0} ' + price + '\n' : '') +
-      '\n\u041D\u0430\u0436\u043C\u0438\u0442\u0435 \u043A\u043D\u043E\u043F\u043A\u0443 \u043D\u0438\u0436\u0435 \u2014 \u0441\u043E\u043E\u0431\u0449\u0435\u043D\u0438\u0435 \u0443\u0436\u0435 \u0433\u043E\u0442\u043E\u0432\u043E, \u043E\u0441\u0442\u0430\u043D\u0435\u0442\u0441\u044F \u0442\u043E\u043B\u044C\u043A\u043E \u043D\u0430\u0436\u0430\u0442\u044C \u041E\u0442\u043F\u0440\u0430\u0432\u0438\u0442\u044C.';
+    // Финальная цена уже хранится в p.price как есть
+    const price = d.productPrice
+      ? Math.round(Number(d.productPrice)).toLocaleString('ru-RU') + ' сомони'
+      : null;
+
+    const text = '✅ <b>Ваша заявка принята!</b>\n\n' +
+      '📦 ' + escHtml(d.productTitle || '—') + '\n' +
+      (price ? '💰 ' + price + '\n' : '') +
+      '\nНажмите кнопку ниже — сообщение уже готово, останется только нажать Отправить.';
 
     await userBot.sendMessage(d.customer_chat_id, text, {
       parse_mode: 'HTML',
       reply_markup: {
         inline_keyboard: [[
-          { text: '\u2708\uFE0F \u041D\u0430\u043F\u0438\u0441\u0430\u0442\u044C \u0430\u0434\u043C\u0438\u043D\u0438\u0441\u0442\u0440\u0430\u0442\u043E\u0440\u0443', url: tgLink }
+          { text: '✈️ Написать администратору', url: tgLink }
         ]]
       }
     });
