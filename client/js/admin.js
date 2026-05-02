@@ -126,7 +126,15 @@ async function renderProducts() {
             <div class="acard-title">${esc(p.title)}</div>
             <div style="font-size:.78rem;color:var(--gray);margin-top:2px">${fmtD(p.created_at)}</div>
           </div>
-          <div class="acard-price">${fmt(p.price)}<span style="font-size:.7rem;font-weight:400"> TJS</span></div>
+          <div>
+            <div class="acard-price">${p.is_admin_price ? fmt(p.price) : fmt(Math.ceil(p.price * 1.2 / 10) * 10)}<span style="font-size:.7rem;font-weight:400"> TJS</span></div>
+            <div style="font-size:.72rem;color:var(--gray);margin-top:2px">
+              ${p.is_admin_price
+                ? '👤 Доля продавца: ' + fmt(Math.round(p.price / 1.2)) + ' TJS'
+                : '👤 Доля продавца: ' + fmt(p.price) + ' TJS · 💰 С комиссией: ' + fmt(Math.ceil(p.price * 1.2 / 10) * 10) + ' TJS'
+              }
+            </div>
+          </div>
         </div>
 
         ${photos.length ? `<div class="acard-photos">${photos.map(ph =>
