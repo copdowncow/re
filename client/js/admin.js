@@ -1,4 +1,4 @@
-'use strict';
+use strict';
 import { api, setTok, clrTok, isAuth } from './api.js';
 import { esc, fmt, fmtD, toast }        from './utils.js';
 
@@ -119,21 +119,18 @@ async function renderProducts() {
       return `<div class="acard">
         <div class="acard-top">
           <div class="acard-info">
-            <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:4px">
+            <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:6px">
               <span style="font-size:.75rem;color:var(--gray)">${CAT[p.category]||p.category}</span>
               ${statusDot}
             </div>
             <div class="acard-title">${esc(p.title)}</div>
-            <div style="font-size:.78rem;color:var(--gray);margin-top:2px">${fmtD(p.created_at)}</div>
+            <div style="font-size:.78rem;color:var(--gray);margin-top:3px">${fmtD(p.created_at)}</div>
           </div>
-          <div>
-            <div class="acard-price">${p.is_admin_price ? fmt(p.price) : fmt(Math.ceil(p.price * 1.2 / 10) * 10)}<span style="font-size:.7rem;font-weight:400"> TJS</span></div>
-            <div style="font-size:.72rem;color:var(--gray);margin-top:2px">
-              ${p.is_admin_price
-                ? '👤 Доля продавца: ' + fmt(Math.round(p.price / 1.2)) + ' TJS'
-                : '👤 Доля продавца: ' + fmt(p.price) + ' TJS · 💰 С комиссией: ' + fmt(Math.ceil(p.price * 1.2 / 10) * 10) + ' TJS'
-              }
-            </div>
+          <div style="text-align:right;min-width:130px">
+            <div style="font-size:.7rem;color:var(--gray);margin-bottom:2px">Цена на канале</div>
+            <div class="acard-price">${p.is_admin_price ? fmt(p.price) : fmt(Math.ceil(p.price * 1.2 / 10) * 10)} TJS</div>
+            <div style="font-size:.72rem;color:var(--gray);margin-top:4px">Доля продавца</div>
+            <div style="font-size:.85rem;font-weight:700;color:#27ae60">${p.is_admin_price ? fmt(Math.round(p.price / 1.2)) : fmt(p.price)} TJS</div>
           </div>
         </div>
 
