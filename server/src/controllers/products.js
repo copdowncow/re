@@ -297,7 +297,8 @@ exports.adminUpdate = async (req, res) => {
     const fields = [
       'title', 'description', 'category', 'price', 'city',
       'seller_name', 'seller_phone', 'seller_telegram',
-      'address', 'pickup_time', 'status'
+      'address', 'pickup_time', 'status',
+      'gift_when', 'size', 'market_price'
     ];
 
     for (const f of fields) {
@@ -305,7 +306,9 @@ exports.adminUpdate = async (req, res) => {
     }
 
     if (updates.price !== undefined) {
+      // Цена от админа = окончательная цена (без добавления комиссии)
       updates.price = Number(updates.price);
+      updates.is_admin_price = true; // Флаг что цена финальная
     }
 
     if (req.files?.length) {
