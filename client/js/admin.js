@@ -242,6 +242,31 @@ window.openEditModal = (id) => {
         <input id="em-pickup_time" type="text" value="${esc(p.pickup_time||'')}" placeholder="Например: с 10:00 до 18:00" style="width:100%;padding:10px 12px;border:1.5px solid #e8d8d0;border-radius:9px;font-size:.95rem;box-sizing:border-box">
       </div>
 
+      <div style="margin-bottom:14px">
+        <label style="display:block;font-size:.82rem;font-weight:600;margin-bottom:5px;color:var(--gray)">Размер</label>
+        <input id="em-size" type="text" value="${esc(p.size||'')}" placeholder="Например: Средний или 45 см" style="width:100%;padding:10px 12px;border:1.5px solid #e8d8d0;border-radius:9px;font-size:.95rem;box-sizing:border-box">
+      </div>
+
+      <div style="margin-bottom:14px">
+        <label style="display:block;font-size:.82rem;font-weight:600;margin-bottom:5px;color:var(--gray)">Когда получили</label>
+        <input id="em-gift-when" type="text" value="${esc(p.gift_when||'')}" placeholder="Например: Вчера" style="width:100%;padding:10px 12px;border:1.5px solid #e8d8d0;border-radius:9px;font-size:.95rem;box-sizing:border-box">
+      </div>
+
+      <div style="margin-bottom:14px">
+        <label style="display:block;font-size:.82rem;font-weight:600;margin-bottom:5px;color:var(--gray)">Цена в магазинах (TJS)</label>
+        <input id="em-market-price" type="number" value="${p.market_price||''}" placeholder="Необязательно" style="width:100%;padding:10px 12px;border:1.5px solid #e8d8d0;border-radius:9px;font-size:.95rem;box-sizing:border-box">
+      </div>
+
+      <div style="margin-bottom:14px">
+        <label style="display:block;font-size:.82rem;font-weight:600;margin-bottom:5px;color:var(--gray)">Продавец: имя</label>
+        <input id="em-seller-name" type="text" value="${esc(p.seller_name||'')}" style="width:100%;padding:10px 12px;border:1.5px solid #e8d8d0;border-radius:9px;font-size:.95rem;box-sizing:border-box">
+      </div>
+
+      <div style="margin-bottom:14px">
+        <label style="display:block;font-size:.82rem;font-weight:600;margin-bottom:5px;color:var(--gray)">Продавец: телефон</label>
+        <input id="em-seller-phone" type="text" value="${esc(p.seller_phone||'')}" style="width:100%;padding:10px 12px;border:1.5px solid #e8d8d0;border-radius:9px;font-size:.95rem;box-sizing:border-box">
+      </div>
+
       <div style="display:flex;gap:10px;margin-top:20px">
         <button onclick="saveEdit(false)" style="flex:1;padding:12px;background:#f0f0f0;border:none;border-radius:10px;font-size:.95rem;cursor:pointer;font-weight:600">
           💾 Сохранить
@@ -268,14 +293,24 @@ window.saveEdit = async (andApprove = false) => {
   const address     = document.getElementById('em-address')?.value.trim() || '';
   const pickup_time = document.getElementById('em-pickup_time')?.value.trim() || '';
 
-  fd.append('title',       title);
-  fd.append('description', description);
-  fd.append('category',    category);
-  fd.append('price',       price);  // Цена без комиссии — как есть
-  fd.append('city',        city);
-  fd.append('address',     address);
-  fd.append('pickup_time', pickup_time);
-  fd.append('admin_edit',  'true');  // Флаг: не добавлять комиссию
+  const size        = document.getElementById('em-size')?.value.trim()        || '';
+  const gift_when   = document.getElementById('em-gift-when')?.value.trim()   || '';
+  const market_price= document.getElementById('em-market-price')?.value       || '';
+  const seller_name = document.getElementById('em-seller-name')?.value.trim() || '';
+  const seller_phone= document.getElementById('em-seller-phone')?.value.trim()|| '';
+
+  fd.append('title',        title);
+  fd.append('description',  description);
+  fd.append('category',     category);
+  fd.append('price',        price); // Окончательная цена от админа
+  fd.append('city',         city);
+  fd.append('address',      address);
+  fd.append('pickup_time',  pickup_time);
+  fd.append('size',         size);
+  fd.append('gift_when',    gift_when);
+  if (market_price) fd.append('market_price', market_price);
+  if (seller_name)  fd.append('seller_name',  seller_name);
+  if (seller_phone) fd.append('seller_phone', seller_phone);
   if (andApprove) fd.append('status', 'active');
 
   try {
