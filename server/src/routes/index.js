@@ -2,7 +2,7 @@
 
 const router = require('express').Router();
 const auth   = require('../middleware/auth');
-const { upload } = require('../middleware/upload');
+const { uploadMiddleware } = require('../middleware/upload');
 
 const A = require('../controllers/auth');
 const P = require('../controllers/products');
@@ -14,13 +14,13 @@ router.post('/admin/change-password', auth, A.changePassword);
 router.get('/products',       P.getProducts);
 router.get('/products/:id',   P.getProduct);
 router.get('/cities',         P.getCities);
-router.post('/products',      upload.array('photos', 15), P.createProduct);
+router.post('/products',      uploadMiddleware, P.createProduct);
 
 router.post('/inquiries', I.createInquiry);
 
 router.get('/admin/products',         auth, P.adminList);
 router.get('/admin/products/:id',     auth, P.adminGet);
-router.put('/admin/products/:id',     auth, upload.array('photos', 15), P.adminUpdate);
+router.put('/admin/products/:id',     auth, uploadMiddleware, P.adminUpdate);
 router.delete('/admin/products/:id',  auth, P.adminDelete);
 
 router.get('/admin/inquiries',              auth, I.getInquiries);
