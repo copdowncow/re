@@ -1,8 +1,46 @@
 'use strict';
+
 const { q, uploadPhoto, getClient } = require('../db/supabase');
-const { notifyProduct, notifySellerApproved, notifySellerRejected } = require('../services/telegram'); // ← добавлено
+const { notifyProduct, notifySellerApproved, notifySellerRejected } = require('../services/telegram');
 const { v4: uuid } = require('uuid');
 
+const sharp = require('sharp');
+const convert = require('heic-convert');
+
+// ─────────────────────────────
+// 📸 ОБРАБОТКА ИЗОБРАЖЕНИЙ
+// ─────────────────────────────
+async function processImage(file) {
+  let buffer = file.buffer;
+  const name = (file.originalname || '').toLowerCase();
+
+  try {
+    // HEIC → JPG
+    if (name.endsWith('.heic') || name.endsWith('.heif')) {
+      buffer = await convert({
+        buffer,
+        format: 'JPEG',
+        quality: 0.9
+      });
+    }
+
+    // Любой формат → JPG, resize до 1200x1200
+    const output = await sharp(buffer)
+      .rotate()
+      .resize(1200, 1200, { fit: 'inside' })
+      .jpeg({ quality: 85 })
+      .toBuffer();
+
+    return output;
+  } catch (e) {
+    console.error('Image error:', e.message);
+    throw new Error('Ошибка обработки изображения');
+  }
+}
+
+// ─────────────────────────────
+// 🔤 SLUG
+// ─────────────────────────────
 function toSlug(str) {
   if (!str) return '';
   const map = {
@@ -38,13 +76,16 @@ async function uniqueSlug(base) {
 
 function publicProduct(p) {
   if (!p) return null;
-  const { seller_phone, seller_telegram, seller_name, seller_chat_id, ...pub } = p; // ← seller_chat_id тоже скрываем
+  const { seller_phone, seller_telegram, seller_name, seller_chat_id, ...pub } = p;
   return {
     ...pub,
     status: p.status || 'unknown'
   };
 }
 
+// ─────────────────────────────
+// 📦 GET PRODUCTS
+// ─────────────────────────────
 exports.getProducts = async (req, res) => {
   try {
     const { category, city, min_price, max_price, search, page = 1, limit = 20 } = req.query;
@@ -83,9 +124,13 @@ exports.getProducts = async (req, res) => {
   }
 };
 
+// ─────────────────────────────
+// 📦 GET PRODUCT
+// ─────────────────────────────
+
 // Кеш просмотров: ip+productId -> timestamp последнего просмотра
 const _viewCache = new Map();
-const VIEW_TTL   = 30 * 60 * 1000; // 30 минут
+const VIEW_TTL = 30 * 60 * 1000; // 30 минут
 
 exports.getProduct = async (req, res) => {
   try {
@@ -105,7 +150,7 @@ exports.getProduct = async (req, res) => {
     }
 
     // Считаем просмотр только раз в 30 минут с одного IP
-    const ip      = req.headers['x-forwarded-for']?.split(',')[0] || req.socket.remoteAddress || 'unknown';
+    const ip       = req.headers['x-forwarded-for']?.split(',')[0] || req.socket.remoteAddress || 'unknown';
     const cacheKey = ip + ':' + data.id;
     const lastView = _viewCache.get(cacheKey);
     const now      = Date.now();
@@ -129,6 +174,9 @@ exports.getProduct = async (req, res) => {
   }
 };
 
+// ─────────────────────────────
+// 🏙 GET CITIES
+// ─────────────────────────────
 exports.getCities = async (req, res) => {
   try {
     const { data, error } = await getClient()
@@ -150,13 +198,16 @@ exports.getCities = async (req, res) => {
   }
 };
 
+// ─────────────────────────────
+// 📦 CREATE PRODUCT
+// ─────────────────────────────
 exports.createProduct = async (req, res) => {
   try {
     const {
       title, description, category, price, city,
       seller_name, seller_phone, seller_telegram,
       address, pickup_time, gift_when, market_price, size,
-      seller_chat_id  // ← добавлено: chat_id продавца из Telegram
+      seller_chat_id
     } = req.body;
 
     if (!title || !category || !price || !city || !seller_phone) {
@@ -175,18 +226,18 @@ exports.createProduct = async (req, res) => {
       .from('products')
       .insert({
         title,
-        description: description || null,
+        description:     description     || null,
         category,
-        price: Number(price),
+        price:           Number(price),
         city,
         seller_name:     seller_name     || null,
         seller_phone,
         seller_telegram: seller_telegram || null,
         address:         address         || null,
         pickup_time:     pickup_time     || null,
-        gift_when:       req.body.gift_when || null,
-        market_price:    market_price ? Number(market_price) : null,
-        size:            req.body.size || null,
+        gift_when:       gift_when       || null,
+        market_price:    market_price    ? Number(market_price) : null,
+        size:            size            || null,
         seller_chat_id:  seller_chat_id  || null,
         photos: [],
         slug,
@@ -197,7 +248,7 @@ exports.createProduct = async (req, res) => {
 
     if (error) throw error;
 
-    // Отвечаем клиенту сразу не ожидая загрузки фото
+    // Отвечаем клиенту сразу, не ожидая загрузки фото
     res.status(201).json({
       id: data.id,
       slug: data.slug,
@@ -206,17 +257,26 @@ exports.createProduct = async (req, res) => {
       previewUrl: `/products/${data.slug}`
     });
 
-    // Загружаем фото в фоне
-    Promise.all(files.map(f => uploadPhoto(f.buffer, f.originalname, f.mimetype)))
+    // Загружаем фото в фоне с обработкой (HEIC, resize, jpeg)
+    Promise.all(
+      files.map(async (f) => {
+        const processed = await processImage(f);
+        return uploadPhoto(processed, `${uuid()}.jpg`, 'image/jpeg');
+      })
+    )
       .then(photos => getClient().from('products').update({ photos }).eq('id', data.id))
       .then(() => notifyProduct({ ...data }))
       .catch(err => console.error('Фото/уведомление ошибка:', err));
+
   } catch (e) {
     console.error('[createProduct]', e);
     res.status(500).json({ error: e.message || 'Ошибка при создании объявления' });
   }
 };
 
+// ─────────────────────────────
+// 🛠 ADMIN: LIST
+// ─────────────────────────────
 exports.adminList = async (req, res) => {
   try {
     const { status, page = 1, limit = 50 } = req.query;
@@ -238,7 +298,7 @@ exports.adminList = async (req, res) => {
     // Автоудаляем просроченные букеты и корзины
     const now = new Date();
     const expired = (data || []).filter(p =>
-      ['bouquet','basket'].includes(p.category) &&
+      ['bouquet', 'basket'].includes(p.category) &&
       p.expires_at && new Date(p.expires_at) < now
     );
     if (expired.length) {
@@ -260,6 +320,9 @@ exports.adminList = async (req, res) => {
   }
 };
 
+// ─────────────────────────────
+// 🛠 ADMIN: GET ONE
+// ─────────────────────────────
 exports.adminGet = async (req, res) => {
   try {
     const { data, error } = await getClient()
@@ -279,6 +342,9 @@ exports.adminGet = async (req, res) => {
   }
 };
 
+// ─────────────────────────────
+// 🛠 ADMIN: UPDATE
+// ─────────────────────────────
 exports.adminUpdate = async (req, res) => {
   try {
     const id = req.params.id;
@@ -311,9 +377,13 @@ exports.adminUpdate = async (req, res) => {
       updates.is_admin_price = true; // Флаг что цена финальная
     }
 
+    // Загружаем новые фото с обработкой (HEIC, resize, jpeg)
     if (req.files?.length) {
       const newUrls = await Promise.all(
-        req.files.map(f => uploadPhoto(f.buffer, f.originalname, f.mimetype))
+        req.files.map(async (f) => {
+          const processed = await processImage(f);
+          return uploadPhoto(processed, `${uuid()}.jpg`, 'image/jpeg');
+        })
       );
       updates.photos = [...(existing.photos || []), ...newUrls];
     }
@@ -349,6 +419,9 @@ exports.adminUpdate = async (req, res) => {
   }
 };
 
+// ─────────────────────────────
+// 🛠 ADMIN: DELETE
+// ─────────────────────────────
 exports.adminDelete = async (req, res) => {
   try {
     const { error } = await getClient()
