@@ -1,39 +1,88 @@
 'use strict';
-const multer = require('multer');
 
+const multer = require('multer');
+const path = require('path');
+
+// 📌 Разрешённые расширения (реально используемые)
+const allowedExt = [
+  '.jpg', '.jpeg', '.png', '.webp',
+  '.heic', '.heif',
+  '.bmp', '.tiff', '.tif'
+];
+
+// 📌 Разрешённые MIME (но не полагаемся только на них)
 const allowedMime = [
   'image/jpeg',
-  'image/jpg',
   'image/png',
   'image/webp',
   'image/heic',
   'image/heif',
-  'image/tiff',
   'image/bmp',
-  'image/x-canon-cr2',
-  'image/x-canon-cr3',
-  'image/x-nikon-nef',
-  'image/x-sony-arw',
-  'image/x-fuji-raf',
-  'image/x-adobe-dng'
+  'image/tiff'
 ];
 
-const upload = multer({
-  storage: multer.memoryStorage(),
-  limits: { fileSize: 10 * 1024 * 1024 },
+// 📌 Проверка файла
+function fileFilter(req, file, cb) {
+  try {
+    const ext = path.extname(file.originalname).toLowerCase();
+    const mime = file.mimetype;
 
-  fileFilter(req, file, cb) {
-    const isAllowedMime = allowedMime.includes(file.mimetype);
+    const extOk = allowedExt.includes(ext);
+    const mimeOk = allowedMime.includes(mime);
 
-    const ext = file.originalname.toLowerCase();
-    const isAllowedExt = ext.match(/\.(jpg|jpeg|png|webp|heic|heif|bmp|tiff|tif|dng|cr2|cr3|nef|arw|raf)$/);
-
-    if (isAllowedMime || isAllowedExt) {
-      cb(null, true);
-    } else {
-      cb(new Error('Неподдерживаемый формат файла'));
+    // ⚠️ иногда mime кривой → разрешаем если совпадает хотя бы одно
+    if (extOk || mimeOk) {
+      return cb(null, true);
     }
+
+    return cb(new Error('Поддерживаются: JPG, PNG, WebP, HEIC, BMP, TIFF'));
+
+  } catch (e) {
+    return cb(new Error('Ошибка проверки файла'));
   }
+}
+
+// 📌 Ограничения
+const limits = {
+  fileSize: 10 * 1024 * 1024, // 10MB
+  files: 10 // максимум 10 файлов
+};
+
+// 📌 Хранилище (в памяти → потом обрабатываешь через sharp)
+const storage = multer.memoryStorage();
+
+// 📌 Сам upload
+const upload = multer({
+  storage,
+  limits,
+  fileFilter
 });
 
-module.exports = { upload };
+// 📌 Обёртка для нормальных ошибок (важно!)
+function uploadMiddleware(req, res, next) {
+  upload.array('photos', 10)(req, res, function (err) {
+
+    if (err instanceof multer.MulterError) {
+      if (err.code === 'LIMIT_FILE_SIZE') {
+        return res.status(400).json({ error: 'Файл слишком большой (макс 10MB)' });
+      }
+      if (err.code === 'LIMIT_FILE_COUNT') {
+        return res.status(400).json({ error: 'Слишком много файлов (макс 10)' });
+      }
+      return res.status(400).json({ error: err.message });
+    }
+
+    if (err) {
+      return res.status(400).json({ error: err.message });
+    }
+
+    // 📌 дополнительная защита — проверка что файлы вообще есть
+    if (!req.files || req.files.length === 0) {
+      return res.status(400).json({ error: 'Файлы не загружены' });
+    }
+
+    next();
+  });
+}
+
+module.exports = { uploadMiddleware };
