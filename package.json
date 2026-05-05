@@ -1,4 +1,13 @@
-"dependencies": {
+{
+  "name": "rebuket",
+  "version": "2.0.0",
+  "description": "ReBuket — маркетплейс букетов и сладостей",
+  "main": "server/src/index.js",
+  "scripts": {
+    "start": "node server/src/index.js",
+    "dev": "node --watch server/src/index.js"
+  },
+  "dependencies": {
     "@supabase/supabase-js": "^2.45.4",
     "bcryptjs": "^2.4.3",
     "cors": "^2.8.5",
@@ -15,3 +24,4 @@
     "uuid": "^10.0.0",
     "sharp": "^0.33.4"
   }
+}
