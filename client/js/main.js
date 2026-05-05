@@ -2,7 +2,7 @@
 import { api }  from './api.js';
 import { esc, fmt, toast, openModal, goPage } from './utils.js';
 
-const COMMISSION = 0.20;
+const COMMISSION = 0.25;
 const _cache = new Map();
 const CACHE_TTL = 30000;
 
@@ -407,19 +407,52 @@ window.selectGiftWhen = (val, el) => {
   document.getElementById('gift-when-error').style.display = 'none';
 };
 
+// Обновляем UI поля размера в зависимости от категории
+function updateSizeField(catVal) {
+  const sizeField = document.getElementById('size-field');
+  if (!sizeField) return;
+
+  const needsSize = ['bouquet', 'basket', 'bear'].includes(catVal);
+  sizeField.style.display = needsSize ? '' : 'none';
+
+  if (!needsSize) {
+    document.getElementById('sell-size').value = '';
+    document.querySelectorAll('#size-chips .chip').forEach(b => b.classList.remove('active'));
+    return;
+  }
+
+  // Переключаем между чипами и текстовым полем
+  const chipsWrap   = document.getElementById('size-chips-wrap');
+  const textWrap    = document.getElementById('size-text-wrap');
+
+  if (catVal === 'bear') {
+    // Для мишек — числовое поле
+    if (chipsWrap) chipsWrap.style.display = 'none';
+    if (textWrap)  textWrap.style.display  = '';
+    document.getElementById('sell-size').value = '';
+  } else {
+    // Для букетов и корзин — чипы
+    if (chipsWrap) chipsWrap.style.display = '';
+    if (textWrap)  textWrap.style.display  = 'none';
+    document.getElementById('sell-size').value = '';
+    document.querySelectorAll('#size-chips .chip').forEach(b => b.classList.remove('active'));
+  }
+}
+
 window.selectCat = (el) => {
   document.querySelectorAll('.cat-sel').forEach(e => e.classList.remove('active'));
   el.classList.add('active');
   const val = el.dataset.val;
   document.getElementById('sell-cat-val').value = val;
-  const sizeField = document.getElementById('size-field');
-  if (sizeField) {
-    sizeField.style.display = ['bouquet','basket','bear'].includes(val) ? '' : 'none';
-    if (!['bouquet','basket','bear'].includes(val)) {
-      document.getElementById('sell-size').value = '';
-      document.querySelectorAll('#size-chips .chip').forEach(b => b.classList.remove('active'));
-    }
-  }
+  updateSizeField(val);
+};
+
+window.updateBearSizeInput = () => {
+  const val = document.getElementById('sell-size-text')?.value.trim();
+  const hidden = document.getElementById('sell-size');
+  if (hidden) hidden.value = val ? val + ' см' : '';
+  const err = document.getElementById('size-error');
+  if (err && val) err.style.display = 'none';
 };
 
 window.updatePricePreview = () => {
@@ -464,12 +497,9 @@ document.addEventListener('DOMContentLoaded', () => {
     if (el) el.addEventListener('input', () => markField(id, true));
   });
 
-  // Показываем поле размера если категория уже выбрана
+  // Инициализируем поле размера по текущей категории
   const catVal = document.getElementById('sell-cat-val')?.value;
-  const sizeField = document.getElementById('size-field');
-  if (sizeField && catVal && ['bouquet','basket','bear'].includes(catVal)) {
-    sizeField.style.display = '';
-  }
+  if (catVal) updateSizeField(catVal);
 });
 
 window.submitListing = async () => {
@@ -487,12 +517,18 @@ window.submitListing = async () => {
   const catEl = document.querySelector('.cat-sel-wrap');
   if (catEl) catEl.style.outline = category ? '' : '2px solid #dc3545';
 
-  const category2 = document.getElementById('sell-cat-val')?.value;
+  // Синхронизируем значение для мишек из текстового поля
+  if (category === 'bear') {
+    const bearText = document.getElementById('sell-size-text')?.value.trim();
+    const hidden = document.getElementById('sell-size');
+    if (hidden) hidden.value = bearText ? bearText + ' см' : '';
+  }
+
   const size = document.getElementById('sell-size')?.value;
-  const needsSize = ['bouquet','basket','bear'].includes(category2);
+  const needsSize = ['bouquet','basket','bear'].includes(category);
   if (needsSize && !size) {
     document.getElementById('size-error').style.display = 'block';
-    document.getElementById('size-chips')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    document.getElementById('size-field')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
   }
 
   const giftWhen = document.getElementById('sell-gift-when')?.value;
@@ -510,7 +546,7 @@ window.submitListing = async () => {
     return;
   }
   if (needsSize && !size) {
-    toast('Выберите размер!','err');
+    toast(category === 'bear' ? 'Введите размер мишки!' : 'Выберите размер!','err');
     return;
   }
   if (!giftWhen) {
@@ -555,6 +591,7 @@ window.submitListing = async () => {
     document.querySelectorAll('#gift-when-chips .chip').forEach(b => b.classList.remove('active'));
     const mpEl = document.getElementById('sell-market-price'); if (mpEl) mpEl.value = '';
     document.getElementById('sell-size').value = '';
+    const sizeText = document.getElementById('sell-size-text'); if (sizeText) sizeText.value = '';
     document.querySelectorAll('#size-chips .chip').forEach(b => b.classList.remove('active'));
     const sf = document.getElementById('size-field'); if (sf) sf.style.display = 'none';
     sellFiles = []; renderSellPhotos();
