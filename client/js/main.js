@@ -2,7 +2,6 @@
 import { api }  from './api.js';
 import { esc, fmt, toast, openModal, goPage } from './utils.js';
 
-const COMMISSION = 0.25;
 const _cache = new Map();
 const CACHE_TTL = 30000;
 
@@ -19,7 +18,16 @@ function imgUrl(url, w = 400) {
   }
   return url;
 }
-function priceWithCommission(p) { return Math.ceil(Number(p) * (1 + COMMISSION) / 10) * 10; }
+
+function getCommission(category) {
+  return category === 'sweets' ? 0.10 : 0.25;
+}
+
+function priceWithCommission(p) {
+  if (p.is_admin_price) return Number(p.price);
+  return Math.ceil(Number(p.price) * (1 + getCommission(p.category)) / 10) * 10;
+}
+
 function fmtPrice(p) { return Number(p).toLocaleString('ru-RU') + ' TJS'; }
 
 const EXPIRY_CATS = ['bouquet', 'basket'];
@@ -95,7 +103,7 @@ function pCard(p) {
       '<h4>' + esc(p.title) + '</h4>' +
       '<p>' + esc((p.description||'').substring(0,65)) + '...</p>' +
       '<div class="pmeta">' +
-        '<div><span class="pprice">' + fmtPrice(priceWithCommission(p.price)) + '</span></div>' +
+        '<div><span class="pprice">' + fmtPrice(priceWithCommission(p)) + '</span></div>' +
         '<span class="pcity">📍' + esc(p.city) + '</span>' +
       '</div>' +
     '</div>' +
@@ -163,7 +171,7 @@ function renderDetail(p, el) {
           expiryChip(p) +
         '</div>' +
         '<h2>' + esc(p.title) + '</h2>' +
-        '<div class="pd-price">' + fmtPrice(priceWithCommission(p.price)) + '</div>' +
+        '<div class="pd-price">' + fmtPrice(priceWithCommission(p)) + '</div>' +
         '<p class="pd-desc">' + esc(p.description||'') + '</p>' +
         '<div class="share-row">🔗 <input id="share-inp" type="text" value="' + esc(pUrl) + '" readonly><button onclick="copyLink()">Копировать</button></div>' +
         infoHtml +
@@ -260,7 +268,6 @@ window.submitInquiry = async () => {
       if (el) el.value = '';
     });
 
-    // Строим готовое сообщение для администратора
     const NL = '\n';
     let msg = '🌸 Здравствуйте! Хочу купить:' + NL + NL;
     msg += '📦 ' + title + NL;
@@ -274,7 +281,6 @@ window.submitInquiry = async () => {
     const adminHandle = adminRaw.replace('https://t.me/', '').replace('@', '').trim();
     const adminUrl    = 'https://t.me/' + adminHandle + '?text=' + encodeURIComponent(msg);
 
-    // Показываем попап
     const oldP = document.getElementById('inq-popup');
     if (oldP) oldP.remove();
 
@@ -297,7 +303,6 @@ window.submitInquiry = async () => {
     ds.style.cssText = 'color:#555;font-size:.9rem;line-height:1.5;margin-bottom:22px';
     ds.textContent = 'Скопируйте готовое сообщение, откройте чат администратора и вставьте его.';
 
-    // Текстовое поле с готовым сообщением
     const ta = document.createElement('textarea');
     ta.value = msg;
     ta.readOnly = true;
@@ -407,7 +412,6 @@ window.selectGiftWhen = (val, el) => {
   document.getElementById('gift-when-error').style.display = 'none';
 };
 
-// Обновляем UI поля размера в зависимости от категории
 function updateSizeField(catVal) {
   const sizeField = document.getElementById('size-field');
   if (!sizeField) return;
@@ -421,17 +425,14 @@ function updateSizeField(catVal) {
     return;
   }
 
-  // Переключаем между чипами и текстовым полем
   const chipsWrap   = document.getElementById('size-chips-wrap');
   const textWrap    = document.getElementById('size-text-wrap');
 
   if (catVal === 'bear') {
-    // Для мишек — числовое поле
     if (chipsWrap) chipsWrap.style.display = 'none';
     if (textWrap)  textWrap.style.display  = '';
     document.getElementById('sell-size').value = '';
   } else {
-    // Для букетов и корзин — чипы
     if (chipsWrap) chipsWrap.style.display = '';
     if (textWrap)  textWrap.style.display  = 'none';
     document.getElementById('sell-size').value = '';
@@ -457,9 +458,11 @@ window.updateBearSizeInput = () => {
 
 window.updatePricePreview = () => {
   const val = Number(document.getElementById('sell-price').value);
+  const cat = document.getElementById('sell-cat-val')?.value || '';
   const preview = document.getElementById('price-preview');
   if (!val || val <= 0) { if(preview) preview.style.display = 'none'; return; }
-  const total = Math.ceil(val * (1 + COMMISSION) / 10) * 10;
+  const rate = getCommission(cat);
+  const total = Math.ceil(val * (1 + rate) / 10) * 10;
   document.getElementById('price-seller').textContent = fmtPrice(val);
   document.getElementById('price-total').textContent  = fmtPrice(total);
   if(preview) preview.style.display = 'block';
@@ -497,7 +500,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if (el) el.addEventListener('input', () => markField(id, true));
   });
 
-  // Инициализируем поле размера по текущей категории
   const catVal = document.getElementById('sell-cat-val')?.value;
   if (catVal) updateSizeField(catVal);
 });
@@ -517,7 +519,6 @@ window.submitListing = async () => {
   const catEl = document.querySelector('.cat-sel-wrap');
   if (catEl) catEl.style.outline = category ? '' : '2px solid #dc3545';
 
-  // Синхронизируем значение для мишек из текстового поля
   if (category === 'bear') {
     const bearText = document.getElementById('sell-size-text')?.value.trim();
     const hidden = document.getElementById('sell-size');
