@@ -20,7 +20,7 @@ router.post('/inquiries', I.createInquiry);
 
 router.get('/admin/products',         auth, P.adminList);
 router.get('/admin/products/:id',     auth, P.adminGet);
-router.put('/admin/products/:id',     auth, uploadMiddlewareOptional, P.adminUpdate); // ← опциональный
+router.put('/admin/products/:id',     auth, uploadMiddlewareOptional, P.adminUpdate);
 router.delete('/admin/products/:id',  auth, P.adminDelete);
 
 router.get('/admin/inquiries',              auth, I.getInquiries);
