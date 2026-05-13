@@ -25,7 +25,7 @@ function getCommission(category) {
 
 function priceWithCommission(p) {
   if (p.is_admin_price) return Number(p.price);
-  return Math.ceil(Number(p.price) * (1 + getCommission(p.category)) / 10) * 10;
+  return Math.ceil((Number(p.price) * (1 + getCommission(p.category))).toFixed(2) / 10) * 10;
 }
 
 function fmtPrice(p) { return Number(p).toLocaleString('ru-RU') + ' TJS'; }
@@ -462,7 +462,7 @@ window.updatePricePreview = () => {
   const preview = document.getElementById('price-preview');
   if (!val || val <= 0) { if(preview) preview.style.display = 'none'; return; }
   const rate = getCommission(cat);
-  const total = Math.ceil(val * (1 + rate) / 10) * 10;
+  const total = Math.ceil((val * (1 + rate)).toFixed(2) / 10) * 10;
   document.getElementById('price-seller').textContent = fmtPrice(val);
   document.getElementById('price-total').textContent  = fmtPrice(total);
   if(preview) preview.style.display = 'block';
