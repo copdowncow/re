@@ -1,8 +1,8 @@
 'use strict';
- 
+
 const router = require('express').Router();
 const auth   = require('../middleware/auth');
-const { uploadMiddleware } = require('../middleware/upload');
+const { uploadMiddleware, uploadMiddlewareOptional } = require('../middleware/upload');
 
 const A = require('../controllers/auth');
 const P = require('../controllers/products');
@@ -20,11 +20,9 @@ router.post('/inquiries', I.createInquiry);
 
 router.get('/admin/products',         auth, P.adminList);
 router.get('/admin/products/:id',     auth, P.adminGet);
-router.put('/admin/products/:id',     auth, uploadMiddleware, P.adminUpdate);
+router.put('/admin/products/:id',     auth, uploadMiddlewareOptional, P.adminUpdate); // ← опциональный
 router.delete('/admin/products/:id',  auth, P.adminDelete);
 
 router.get('/admin/inquiries',              auth, I.getInquiries);
 router.patch('/admin/inquiries/:id/status', auth, I.updateInquiry);
 router.get('/admin/stats',                  auth, I.getStats);
-
-module.exports = router;
