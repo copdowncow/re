@@ -2,6 +2,8 @@
 import { api, setTok, clrTok, isAuth } from './api.js';
 import { esc, fmt, fmtD, toast }        from './utils.js';
 
+const COMMISSION = 0.25; // ← 25%
+
 export function checkAdminAuth() {
   if (isAuth()) showDash();
 }
@@ -79,6 +81,19 @@ window.setPFilter = (s,el) => {
   renderProducts();
 };
 
+function priceOnChannel(p) {
+  // Если цена уже финальная (поставлена админом) — показываем как есть
+  // Иначе добавляем комиссию 25%
+  if (p.is_admin_price) return p.price;
+  return Math.ceil(p.price * (1 + COMMISSION) / 10) * 10;
+}
+
+function priceToSeller(p) {
+  // Доля продавца: если цена финальная — вычитаем комиссию, иначе оригинал
+  if (p.is_admin_price) return Math.round(p.price / (1 + COMMISSION));
+  return p.price;
+}
+
 async function renderProducts() {
   const el = document.getElementById('tab-products');
   el.innerHTML = `
@@ -128,9 +143,9 @@ async function renderProducts() {
           </div>
           <div style="text-align:right;min-width:130px">
             <div style="font-size:.7rem;color:var(--gray);margin-bottom:2px">Цена на канале</div>
-            <div class="acard-price">${p.is_admin_price ? fmt(p.price) : fmt(Math.ceil(p.price * 1.2 / 10) * 10)} TJS</div>
+            <div class="acard-price">${fmt(priceOnChannel(p))} TJS</div>
             <div style="font-size:.72rem;color:var(--gray);margin-top:4px">Доля продавца</div>
-            <div style="font-size:.85rem;font-weight:700;color:#27ae60">${p.is_admin_price ? fmt(Math.round(p.price / 1.2)) : fmt(p.price)} TJS</div>
+            <div style="font-size:.85rem;font-weight:700;color:#27ae60">${fmt(priceToSeller(p))} TJS</div>
           </div>
         </div>
 
@@ -185,7 +200,6 @@ window.openEditModal = (id) => {
   const p = _productsCache.find(x => x.id === id);
   if (!p) { toast('Объявление не найдено', 'err'); return; }
 
-  // Создаём модальное окно если его ещё нет
   let modal = document.getElementById('edit-modal');
   if (!modal) {
     modal = document.createElement('div');
@@ -294,10 +308,9 @@ window.saveEdit = async (andApprove = false) => {
 
   if (!title || !price) { toast('Заполните название и цену','err'); return; }
 
-  const fd = new FormData();
-  const address     = document.getElementById('em-address')?.value.trim() || '';
+  const fd          = new FormData();
+  const address     = document.getElementById('em-address')?.value.trim()     || '';
   const pickup_time = document.getElementById('em-pickup_time')?.value.trim() || '';
-
   const size        = document.getElementById('em-size')?.value.trim()        || '';
   const gift_when   = document.getElementById('em-gift-when')?.value.trim()   || '';
   const market_price= document.getElementById('em-market-price')?.value       || '';
@@ -307,7 +320,7 @@ window.saveEdit = async (andApprove = false) => {
   fd.append('title',        title);
   fd.append('description',  description);
   fd.append('category',     category);
-  fd.append('price',        price); // Окончательная цена от админа
+  fd.append('price',        price);
   fd.append('city',         city);
   fd.append('address',      address);
   fd.append('pickup_time',  pickup_time);
@@ -316,7 +329,7 @@ window.saveEdit = async (andApprove = false) => {
   if (market_price) fd.append('market_price', market_price);
   if (seller_name)  fd.append('seller_name',  seller_name);
   if (seller_phone) fd.append('seller_phone', seller_phone);
-  if (andApprove) fd.append('status', 'active');
+  if (andApprove)   fd.append('status', 'active');
 
   try {
     await api.updateProduct(id, fd);
