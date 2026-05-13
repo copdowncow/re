@@ -1,7 +1,6 @@
 'use strict';
 require('dotenv').config();
 
-// Проверяем наличие telegram модуля
 let TelegramClientLib = null;
 let StringSessionLib  = null;
 try {
@@ -11,18 +10,46 @@ try {
 } catch(e) {
   console.log('⚠️  telegram (gramjs) не найден:', e.message);
 }
+
 const express   = require('express');
 const cors      = require('cors');
 const helmet    = require('helmet');
 const rateLimit = require('express-rate-limit');
 const path      = require('path');
-const { getClient }                = require('./db/supabase');
+const { getClient } = require('./db/supabase');
 const { initBots, setupCallbacks, notifySellerApproved, notifySellerRejected, markExpiredInChannel } = require('./services/telegram');
-const routes = require('./routes'); // ← исправлено
+const { uploadMiddleware, uploadMiddlewareOptional } = require('./middleware/upload');
 
-const app  = express();
-const PORT = process.env.PORT || 3000;
+const auth = require('./middleware/auth');
+const A    = require('./controllers/auth');
+const P    = require('./controllers/products');
+const I    = require('./controllers/inquiries');
 
+const app    = express();
+const PORT   = process.env.PORT || 3000;
+const router = express.Router();
+
+// ── Роуты ────────────────────────────────────────────────
+router.post('/admin/login',           A.login);
+router.post('/admin/change-password', auth, A.changePassword);
+
+router.get('/products',     P.getProducts);
+router.get('/products/:id', P.getProduct);
+router.get('/cities',       P.getCities);
+router.post('/products',    uploadMiddleware, P.createProduct);
+
+router.post('/inquiries', I.createInquiry);
+
+router.get('/admin/products',         auth, P.adminList);
+router.get('/admin/products/:id',     auth, P.adminGet);
+router.put('/admin/products/:id',     auth, uploadMiddlewareOptional, P.adminUpdate);
+router.delete('/admin/products/:id',  auth, P.adminDelete);
+
+router.get('/admin/inquiries',              auth, I.getInquiries);
+router.patch('/admin/inquiries/:id/status', auth, I.updateInquiry);
+router.get('/admin/stats',                  auth, I.getStats);
+
+// ── App ──────────────────────────────────────────────────
 app.set('trust proxy', 1);
 
 app.use(helmet({ contentSecurityPolicy: false, crossOriginResourcePolicy: { policy: 'cross-origin' } }));
@@ -40,7 +67,7 @@ app.get('/api/config', (req, res) => res.json({
   bot_username: process.env.BOT_USERNAME    || 'ReBuket_bot',
 }));
 
-app.use('/api', routes);
+app.use('/api', router);
 
 // ── Счётчики ID ──────────────────────────────────────────
 app.post('/api/admin/counter', async (req, res) => {
@@ -55,7 +82,7 @@ app.post('/api/admin/counter', async (req, res) => {
   } catch(e) { res.status(500).json({ error: e.message }); }
 });
 
-// ── User Bot авторизация (одноразовая) ────────────────────
+// ── User Bot авторизация ──────────────────────────────────
 const _authState = {};
 app.get('/api/userbot/auth', async (req, res) => {
   try {
@@ -97,35 +124,25 @@ app.use((err, req, res, next) => {
 
 app.get('*', (req, res) => res.sendFile(path.join(CLIENT_DIR, 'index.html')));
 
-// ── Автоудаление просроченных объявлений ─────────────────
+// ── Автоудаление просроченных ─────────────────────────────
 async function removeExpiredProducts() {
   try {
     const now        = new Date().toISOString();
     const twoDaysAgo = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString();
-
     const { data: expired, error: fetchErr } = await getClient()
       .from('products')
       .select('*')
       .in('category', ['bouquet', 'basket'])
       .or(`expires_at.lt.${now},and(expires_at.is.null,created_at.lt.${twoDaysAgo})`);
-
     if (fetchErr) { console.log('Expire check error:', fetchErr.message); return; }
-
     if (expired?.length) {
-      for (const p of expired) {
-        await markExpiredInChannel(p).catch(() => {});
-      }
+      for (const p of expired) await markExpiredInChannel(p).catch(() => {});
       const ids = expired.map(p => p.id);
-      const { error: delErr } = await getClient()
-        .from('products')
-        .delete()
-        .in('id', ids);
+      const { error: delErr } = await getClient().from('products').delete().in('id', ids);
       if (delErr) { console.log('Delete error:', delErr.message); return; }
-      console.log(`🗑  Удалено просроченных объявлений: ${expired.length}`);
+      console.log(`🗑  Удалено просроченных: ${expired.length}`);
     }
-  } catch(e) {
-    console.log('Expire check error:', e.message);
-  }
+  } catch(e) { console.log('Expire check error:', e.message); }
 }
 
 async function start() {
