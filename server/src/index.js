@@ -18,12 +18,12 @@ const rateLimit = require('express-rate-limit');
 const path      = require('path');
 const { getClient }                = require('./db/supabase');
 const { initBots, setupCallbacks, notifySellerApproved, notifySellerRejected, markExpiredInChannel } = require('./services/telegram');
-const routes = require('./routes/index');
+const routes = require('./routes'); // ← исправлено
 
 const app  = express();
 const PORT = process.env.PORT || 3000;
 
-app.set('trust proxy', 1); // Доверяем прокси (Railway/Render/Nginx)
+app.set('trust proxy', 1);
 
 app.use(helmet({ contentSecurityPolicy: false, crossOriginResourcePolicy: { policy: 'cross-origin' } }));
 app.use(cors({ origin: '*' }));
@@ -62,7 +62,6 @@ app.get('/api/userbot/auth', async (req, res) => {
     const TelegramClient = TelegramClientLib;
     const StringSession  = StringSessionLib;
     if (!TelegramClient) return res.json({ error: 'telegram модуль не установлен' });
-    const readline           = require('readline');
     const apiId   = Number(process.env.TG_API_ID);
     const apiHash = process.env.TG_API_HASH;
     const phone   = process.env.TG_PHONE;
@@ -101,11 +100,9 @@ app.get('*', (req, res) => res.sendFile(path.join(CLIENT_DIR, 'index.html')));
 // ── Автоудаление просроченных объявлений ─────────────────
 async function removeExpiredProducts() {
   try {
-    const now = new Date().toISOString();
-    // Сначала получаем просроченные чтобы отредактировать посты в канале
+    const now        = new Date().toISOString();
     const twoDaysAgo = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString();
 
-    // Удаляем: у кого expires_at истёк ИЛИ у кого expires_at null но created_at > 2 дней назад
     const { data: expired, error: fetchErr } = await getClient()
       .from('products')
       .select('*')
@@ -115,18 +112,14 @@ async function removeExpiredProducts() {
     if (fetchErr) { console.log('Expire check error:', fetchErr.message); return; }
 
     if (expired?.length) {
-      // Редактируем посты в канале — меняем текст на "Снято с продажи"
       for (const p of expired) {
         await markExpiredInChannel(p).catch(() => {});
       }
-
-      // Удаляем из БД
       const ids = expired.map(p => p.id);
       const { error: delErr } = await getClient()
         .from('products')
         .delete()
         .in('id', ids);
-
       if (delErr) { console.log('Delete error:', delErr.message); return; }
       console.log(`🗑  Удалено просроченных объявлений: ${expired.length}`);
     }
@@ -145,11 +138,8 @@ async function start() {
 
   initBots();
 
-
-
   setupCallbacks(
     async (id) => {
-      // Устанавливаем expires_at для букетов и корзин
       const { data: existing } = await getClient().from('products').select('*').eq('id', id).single();
       const updates = { status: 'active' };
       if (existing && ['bouquet','basket'].includes(existing.category)) {
@@ -166,7 +156,6 @@ async function start() {
     }
   );
 
-  // Проверяем просроченные сразу при старте и затем каждые 30 минут
   await removeExpiredProducts();
   setInterval(removeExpiredProducts, 30 * 60 * 1000);
 
