@@ -2,7 +2,9 @@
 import { api, setTok, clrTok, isAuth } from './api.js';
 import { esc, fmt, fmtD, toast }        from './utils.js';
 
-const COMMISSION = 0.25; // ← 25%
+function getCommission(category) {
+  return category === 'sweets' ? 0.10 : 0.25;
+}
 
 export function checkAdminAuth() {
   if (isAuth()) showDash();
@@ -82,15 +84,12 @@ window.setPFilter = (s,el) => {
 };
 
 function priceOnChannel(p) {
-  // Если цена уже финальная (поставлена админом) — показываем как есть
-  // Иначе добавляем комиссию 25%
   if (p.is_admin_price) return p.price;
-  return Math.ceil(p.price * (1 + COMMISSION) / 10) * 10;
+  return Math.ceil(p.price * (1 + getCommission(p.category)) / 10) * 10;
 }
 
 function priceToSeller(p) {
-  // Доля продавца: если цена финальная — вычитаем комиссию, иначе оригинал
-  if (p.is_admin_price) return Math.round(p.price / (1 + COMMISSION));
+  if (p.is_admin_price) return Math.round(p.price / (1 + getCommission(p.category)));
   return p.price;
 }
 
@@ -286,6 +285,18 @@ window.openEditModal = (id) => {
         <input id="em-seller-phone" type="text" value="${esc(p.seller_phone||'')}" style="width:100%;padding:10px 12px;border:1.5px solid #e8d8d0;border-radius:9px;font-size:.95rem;box-sizing:border-box">
       </div>
 
+      <div style="margin-bottom:14px">
+        <label style="display:block;font-size:.82rem;font-weight:600;margin-bottom:5px;color:var(--gray)">
+          💰 Итоговая цена (от администратора)
+        </label>
+        <input id="em-admin-price" type="number" value="${p.is_admin_price ? p.price : ''}"
+          placeholder="Оставьте пустым — цена будет с комиссией"
+          style="width:100%;padding:10px 12px;border:1.5px solid #e8d8d0;border-radius:9px;font-size:.95rem;box-sizing:border-box">
+        <div style="font-size:.75rem;color:var(--gray);margin-top:4px">
+          Если заполнено — показывается как есть, без комиссии. Если пусто — к цене продавца добавится комиссия автоматически.
+        </div>
+      </div>
+
       <div style="display:flex;gap:10px;margin-top:20px">
         <button onclick="saveEdit(false)" style="flex:1;padding:12px;background:#f0f0f0;border:none;border-radius:10px;font-size:.95rem;cursor:pointer;font-weight:600">
           💾 Сохранить
@@ -305,6 +316,7 @@ window.saveEdit = async (andApprove = false) => {
   const category    = document.getElementById('em-category').value;
   const price       = document.getElementById('em-price').value;
   const city        = document.getElementById('em-city').value;
+  const adminPrice  = document.getElementById('em-admin-price')?.value.trim();
 
   if (!title || !price) { toast('Заполните название и цену','err'); return; }
 
@@ -320,7 +332,6 @@ window.saveEdit = async (andApprove = false) => {
   fd.append('title',        title);
   fd.append('description',  description);
   fd.append('category',     category);
-  fd.append('price',        price);
   fd.append('city',         city);
   fd.append('address',      address);
   fd.append('pickup_time',  pickup_time);
@@ -330,6 +341,15 @@ window.saveEdit = async (andApprove = false) => {
   if (seller_name)  fd.append('seller_name',  seller_name);
   if (seller_phone) fd.append('seller_phone', seller_phone);
   if (andApprove)   fd.append('status', 'active');
+
+  // Если админ заполнил итоговую цену — используем её и ставим флаг
+  if (adminPrice && Number(adminPrice) > 0) {
+    fd.append('price', adminPrice);
+    fd.append('is_admin_price', 'true');
+  } else {
+    fd.append('price', price);
+    fd.append('is_admin_price', 'false');
+  }
 
   try {
     await api.updateProduct(id, fd);
@@ -362,7 +382,7 @@ async function renderInquiries() {
   try {
     const r = await api.inquiries({ status:iFilter, limit:100 });
     const l = document.getElementById('i-list');
-    if (!r.data?.length) { l.innerHTML='<div class="empty"><span>📭</span><h3>Нет заявок</h3></div>'; return; }
+    if (!r.data?.length) { l.innerHTML='<div class="empty"><span>📭</span><h3>Нет заявок</span></div>'; return; }
 
     l.innerHTML = r.data.map(inq => {
       const prod = inq.products;
