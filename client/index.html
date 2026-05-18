@@ -3,9 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<meta name="theme-color" content="#8B2A3F">
-<title>ReBuket — Букеты и сладости</title>
-<meta name="description" content="ReBuket — маркетплейс букетов, корзин, мишек и сладостей в Таджикистане">
+<meta name="theme-color" content="#1A5C3A">
+<title>ReBuket.tj — Букеты и сладости</title>
+<meta name="description" content="ReBuket.tj — маркетплейс букетов, корзин, мишек и сладостей в Таджикистане">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="dns-prefetch" href="https://telegram.org">
@@ -42,7 +42,7 @@
 .cat-body { padding: 10px 12px; min-width: 0; overflow: hidden; }
 .cat-body h3 { font-size: .95rem; font-weight: 700; margin-bottom: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .cat-body p  { color: var(--gray); font-size: .73rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.cat-cnt { display: inline-block; background: var(--rose-l); color: var(--rose-d); padding: 2px 8px; border-radius: 20px; font-size: .68rem; font-weight: 700; margin-top: 4px; white-space: nowrap; }
+.cat-cnt { display: inline-block; background: var(--green-l); color: var(--green-d); padding: 2px 8px; border-radius: 20px; font-size: .68rem; font-weight: 700; margin-top: 4px; white-space: nowrap; }
 .cats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
 @media (min-width: 560px) { .cats { grid-template-columns: repeat(4, 1fr); } }
 .cat-img { height: 110px; font-size: 2.8rem; }
@@ -54,7 +54,7 @@
 <!-- ════ NAV ════════════════════════════════════════════ -->
 <nav>
   <div class="nav-wrap">
-    <div class="logo" onclick="goPage('home')">🌸&nbsp;<em>ReBuket</em></div>
+    <div class="logo" onclick="goPage('home')">🌿&nbsp;rebuket<em>.tj</em></div>
     <ul class="nav-links">
       <li><a data-nav="home"    onclick="goPage('home')">Главная</a></li>
       <li><a data-nav="catalog" onclick="goPage('catalog')">Каталог</a></li>
@@ -78,7 +78,7 @@
 <div id="page-home" class="page active">
   <div class="hero">
     <div class="hero-inner">
-      <h1>🌸 ReBuket</h1>
+      <h1>🌿 rebuket<span style="color:#4CAF78">.tj</span></h1>
       <p>Купи или продай букеты, корзины, мишки и сладости.<br>Свежие цветы и угощения по всему Таджикистану.</p>
       <div class="hero-btns">
         <button class="btn btn-white"   onclick="goPage('catalog')">💐 Смотреть каталог</button>
@@ -146,7 +146,7 @@
         <input type="text" id="f-search" placeholder="Название…" oninput="applyFilters()" style="width:160px">
       </div>
     </div>
-    <div class="pgrid" id="pgrid"><div class="loader">🌸 Загружаем…</div></div>
+    <div class="pgrid" id="pgrid"><div class="loader">🌿 Загружаем…</div></div>
     <div id="pgn" class="pgn"></div>
   </div>
 </div>
@@ -197,11 +197,11 @@
           <div id="price-preview" style="display:none;margin-top:10px;padding:12px;background:var(--warm);border-radius:10px;font-size:.88rem;line-height:1.8">
             <div style="display:flex;justify-content:space-between">
               <span style="color:var(--gray)">Вы получите:</span>
-              <span id="price-seller" style="font-weight:700;color:var(--rose)"></span>
+              <span id="price-seller" style="font-weight:700;color:var(--green)"></span>
             </div>
-            <div style="display:flex;justify-content:space-between;border-top:1px solid #e8d8d0;margin-top:6px;padding-top:6px">
+            <div style="display:flex;justify-content:space-between;border-top:1px solid #d8ece0;margin-top:6px;padding-top:6px">
               <span style="font-weight:700">Покупатель заплатит:</span>
-              <span id="price-total" style="font-weight:700;color:var(--rose);font-size:1rem"></span>
+              <span id="price-total" style="font-weight:700;color:var(--green);font-size:1rem"></span>
             </div>
             <div style="margin-top:6px;font-size:.78rem;color:var(--gray);text-align:center">
               ✅ Комиссия платформы включена в цену
@@ -218,7 +218,7 @@
           </select>
         </div>
 
-        <!-- Контакты продавца (только для администратора) -->
+        <!-- Контакты продавца -->
         <div class="form-group fg-full" style="background:var(--warm);border-radius:12px;padding:16px">
           <p style="font-weight:700;margin-bottom:12px;color:var(--mid)">🔐 Ваши контакты (видит только администратор)</p>
           <div class="fgrid">
@@ -247,11 +247,10 @@
               <input type="number" id="sell-market-price" placeholder="Например: 350" min="0">
             </div>
 
-            <!-- Поле размера — адаптируется под категорию -->
+            <!-- Поле размера -->
             <div class="form-group fg-full" id="size-field">
               <label id="size-label">Размер * <span style="color:var(--gray);font-weight:400">(обязательно)</span></label>
 
-              <!-- Чипы для букетов и корзин -->
               <div id="size-chips-wrap" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:6px" id="size-chips-wrap">
                 <div id="size-chips" style="display:flex;flex-wrap:wrap;gap:8px">
                   <button type="button" class="chip" onclick="selectSize('Маленький',this)">🟢 Маленький</button>
@@ -260,7 +259,6 @@
                 </div>
               </div>
 
-              <!-- Текстовое поле для мишек -->
               <div id="size-text-wrap" style="display:none;margin-top:6px">
                 <div style="display:flex;align-items:center;gap:8px">
                   <input
@@ -270,7 +268,7 @@
                     min="1"
                     max="999"
                     oninput="updateBearSizeInput()"
-                    style="width:120px;padding:10px 12px;border:1.5px solid #e8d8d0;border-radius:9px;font-size:.95rem"
+                    style="width:120px;padding:10px 12px;border:1.5px solid #c8e6d4;border-radius:9px;font-size:.95rem"
                   >
                   <span style="color:var(--gray);font-size:.9rem">см</span>
                 </div>
@@ -342,7 +340,7 @@
     <div id="a-dash" style="display:none">
       <div class="a-hdr">
         <div>
-          <h2>🌸 ReBuket — Администратор</h2>
+          <h2>🌿 rebuket.tj — Администратор</h2>
           <p id="a-welcome" style="opacity:.65;font-size:.82rem;margin-top:2px"></p>
         </div>
         <button class="btn btn-outline" onclick="adminLogout()" style="font-size:.82rem;padding:7px 16px;border-color:rgba(255,255,255,.4)">Выйти</button>
@@ -395,8 +393,8 @@
 <div class="toast" id="toast"></div>
 <button id="scroll-top" onclick="window.scrollTo({top:0,behavior:'smooth'})"
   style="display:none;position:fixed;bottom:24px;right:24px;z-index:888;
-  width:44px;height:44px;border-radius:50%;background:var(--rose);color:#fff;
-  border:none;font-size:1.3rem;box-shadow:0 4px 16px rgba(200,83,106,.4);cursor:pointer">↑</button>
+  width:44px;height:44px;border-radius:50%;background:var(--green);color:#fff;
+  border:none;font-size:1.3rem;box-shadow:0 4px 16px rgba(46,125,82,.4);cursor:pointer">↑</button>
 <script>
   window.addEventListener('scroll', () => {
     document.getElementById('scroll-top').style.display = window.scrollY > 300 ? 'block' : 'none';
@@ -412,8 +410,8 @@
 </div>
 
 <footer>
-  <div class="logo">🌸&nbsp;<em>ReBuket</em></div>
-  <p>© 2025 ReBuket — Подарки по всему Таджикистану</p>
+  <div class="logo">🌿&nbsp;rebuket<em>.tj</em></div>
+  <p>© 2025 rebuket.tj — Подарки по всему Таджикистану</p>
 </footer>
 
 <script type="module">
