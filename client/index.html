@@ -3,613 +3,31 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#22A05B">
 <title>ReBuket.tj — Букеты и сладости</title>
+<meta name="description" content="ReBuket.tj — маркетплейс букетов, корзин, мишек и сладостей в Таджикистане">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,800;1,600&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-<style>
-/* ══════════════════════════════════════════
-   TOKENS
-══════════════════════════════════════════ */
-:root {
-  --green:    #22A05B;
-  --green-l:  #E8F7EE;
-  --green-d:  #157A42;
-  --green-m:  #2ECC71;
-  --black:    #111111;
-  --dark:     #1C1C1C;
-  --mid:      #444444;
-  --gray:     #888888;
-  --light:    #F5F5F5;
-  --cream:    #FAFAFA;
-  --white:    #FFFFFF;
-  --border:   #E8E8E8;
-  --shadow-sm: 0 2px 12px rgba(0,0,0,.06);
-  --shadow:    0 8px 32px rgba(0,0,0,.10);
-  --shadow-lg: 0 16px 56px rgba(0,0,0,.14);
-  --r:   12px;
-  --rr:  20px;
-  --rrr: 32px;
-}
-
-*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
-html { scroll-behavior:smooth; }
-body {
-  font-family: 'DM Sans', sans-serif;
-  background: var(--white);
-  color: var(--dark);
-  min-height: 100vh;
-  overflow-x: hidden;
-  -webkit-tap-highlight-color: transparent;
-}
-h1,h2,h3,h4,h5 { font-family: 'Playfair Display', serif; }
-a { color:inherit; text-decoration:none; }
-img { max-width:100%; display:block; }
-button { font-family:'DM Sans',sans-serif; cursor:pointer; }
-
-/* ══════════════════════════════════════════
-   NAV — pure white
-══════════════════════════════════════════ */
-nav {
-  background: var(--white);
-  border-bottom: 1.5px solid var(--border);
-  position: sticky; top:0; z-index:800;
-  box-shadow: 0 2px 16px rgba(0,0,0,.06);
-}
-.nav-wrap {
-  max-width:1280px; margin:0 auto; padding:0 24px;
-  height:64px; display:flex; align-items:center; justify-content:space-between; gap:16px;
-}
-.logo {
-  font-family:'Playfair Display',serif;
-  font-size:1.7rem; font-weight:800;
-  color: var(--black);
-  cursor:pointer; display:flex; align-items:center; gap:1px;
-  white-space:nowrap; flex-shrink:0; user-select:none; letter-spacing:-.5px;
-}
-.logo em { color:var(--green); font-style:normal; }
-
-.nav-links {
-  display:flex; gap:2px; list-style:none; align-items:center; flex:1; justify-content:center;
-}
-.nav-links a {
-  font-size:.875rem; font-weight:600; padding:7px 14px;
-  border-radius:50px; cursor:pointer; transition:.15s;
-  color:var(--mid); white-space:nowrap; display:block; letter-spacing:.1px;
-}
-.nav-links a:hover { background:var(--light); color:var(--black); }
-.nav-links a.active { background:var(--green-l); color:var(--green-d); }
-
-.nav-right { display:flex; align-items:center; gap:10px; flex-shrink:0; }
-
-.btn-shop-login {
-  display:inline-flex; align-items:center; gap:7px;
-  padding:9px 18px; border-radius:50px;
-  background:var(--black); color:var(--white);
-  border:none; font-size:.84rem; font-weight:600;
-  transition:.18s; white-space:nowrap; letter-spacing:.1px;
-}
-.btn-shop-login:hover { background:var(--green-d); transform:translateY(-1px); box-shadow:var(--shadow); }
-.btn-shop-login .shop-icon { font-size:1rem; }
-
-.burger {
-  display:none; flex-direction:column; gap:5px;
-  width:38px; height:38px; padding:8px;
-  border:1.5px solid var(--border); border-radius:10px; background:none;
-  align-items:center; justify-content:center;
-}
-.burger span { display:block; width:18px; height:2px; background:var(--black); border-radius:2px; transition:.3s; }
-.burger.open span:nth-child(1) { transform:rotate(45deg) translate(5px,5px); }
-.burger.open span:nth-child(2) { opacity:0; }
-.burger.open span:nth-child(3) { transform:rotate(-45deg) translate(5px,-5px); }
-
-.nav-drawer {
-  display:none; flex-direction:column;
-  background:var(--white); border-top:1.5px solid var(--border);
-  padding:10px 16px 20px; gap:2px;
-}
-.nav-drawer.open { display:flex; }
-.nav-drawer a {
-  font-size:.95rem; font-weight:600; padding:12px 14px; border-radius:12px;
-  cursor:pointer; color:var(--mid); transition:.15s; display:flex; align-items:center; gap:10px;
-}
-.nav-drawer a:hover { background:var(--light); color:var(--black); }
-.nav-drawer .drawer-shop {
-  background:var(--black); color:var(--white); margin-top:6px;
-  border-radius:12px; justify-content:center;
-}
-.nav-drawer .drawer-shop:hover { background:var(--green-d); }
-
-@media (max-width:820px) {
-  .nav-links { display:none; }
-  .btn-shop-login { display:none; }
-  .burger { display:flex; }
-}
-
-/* ══════════════════════════════════════════
-   PAGE SYSTEM
-══════════════════════════════════════════ */
-.page { display:none; animation:fadeUp .3s ease; }
-.page.active { display:block; }
-@keyframes fadeUp { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
-
-/* ══════════════════════════════════════════
-   HERO — clean white with green accent
-══════════════════════════════════════════ */
-.hero {
-  background: var(--white);
-  padding: clamp(60px,10vw,100px) 24px clamp(50px,8vw,80px);
-  text-align:center; position:relative; overflow:hidden;
-}
-.hero::before {
-  content:'';
-  position:absolute; inset:0;
-  background: radial-gradient(ellipse 80% 60% at 50% 0%, rgba(34,160,91,.07) 0%, transparent 70%);
-  pointer-events:none;
-}
-.hero-badge {
-  display:inline-flex; align-items:center; gap:6px;
-  background:var(--green-l); color:var(--green-d);
-  padding:5px 14px; border-radius:50px; font-size:.78rem; font-weight:700;
-  letter-spacing:.3px; text-transform:uppercase; margin-bottom:22px;
-}
-.hero h1 {
-  font-size: clamp(2.4rem,6vw,4rem);
-  color: var(--black); line-height:1.15; margin-bottom:14px;
-  letter-spacing:-1px;
-}
-.hero h1 span { color:var(--green); }
-.hero p { color:var(--gray); font-size:clamp(.95rem,2vw,1.1rem); max-width:520px; margin:0 auto 32px; line-height:1.7; font-weight:400; }
-.hero-btns { display:flex; gap:12px; justify-content:center; flex-wrap:wrap; }
-
-/* ══════════════════════════════════════════
-   BUTTONS
-══════════════════════════════════════════ */
-.btn {
-  padding:11px 26px; border-radius:50px;
-  font-size:.9rem; font-weight:600; border:none;
-  transition:.18s; display:inline-flex; align-items:center; gap:7px;
-  letter-spacing:.1px;
-}
-.btn:disabled { opacity:.5; cursor:not-allowed; }
-.btn-primary  { background:var(--green); color:#fff; }
-.btn-primary:hover:not(:disabled)  { background:var(--green-d); transform:translateY(-2px); box-shadow:0 8px 24px rgba(34,160,91,.35); }
-.btn-black    { background:var(--black); color:#fff; }
-.btn-black:hover:not(:disabled)    { background:#333; transform:translateY(-2px); box-shadow:var(--shadow); }
-.btn-outline  { background:transparent; border:2px solid var(--border); color:var(--dark); }
-.btn-outline:hover:not(:disabled)  { border-color:var(--black); background:var(--light); }
-.btn-outline-green { background:transparent; border:2px solid var(--green); color:var(--green); }
-.btn-outline-green:hover:not(:disabled) { background:var(--green); color:#fff; }
-.btn-ig  { background:linear-gradient(135deg,#F58529,#DD2A7B,#8134AF); color:#fff; }
-.btn-tg  { background:#229ED9; color:#fff; }
-
-/* ══════════════════════════════════════════
-   SECTION
-══════════════════════════════════════════ */
-.section { padding:clamp(40px,6vw,72px) 24px; max-width:1280px; margin:0 auto; }
-.section-title { font-size:clamp(1.6rem,3.5vw,2.2rem); color:var(--black); margin-bottom:6px; letter-spacing:-.5px; }
-.section-sub   { color:var(--gray); margin-bottom:32px; font-size:.92rem; }
-
-/* ══════════════════════════════════════════
-   ECO / SHOP TABS (main switch)
-══════════════════════════════════════════ */
-.mode-switch {
-  display:inline-flex; align-items:center;
-  background:var(--light); border-radius:50px; padding:4px;
-  gap:3px; margin-bottom:28px;
-}
-.mode-btn {
-  padding:9px 22px; border-radius:50px; border:none;
-  font-size:.875rem; font-weight:600; transition:.2s;
-  background:transparent; color:var(--gray); display:flex; align-items:center; gap:7px;
-  white-space:nowrap;
-}
-.mode-btn.active {
-  background:var(--white); color:var(--black);
-  box-shadow:0 2px 10px rgba(0,0,0,.1);
-}
-.mode-btn.active.eco-active  { color:var(--green-d); }
-.mode-btn.active.shop-active { color:var(--black); }
-.mode-eco-dot  { width:8px; height:8px; border-radius:50%; background:var(--green); display:inline-block; }
-.mode-shop-dot { width:8px; height:8px; border-radius:50%; background:var(--black); display:inline-block; }
-
-/* ══════════════════════════════════════════
-   CATEGORY CARDS
-══════════════════════════════════════════ */
-.cats {
-  display:grid; grid-template-columns:repeat(4,1fr); gap:14px;
-}
-@media (max-width:700px) { .cats { grid-template-columns:repeat(2,1fr); gap:10px; } }
-
-.cat-card {
-  background:var(--white); border-radius:var(--rr); overflow:hidden;
-  border:1.5px solid var(--border); cursor:pointer; transition:.25s;
-}
-.cat-card:hover { transform:translateY(-5px); box-shadow:var(--shadow); border-color:transparent; }
-
-/* ECO card accent */
-.cat-card.eco .cat-img-wrap { background:linear-gradient(145deg,#E8F7EE,#C8EDD9); }
-/* SHOP card accent */
-.cat-card.shop .cat-img-wrap { background:linear-gradient(145deg,#F5F5F5,#E8E8E8); }
-
-.cat-img-wrap {
-  height:110px; display:flex; align-items:center; justify-content:center;
-  font-size:2.8rem; position:relative;
-}
-@media (min-width:700px) { .cat-img-wrap { height:130px; font-size:3.2rem; } }
-
-.eco-badge, .shop-badge {
-  position:absolute; top:8px; right:8px;
-  font-size:.6rem; font-weight:700; padding:2px 7px; border-radius:20px;
-  text-transform:uppercase; letter-spacing:.4px;
-}
-.eco-badge  { background:var(--green); color:#fff; }
-.shop-badge { background:var(--black); color:#fff; }
-
-.cat-body { padding:12px 14px 14px; }
-.cat-body h3 { font-size:.92rem; font-weight:700; color:var(--black); margin-bottom:3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.cat-body p  { color:var(--gray); font-size:.73rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.cat-cnt {
-  display:inline-block; padding:2px 9px; border-radius:20px; font-size:.68rem; font-weight:700; margin-top:5px;
-}
-.eco  .cat-cnt { background:var(--green-l); color:var(--green-d); }
-.shop .cat-cnt { background:var(--light);   color:var(--mid); }
-
-/* ══════════════════════════════════════════
-   CATALOG FILTERS
-══════════════════════════════════════════ */
-.filters {
-  display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end;
-  margin-bottom:24px; padding:18px 20px;
-  background:var(--white); border-radius:var(--r); box-shadow:var(--shadow-sm);
-  border:1.5px solid var(--border);
-}
-.fg { display:flex; flex-direction:column; gap:5px; }
-.fg label { font-size:.68rem; font-weight:700; color:var(--gray); text-transform:uppercase; letter-spacing:.6px; }
-.fg select, .fg input {
-  padding:8px 13px; border:1.5px solid var(--border); border-radius:10px;
-  font-family:'DM Sans',sans-serif; font-size:.86rem; outline:none;
-  transition:.2s; background:var(--white); color:var(--dark);
-}
-.fg select:focus, .fg input:focus { border-color:var(--green); }
-.chips { display:flex; flex-wrap:wrap; gap:6px; }
-.chip {
-  padding:6px 14px; border-radius:50px; border:1.5px solid var(--border);
-  background:var(--white); cursor:pointer; font-size:.81rem; font-weight:600;
-  transition:.2s; color:var(--mid); white-space:nowrap;
-}
-.chip.active { background:var(--black); border-color:var(--black); color:#fff; }
-.chip:hover  { border-color:var(--black); }
-
-/* ══════════════════════════════════════════
-   PRODUCT GRID
-══════════════════════════════════════════ */
-.pgrid { display:grid; grid-template-columns:repeat(auto-fill,minmax(230px,1fr)); gap:18px; }
-@media (max-width:500px) { .pgrid { grid-template-columns:repeat(auto-fill,minmax(155px,1fr)); gap:12px; } }
-
-.pcard {
-  background:var(--white); border-radius:var(--rr); overflow:hidden;
-  border:1.5px solid var(--border); transition:.25s; cursor:pointer;
-}
-.pcard:hover { transform:translateY(-4px); box-shadow:var(--shadow); border-color:transparent; }
-.pcard-img { height:200px; overflow:hidden; position:relative; }
-@media (max-width:500px) { .pcard-img { height:155px; } }
-.pcard-img img { width:100%; height:100%; object-fit:cover; transition:.3s; background:var(--light); }
-.pcard:hover .pcard-img img { transform:scale(1.05); }
-.pcard-ph { width:100%; height:100%; display:flex; align-items:center; justify-content:center; font-size:3.5rem; background:var(--light); }
-.pbadge {
-  position:absolute; top:10px; right:10px;
-  background:var(--black); color:#fff;
-  padding:3px 10px; border-radius:20px; font-size:.68rem; font-weight:700;
-}
-.pbadge.eco-pbadge  { background:var(--green); }
-.pbadge.shop-pbadge { background:var(--black); }
-.pcard-body { padding:14px 16px 18px; }
-.pcard-body h4 { font-size:.93rem; font-weight:700; margin-bottom:4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.pcard-body p  { color:var(--gray); font-size:.78rem; margin-bottom:10px; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
-.pmeta { display:flex; align-items:center; justify-content:space-between; gap:5px; }
-.pprice { font-size:1.08rem; font-weight:800; color:var(--black); white-space:nowrap; }
-.pcity  { font-size:.74rem; color:var(--gray); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-
-/* ══════════════════════════════════════════
-   PRODUCT DETAIL
-══════════════════════════════════════════ */
-.pd-wrap {
-  max-width:960px; margin:0 auto; background:var(--white);
-  border-radius:var(--rr); overflow:hidden;
-  box-shadow:var(--shadow); border:1.5px solid var(--border);
-}
-.pd-gallery { position:relative; background:var(--light); }
-.pd-main { width:100%; height:clamp(240px,45vw,440px); object-fit:cover; display:block; }
-.pd-thumbs {
-  display:flex; gap:9px; padding:10px 16px; overflow-x:auto;
-  background:var(--white); border-top:1.5px solid var(--border); scrollbar-width:none;
-}
-.pd-thumbs::-webkit-scrollbar { display:none; }
-.pd-thumbs img {
-  width:68px; height:58px; object-fit:cover; border-radius:10px;
-  cursor:pointer; opacity:.55; transition:.2s; flex-shrink:0; border:2px solid transparent;
-}
-.pd-thumbs img.active, .pd-thumbs img:hover { opacity:1; border-color:var(--green); }
-.pd-body { padding:clamp(20px,4vw,36px); }
-.pd-chips { display:flex; gap:7px; flex-wrap:wrap; margin-bottom:14px; }
-.pd-chip { background:var(--light); padding:4px 12px; border-radius:20px; font-size:.78rem; border:1.5px solid var(--border); }
-.pd-chip.hi { background:var(--green-l); color:var(--green-d); font-weight:700; border-color:transparent; }
-.pd-body h2 { font-size:clamp(1.4rem,4vw,2rem); margin-bottom:10px; letter-spacing:-.3px; }
-.pd-price { font-size:clamp(1.5rem,4vw,1.9rem); font-weight:800; color:var(--black); margin:10px 0 18px; }
-.pd-desc  { color:var(--mid); line-height:1.75; margin-bottom:22px; font-size:.94rem; }
-.pd-info  {
-  display:grid; grid-template-columns:1fr 1fr; gap:12px;
-  background:var(--light); border-radius:14px; padding:16px; margin-bottom:22px;
-}
-@media (max-width:500px) { .pd-info { grid-template-columns:1fr; } }
-.pd-info-lbl { font-size:.68rem; font-weight:700; color:var(--gray); text-transform:uppercase; letter-spacing:.5px; margin-bottom:3px; }
-.share-row {
-  display:flex; align-items:center; gap:8px; padding:10px 14px;
-  background:var(--light); border-radius:11px; margin-bottom:20px;
-  border:1.5px solid var(--border);
-}
-.share-row input { flex:1; border:none; background:transparent; font-family:'DM Sans',sans-serif; font-size:.79rem; color:var(--mid); outline:none; min-width:0; }
-.share-row button { background:var(--black); color:#fff; border:none; border-radius:8px; padding:5px 12px; font-size:.75rem; font-weight:700; white-space:nowrap; }
-.pd-contact { padding:18px clamp(20px,4vw,36px); background:var(--light); border-top:1.5px solid var(--border); }
-.pd-contact p { font-weight:700; margin-bottom:12px; font-size:.95rem; }
-.pd-contact-btns { display:flex; gap:9px; flex-wrap:wrap; }
-.pd-contact-note { font-size:.78rem; color:var(--gray); margin-top:10px; line-height:1.5; }
-
-/* ══════════════════════════════════════════
-   SELL FORM
-══════════════════════════════════════════ */
-.sell-wrap {
-  max-width:720px; margin:0 auto; background:var(--white);
-  border-radius:var(--rr); padding:clamp(22px,5vw,40px);
-  box-shadow:var(--shadow); border:1.5px solid var(--border);
-}
-.fgrid { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
-@media (max-width:560px) { .fgrid { grid-template-columns:1fr; } }
-.fg-full { grid-column:1/-1; }
-.form-group { display:flex; flex-direction:column; gap:5px; }
-.form-group label { font-size:.78rem; font-weight:700; color:var(--mid); }
-.form-group input,
-.form-group select,
-.form-group textarea {
-  padding:10px 14px; border:1.5px solid var(--border); border-radius:11px;
-  font-family:'DM Sans',sans-serif; font-size:.91rem; outline:none;
-  transition:.2s; background:var(--cream); color:var(--dark); width:100%;
-}
-.form-group input:focus,
-.form-group select:focus,
-.form-group textarea:focus { border-color:var(--green); background:var(--white); }
-.form-group textarea { height:82px; resize:vertical; }
-.cat-select-row { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; }
-@media (max-width:440px) { .cat-select-row { grid-template-columns:repeat(2,1fr); } }
-.cat-sel {
-  border:1.5px solid var(--border); border-radius:13px; padding:11px 4px;
-  text-align:center; cursor:pointer; transition:.15s; background:var(--cream);
-  display:flex; flex-direction:column; align-items:center; gap:5px;
-}
-.cat-sel:hover  { border-color:var(--green); background:var(--green-l); }
-.cat-sel.active { border-color:var(--green); background:var(--green-l); }
-.cs-em  { font-size:1.8rem; line-height:1; display:block; }
-.cs-txt { font-size:.76rem; font-weight:700; color:var(--mid); display:block; }
-
-.photo-area {
-  border:2px dashed var(--border); border-radius:13px; padding:28px 16px;
-  text-align:center; cursor:pointer; transition:.2s; background:var(--cream); display:block;
-}
-.photo-area:hover { border-color:var(--green); background:var(--green-l); }
-.photo-area .icon { font-size:2.2rem; display:block; margin-bottom:8px; }
-.photo-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(88px,1fr)); gap:8px; margin-top:12px; }
-.photo-thumb { position:relative; border-radius:10px; overflow:hidden; }
-.photo-thumb img { width:100%; height:82px; object-fit:cover; display:block; }
-.photo-del {
-  position:absolute; top:3px; right:3px;
-  background:rgba(0,0,0,.65); color:#fff; border:none; border-radius:50%;
-  width:20px; height:20px; font-size:.78rem; display:flex; align-items:center; justify-content:center;
-}
-.photo-hint { font-size:.76rem; color:var(--green); font-weight:700; margin-top:5px; }
-
-/* ══════════════════════════════════════════
-   ADMIN
-══════════════════════════════════════════ */
-.a-login-box {
-  max-width:400px; margin:50px auto; background:var(--white);
-  border-radius:var(--rr); padding:40px; box-shadow:var(--shadow-lg);
-  border:1.5px solid var(--border); text-align:center;
-}
-.a-hdr {
-  background:var(--black); color:#fff; padding:16px 20px; border-radius:16px;
-  margin-bottom:16px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px;
-}
-.a-hdr h2 { font-size:1.1rem; }
-.stats-bar { display:grid; grid-template-columns:repeat(auto-fill,minmax(130px,1fr)); gap:12px; margin-bottom:18px; }
-.s-card {
-  background:var(--white); border-radius:14px; padding:16px;
-  box-shadow:var(--shadow-sm); text-align:center; border:1.5px solid var(--border);
-}
-.s-card em  { font-size:1.8rem; font-style:normal; display:block; margin-bottom:3px; }
-.s-card b   { font-size:1.35rem; color:var(--black); display:block; }
-.s-card small { color:var(--gray); font-size:.72rem; }
-.atabs {
-  display:flex; gap:4px; flex-wrap:wrap;
-  background:var(--white); padding:7px; border-radius:13px;
-  box-shadow:var(--shadow-sm); margin-bottom:16px;
-  border:1.5px solid var(--border);
-}
-.atab {
-  padding:8px 16px; border-radius:10px; border:none; background:transparent;
-  font-size:.84rem; font-weight:600; color:var(--gray); transition:.2s; white-space:nowrap;
-}
-.atab.active, .atab:hover { background:var(--light); color:var(--black); }
-.atable-wrap {
-  background:var(--white); border-radius:14px; padding:16px;
-  box-shadow:var(--shadow-sm); border:1.5px solid var(--border);
-  overflow-x:auto;
-}
-.atable { width:100%; border-collapse:collapse; min-width:560px; }
-.atable th { text-align:left; padding:9px 10px; font-size:.7rem; font-weight:700; color:var(--gray); text-transform:uppercase; letter-spacing:.5px; border-bottom:2px solid var(--border); white-space:nowrap; }
-.atable td { padding:10px 10px; font-size:.84rem; border-bottom:1px solid var(--light); vertical-align:middle; }
-.atable tr:hover td { background:var(--cream); }
-.abtn { padding:4px 11px; border-radius:8px; border:1.5px solid var(--border); background:var(--white); font-size:.74rem; font-weight:700; transition:.2s; white-space:nowrap; cursor:pointer; }
-.abtn.g  { border-color:var(--green); color:var(--green); }
-.abtn.g:hover { background:var(--green); color:#fff; }
-.abtn.r  { border-color:#c0392b; color:#c0392b; }
-.abtn.r:hover { background:#c0392b; color:#fff; }
-.abtn.b  { border-color:#2563eb; color:#2563eb; }
-.abtn.b:hover { background:#2563eb; color:#fff; }
-.bd-g { background:var(--green-l); color:var(--green-d); padding:2px 9px; border-radius:20px; font-size:.7rem; font-weight:700; }
-.bd-y { background:#FFF3CD; color:#856404; padding:2px 9px; border-radius:20px; font-size:.7rem; font-weight:700; }
-.bd-r { background:#FFE8E8; color:#c0392b; padding:2px 9px; border-radius:20px; font-size:.7rem; font-weight:700; }
-.acard {
-  background:var(--white); border-radius:16px; padding:16px; margin-bottom:12px;
-  box-shadow:var(--shadow-sm); border:1.5px solid var(--border);
-}
-.acard-top { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:10px; gap:10px; }
-.acard-info { flex:1; min-width:0; }
-.acard-title { font-size:.95rem; font-weight:700; color:var(--black); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.acard-price { font-size:1.1rem; font-weight:800; color:var(--black); white-space:nowrap; flex-shrink:0; }
-.acard-photos { display:flex; gap:6px; margin-bottom:10px; flex-wrap:wrap; }
-.acard-photos img { width:72px; height:62px; object-fit:cover; border-radius:9px; cursor:pointer; border:1.5px solid var(--border); transition:.15s; }
-.acard-meta { display:flex; flex-wrap:wrap; gap:6px 14px; font-size:.8rem; color:var(--mid); margin-bottom:12px; padding:8px 11px; background:var(--light); border-radius:10px; }
-.acard-meta a { color:var(--green-d); font-weight:700; }
-.acard-actions { display:flex; flex-wrap:wrap; gap:6px; }
-.aact-btn {
-  padding:7px 14px; border-radius:9px; border:none;
-  font-size:.8rem; font-weight:700; cursor:pointer; transition:.15s;
-  font-family:'DM Sans',sans-serif; text-decoration:none; display:inline-flex; align-items:center; gap:4px;
-}
-.aact-g { background:#d4ead9; color:#1a5c3a; }
-.aact-g:hover { background:var(--green); color:#fff; }
-.aact-r { background:#ffe8e8; color:#c0392b; }
-.aact-r:hover { background:#c0392b; color:#fff; }
-.aact-b { background:#dbeafe; color:#1d4ed8; }
-.aact-b:hover { background:#2563eb; color:#fff; }
-.aact-gray { background:var(--light); color:var(--mid); }
-.aact-gray:hover { background:#ddd; }
-.inq-card { background:var(--white); border-radius:14px; padding:16px; box-shadow:var(--shadow-sm); margin-bottom:12px; border:1.5px solid var(--border); }
-.inq-hd { display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; flex-wrap:wrap; gap:5px; }
-.inq-body { display:grid; grid-template-columns:1fr 1fr; gap:14px; font-size:.84rem; line-height:1.8; }
-@media (max-width:500px) { .inq-body { grid-template-columns:1fr; } }
-.stat-box { background:var(--white); border-radius:13px; padding:16px; box-shadow:var(--shadow-sm); margin-bottom:14px; border:1.5px solid var(--border); }
-.stat-box h4 { color:var(--black); margin-bottom:12px; font-size:1.05rem; }
-.srow { display:flex; justify-content:space-between; padding:5px 0; border-bottom:1px solid var(--light); font-size:.85rem; }
-.srow:last-child { border:none; }
-.admin-photos { display:flex; gap:6px; flex-wrap:wrap; }
-.admin-photos img { width:52px; height:44px; object-fit:cover; border-radius:7px; cursor:pointer; }
-
-/* ══════════════════════════════════════════
-   MODAL / OVERLAY
-══════════════════════════════════════════ */
-.overlay { position:fixed; inset:0; background:rgba(0,0,0,.45); z-index:900; display:none; align-items:center; justify-content:center; padding:14px; }
-.overlay.open { display:flex; }
-.modal {
-  background:var(--white); border-radius:var(--rr); padding:clamp(22px,5vw,36px);
-  max-width:490px; width:100%; max-height:90vh; overflow-y:auto;
-  box-shadow:var(--shadow-lg); animation:slideUp .3s ease; position:relative;
-}
-@keyframes slideUp { from { transform:translateY(22px); opacity:0; } to { transform:translateY(0); opacity:1; } }
-.modal-x { position:absolute; top:12px; right:12px; width:32px; height:32px; border-radius:50%; border:none; background:var(--light); font-size:1rem; display:flex; align-items:center; justify-content:center; cursor:pointer; }
-.modal-x:hover { background:var(--border); }
-.modal h3 { font-size:1.5rem; margin-bottom:5px; color:var(--black); }
-
-/* ══════════════════════════════════════════
-   TOAST
-══════════════════════════════════════════ */
-.toast { position:fixed; bottom:18px; right:18px; background:var(--dark); color:#fff; padding:11px 18px; border-radius:12px; font-weight:600; font-size:.88rem; box-shadow:var(--shadow-lg); z-index:9999; transform:translateY(80px); transition:transform .3s; max-width:calc(100vw - 36px); pointer-events:none; }
-.toast.show { transform:translateY(0); }
-.toast.ok  { background:var(--green); }
-.toast.err { background:#c0392b; }
-
-/* ══════════════════════════════════════════
-   PAGINATION
-══════════════════════════════════════════ */
-.pgn { display:flex; gap:5px; justify-content:center; margin-top:24px; flex-wrap:wrap; }
-.pgn-btn { width:36px; height:36px; border-radius:10px; border:1.5px solid var(--border); background:var(--white); font-weight:700; font-size:.85rem; transition:.2s; cursor:pointer; }
-.pgn-btn.active, .pgn-btn:hover { background:var(--black); border-color:var(--black); color:#fff; }
-
-/* ══════════════════════════════════════════
-   MISC
-══════════════════════════════════════════ */
-.back { display:inline-flex; align-items:center; gap:5px; color:var(--gray); background:none; border:none; font-size:.88rem; font-weight:600; padding:0; transition:.2s; margin-bottom:20px; cursor:pointer; }
-.back:hover { color:var(--black); }
-.empty { text-align:center; padding:60px 20px; color:var(--gray); grid-column:1/-1; }
-.empty span { font-size:3rem; display:block; margin-bottom:12px; }
-.empty h3   { font-size:1.1rem; color:var(--dark); margin-bottom:5px; }
-.loader { text-align:center; padding:50px; color:var(--gray); font-size:.95rem; grid-column:1/-1; }
-
-/* Timer badge */
-.timer-badge { position:absolute; bottom:8px; left:8px; background:rgba(0,0,0,.55); color:#fff; font-size:.72rem; font-weight:700; padding:3px 8px; border-radius:20px; backdrop-filter:blur(4px); }
-.timer-badge.urgent { background:#dc3545; animation:pulse 1.2s infinite; }
-.timer-badge.expired { background:#6c757d; }
-@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.6} }
-
-/* ══════════════════════════════════════════
-   SECTION DIVIDER
-══════════════════════════════════════════ */
-.divider { border:none; border-top:1.5px solid var(--border); margin:0; }
-
-/* ══════════════════════════════════════════
-   FOOTER
-══════════════════════════════════════════ */
-footer { background:var(--black); color:#555; text-align:center; padding:28px 20px; margin-top:60px; }
-footer .logo { justify-content:center; margin-bottom:8px; pointer-events:none; color:#fff; }
-footer .logo em { color:var(--green); }
-footer p { font-size:.78rem; }
-
-/* Scroll top */
-#scroll-top { display:none; position:fixed; bottom:24px; right:24px; z-index:888; width:44px; height:44px; border-radius:50%; background:var(--black); color:#fff; border:none; font-size:1.2rem; box-shadow:var(--shadow); cursor:pointer; transition:.2s; }
-#scroll-top:hover { background:var(--green); }
-
-/* Lightbox */
-#lightbox { display:none; position:fixed; inset:0; background:rgba(0,0,0,.93); z-index:9998; align-items:center; justify-content:center; padding:16px; }
-
-/* Price preview */
-#price-preview { display:none; margin-top:10px; padding:13px; background:var(--light); border-radius:11px; font-size:.88rem; line-height:1.8; border:1.5px solid var(--border); }
-
-/* Size / gift-when chips inside forms */
-#size-chips button.chip.active { background:var(--black); border-color:var(--black); color:#fff; }
-#gift-when-chips button.chip.active { background:var(--black); border-color:var(--black); color:#fff; }
-
-/* Sell type toggle */
-.sell-type-toggle { display:inline-flex; background:var(--light); border-radius:50px; padding:4px; gap:3px; margin-bottom:22px; }
-.stt-btn { padding:8px 20px; border-radius:50px; border:none; font-size:.83rem; font-weight:600; background:transparent; color:var(--gray); transition:.2s; cursor:pointer; }
-.stt-btn.active { background:var(--white); color:var(--black); box-shadow:0 2px 8px rgba(0,0,0,.09); }
-
-/* Mode label in catalog */
-.mode-label {
-  display:inline-flex; align-items:center; gap:6px;
-  font-size:.75rem; font-weight:700; padding:3px 10px; border-radius:20px; margin-bottom:8px;
-}
-.mode-label.eco  { background:var(--green-l); color:var(--green-d); }
-.mode-label.shop { background:var(--light); color:var(--mid); }
-
-/* Store login modal */
-.store-modal { max-width:440px; }
-.store-modal h3 { font-size:1.6rem; margin-bottom:4px; }
-.store-modal .subtitle { color:var(--gray); font-size:.88rem; margin-bottom:24px; }
-
-@media (max-width:700px) {
-  .atable-wrap { padding:8px; }
-  .atable { font-size:.78rem; min-width:480px; }
-  .atable td, .atable th { padding:7px 5px; }
-  .abtn { padding:3px 7px; font-size:.68rem; }
-}
-</style>
+<link rel="dns-prefetch" href="https://telegram.org">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,800;1,600&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&display=swap" rel="stylesheet">
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<link rel="stylesheet" href="css/style.css">
 </head>
 <body>
 
-<!-- ════ NAV ════════════════════════════════════════════ -->
+<!-- NAV -->
 <nav>
   <div class="nav-wrap">
     <div class="logo" onclick="goPage('home')">rebuket<em>.tj</em></div>
     <ul class="nav-links">
       <li><a data-nav="home"    onclick="goPage('home')">Главная</a></li>
       <li><a data-nav="catalog" onclick="goPage('catalog')">Каталог</a></li>
-      <li><a data-nav="sell"    onclick="goPage('sell')">Разместить</a></li>
-      <li><a data-nav="admin"   onclick="goPage('admin')">⚙ Панель</a></li>
+      <li><a data-nav="sell"    onclick="goPage('sell')">+ Разместить</a></li>
+      <li><a data-nav="admin"   class="nav-admin" onclick="goPage('admin')">⚙ Панель</a></li>
     </ul>
     <div class="nav-right">
-      <button class="btn-shop-login" onclick="openStoreLogin()">
-        <span class="shop-icon">🏪</span> Войти как магазин
+      <button class="btn-shop-login" onclick="openStoreModal()">
+        <span>🏪</span> Войти как магазин
       </button>
     </div>
     <button class="burger" id="burger" onclick="toggleBurger()" aria-label="Меню">
@@ -617,112 +35,105 @@ footer p { font-size:.78rem; }
     </button>
   </div>
   <div class="nav-drawer" id="nav-drawer">
-    <a onclick="goPage('home'); closeBurger()">🏠 Главная</a>
-    <a onclick="goPage('catalog'); closeBurger()">🛍 Каталог</a>
-    <a onclick="goPage('sell'); closeBurger()">➕ Разместить объявление</a>
-    <a onclick="goPage('admin'); closeBurger()">⚙ Панель администратора</a>
-    <a class="drawer-shop" onclick="openStoreLogin(); closeBurger()">🏪 Войти как магазин</a>
+    <a data-nav="home"    onclick="goPage('home')">🏠 Главная</a>
+    <a data-nav="catalog" onclick="goPage('catalog')">🛍 Каталог</a>
+    <a data-nav="sell"    onclick="goPage('sell')">➕ Разместить объявление</a>
+    <a data-nav="admin"   class="nav-admin" onclick="goPage('admin')">⚙ Панель администратора</a>
+    <a class="drawer-shop" onclick="openStoreModal()">🏪 Войти как магазин</a>
   </div>
 </nav>
 
-<!-- ════ HOME ════════════════════════════════════════════ -->
+<!-- HOME -->
 <div id="page-home" class="page active">
-
-  <!-- Hero -->
   <div class="hero">
-    <div class="hero-badge">🌿 Таджикистан · Подарки с душой</div>
-    <h1>Дари цветы.<br><span>Перепродавай. Радуй.</span></h1>
-    <p>Свежие букеты, корзины, мишки и сладости — от частных продавцов и профессиональных магазинов по всей стране.</p>
-    <div class="hero-btns">
-      <button class="btn btn-black" onclick="setModeAndGo('eco')">🌿 Эко-букеты</button>
-      <button class="btn btn-primary" onclick="setModeAndGo('shop')">🏪 Магазинные цветы</button>
-      <button class="btn btn-outline" onclick="goPage('sell')">+ Разместить</button>
+    <div class="hero-inner">
+      <div class="hero-badge">🌿 Таджикистан · Подарки с душой</div>
+      <h1>rebuket<span style="color:var(--green)">.tj</span></h1>
+      <p>Купи или продай букеты, корзины, мишки и сладости.<br>Свежие цветы и угощения по всему Таджикистану.</p>
+      <div class="hero-btns">
+        <button class="btn btn-black"   onclick="setModeAndGo('eco')">🌿 Эко-букеты</button>
+        <button class="btn btn-primary" onclick="setModeAndGo('shop')">🏪 Магазинные цветы</button>
+        <button class="btn btn-outline" onclick="goPage('sell')">+ Разместить</button>
+      </div>
     </div>
   </div>
-
-  <hr class="divider">
-
-  <!-- Category section -->
   <div class="section">
-    <!-- Mode switch -->
-    <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; margin-bottom:8px;">
+    <div class="home-cats-header">
       <div>
         <h2 class="section-title">Категории</h2>
-        <p class="section-sub" style="margin-bottom:0">Выберите тип объявлений и категорию</p>
+        <p class="section-sub">Выберите тип и категорию</p>
       </div>
       <div class="mode-switch">
-        <button class="mode-btn active eco-active" id="home-mode-eco" onclick="switchHomeMode('eco')">
-          <span class="mode-eco-dot"></span> Эко
+        <button class="mode-btn active" id="home-mode-eco"  onclick="switchHomeMode('eco')">
+          <span class="dot dot-eco"></span> Эко
         </button>
-        <button class="mode-btn shop-active" id="home-mode-shop" onclick="switchHomeMode('shop')">
-          <span class="mode-shop-dot"></span> Магазинные цветы
+        <button class="mode-btn" id="home-mode-shop" onclick="switchHomeMode('shop')">
+          <span class="dot dot-shop"></span> Магазинные цветы
         </button>
       </div>
     </div>
 
-    <!-- ECO categories -->
-    <div id="cats-eco" class="cats" style="margin-top:20px;">
-      <div class="cat-card eco" onclick="filterAndGo('Букет','eco')">
-        <div class="cat-img-wrap"><span class="eco-badge">Эко</span>💐</div>
-        <div class="cat-body"><h3>Букеты</h3><p>Перепродажа · частные</p><span class="cat-cnt" id="cnt-eco-bouquet">…</span></div>
+    <div id="cats-eco" class="cats">
+      <div class="cat-card eco" onclick="filterAndGo('Букет')">
+        <div class="cat-img ci-bouquet">💐<span class="cat-type-badge eco-badge">Эко</span></div>
+        <div class="cat-body"><h3>Букеты</h3><p>Перепродажа · частные</p><span class="cat-cnt eco-cnt" id="cnt-bouquet">…</span></div>
       </div>
-      <div class="cat-card eco" onclick="filterAndGo('Корзина','eco')">
-        <div class="cat-img-wrap"><span class="eco-badge">Эко</span>🧺</div>
-        <div class="cat-body"><h3>Корзины</h3><p>Подарочные корзины</p><span class="cat-cnt" id="cnt-eco-basket">…</span></div>
+      <div class="cat-card eco" onclick="filterAndGo('Корзина')">
+        <div class="cat-img ci-basket">🧺<span class="cat-type-badge eco-badge">Эко</span></div>
+        <div class="cat-body"><h3>Корзины</h3><p>Подарочные корзины</p><span class="cat-cnt eco-cnt" id="cnt-basket">…</span></div>
       </div>
-      <div class="cat-card eco" onclick="filterAndGo('Мишка','eco')">
-        <div class="cat-img-wrap"><span class="eco-badge">Эко</span>🧸</div>
-        <div class="cat-body"><h3>Мишки</h3><p>Мишки с цветами</p><span class="cat-cnt" id="cnt-eco-bear">…</span></div>
+      <div class="cat-card eco" onclick="filterAndGo('Мишка')">
+        <div class="cat-img ci-bear">🧸<span class="cat-type-badge eco-badge">Эко</span></div>
+        <div class="cat-body"><h3>Мишки</h3><p>Мишки с цветами</p><span class="cat-cnt eco-cnt" id="cnt-bear">…</span></div>
       </div>
-      <div class="cat-card eco" onclick="filterAndGo('Сладости','eco')">
-        <div class="cat-img-wrap"><span class="eco-badge">Эко</span>🍰</div>
-        <div class="cat-body"><h3>Сладости</h3><p>Торты, трайфлы и др.</p><span class="cat-cnt" id="cnt-eco-sweets">…</span></div>
+      <div class="cat-card eco" onclick="filterAndGo('Сладости')">
+        <div class="cat-img ci-sweets">🍰<span class="cat-type-badge eco-badge">Эко</span></div>
+        <div class="cat-body"><h3>Сладости</h3><p>Торты, трайфлы, капкейки</p><span class="cat-cnt eco-cnt" id="cnt-sweets">…</span></div>
       </div>
     </div>
 
-    <!-- SHOP categories (hidden by default) -->
-    <div id="cats-shop" class="cats" style="margin-top:20px; display:none;">
-      <div class="cat-card shop" onclick="filterAndGo('Букет','shop')">
-        <div class="cat-img-wrap"><span class="shop-badge">Магазин</span>💐</div>
-        <div class="cat-body"><h3>Букеты</h3><p>От флористов · магазины</p><span class="cat-cnt" id="cnt-shop-bouquet">…</span></div>
+    <div id="cats-shop" class="cats" style="display:none">
+      <div class="cat-card shop" onclick="filterAndGo('Букет')">
+        <div class="cat-img ci-bouquet">💐<span class="cat-type-badge shop-badge">Магазин</span></div>
+        <div class="cat-body"><h3>Букеты</h3><p>От флористов</p><span class="cat-cnt shop-cnt" id="cnt-shop-bouquet">…</span></div>
       </div>
-      <div class="cat-card shop" onclick="filterAndGo('Корзина','shop')">
-        <div class="cat-img-wrap"><span class="shop-badge">Магазин</span>🧺</div>
-        <div class="cat-body"><h3>Корзины</h3><p>Профессиональные</p><span class="cat-cnt" id="cnt-shop-basket">…</span></div>
+      <div class="cat-card shop" onclick="filterAndGo('Корзина')">
+        <div class="cat-img ci-basket">🧺<span class="cat-type-badge shop-badge">Магазин</span></div>
+        <div class="cat-body"><h3>Корзины</h3><p>Профессиональные</p><span class="cat-cnt shop-cnt" id="cnt-shop-basket">…</span></div>
       </div>
-      <div class="cat-card shop" onclick="filterAndGo('Мишка','shop')">
-        <div class="cat-img-wrap"><span class="shop-badge">Магазин</span>🧸</div>
-        <div class="cat-body"><h3>Мишки</h3><p>Флористические мишки</p><span class="cat-cnt" id="cnt-shop-bear">…</span></div>
+      <div class="cat-card shop" onclick="filterAndGo('Мишка')">
+        <div class="cat-img ci-bear">🧸<span class="cat-type-badge shop-badge">Магазин</span></div>
+        <div class="cat-body"><h3>Мишки</h3><p>Флористические</p><span class="cat-cnt shop-cnt" id="cnt-shop-bear">…</span></div>
       </div>
-      <div class="cat-card shop" onclick="filterAndGo('Сладости','shop')">
-        <div class="cat-img-wrap"><span class="shop-badge">Магазин</span>🍰</div>
-        <div class="cat-body"><h3>Сладости</h3><p>Кондитерские изделия</p><span class="cat-cnt" id="cnt-shop-sweets">…</span></div>
+      <div class="cat-card shop" onclick="filterAndGo('Сладости')">
+        <div class="cat-img ci-sweets">🍰<span class="cat-type-badge shop-badge">Магазин</span></div>
+        <div class="cat-body"><h3>Сладости</h3><p>Кондитерские изделия</p><span class="cat-cnt shop-cnt" id="cnt-shop-sweets">…</span></div>
       </div>
     </div>
   </div>
 </div>
 
-<!-- ════ CATALOG ════════════════════════════════════════ -->
+<!-- CATALOG -->
 <div id="page-catalog" class="page">
   <div class="section">
     <button class="back" onclick="goPage('home')">← Назад</button>
-    <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; margin-bottom:6px;">
+    <div class="home-cats-header" style="margin-bottom:18px">
       <div>
         <h2 class="section-title">Каталог</h2>
         <p class="section-sub" style="margin-bottom:0">Найдите идеальный подарок</p>
       </div>
       <div class="mode-switch">
-        <button class="mode-btn active eco-active" id="cat-mode-eco" onclick="setCatalogMode('eco')">
-          <span class="mode-eco-dot"></span> Эко
+        <button class="mode-btn active" id="cat-mode-eco"  onclick="setCatalogMode('eco')">
+          <span class="dot dot-eco"></span> Эко
         </button>
-        <button class="mode-btn shop-active" id="cat-mode-shop" onclick="setCatalogMode('shop')">
-          <span class="mode-shop-dot"></span> Магазинные цветы
+        <button class="mode-btn" id="cat-mode-shop" onclick="setCatalogMode('shop')">
+          <span class="dot dot-shop"></span> Магазинные
         </button>
       </div>
     </div>
-
-    <div id="catalog-mode-label" class="mode-label eco" style="margin-bottom:16px;">🌿 Показаны Эко-объявления (перепродажа)</div>
-
+    <div id="catalog-mode-banner" class="mode-banner eco-banner">
+      🌿 Показаны Эко-объявления — перепродажа от частных лиц
+    </div>
     <div class="filters">
       <div class="fg">
         <label>Категория</label>
@@ -753,12 +164,12 @@ footer p { font-size:.78rem; }
         <input type="text" id="f-search" placeholder="Название…" oninput="applyFilters()" style="width:160px">
       </div>
     </div>
-    <div class="pgrid" id="pgrid"><div class="loader">Загружаем…</div></div>
+    <div class="pgrid" id="pgrid"><div class="loader">🌿 Загружаем…</div></div>
     <div id="pgn" class="pgn"></div>
   </div>
 </div>
 
-<!-- ════ PRODUCT DETAIL ══════════════════════════════════ -->
+<!-- PRODUCT DETAIL -->
 <div id="page-product" class="page">
   <div class="section">
     <button class="back" onclick="goPage('catalog')">← Назад</button>
@@ -766,26 +177,14 @@ footer p { font-size:.78rem; }
   </div>
 </div>
 
-<!-- ════ SELL ════════════════════════════════════════════ -->
+<!-- SELL -->
 <div id="page-sell" class="page">
   <div class="section">
     <button class="back" onclick="goPage('home')">← Назад</button>
     <h2 class="section-title">Разместить объявление</h2>
     <p class="section-sub">Ваш товар увидят покупатели после проверки администратором</p>
     <div class="sell-wrap">
-
-      <!-- Seller type -->
-      <div style="margin-bottom:22px;">
-        <p style="font-size:.78rem;font-weight:700;color:var(--mid);margin-bottom:8px;">ТИП ПРОДАВЦА</p>
-        <div class="sell-type-toggle">
-          <button class="stt-btn active" id="stt-eco" onclick="setSellType('eco')">🌿 Частное лицо (Эко)</button>
-          <button class="stt-btn" id="stt-shop" onclick="setSellType('shop')">🏪 Магазин</button>
-        </div>
-        <p style="font-size:.76rem;color:var(--gray);margin-top:6px;" id="stt-desc">Вы перепродаёте подаренный букет или сладости</p>
-      </div>
-
-      <!-- Category -->
-      <div class="form-group" style="margin-bottom:22px">
+      <div class="form-group" style="margin-bottom:20px">
         <label>Категория *</label>
         <div class="cat-select-row">
           <div class="cat-sel active" data-val="bouquet" onclick="selectCat(this)"><span class="cs-em">💐</span><span class="cs-txt">Букет</span></div>
@@ -795,7 +194,6 @@ footer p { font-size:.78rem; }
         </div>
         <input type="hidden" name="sell-cat" id="sell-cat-val" value="bouquet">
       </div>
-
       <div class="fgrid">
         <div class="form-group fg-full">
           <label>Название *</label>
@@ -808,16 +206,16 @@ footer p { font-size:.78rem; }
         <div class="form-group">
           <label>Ваша цена (TJS) *</label>
           <input type="number" id="sell-price" placeholder="350" oninput="updatePricePreview()" min="1">
-          <div id="price-preview">
+          <div id="price-preview" style="display:none;margin-top:10px;padding:12px;background:var(--warm);border-radius:10px;font-size:.88rem;line-height:1.8;border:1.5px solid var(--border)">
             <div style="display:flex;justify-content:space-between">
               <span style="color:var(--gray)">Вы получите:</span>
               <span id="price-seller" style="font-weight:700;color:var(--green)"></span>
             </div>
-            <div style="display:flex;justify-content:space-between;border-top:1.5px solid var(--border);margin-top:6px;padding-top:6px">
+            <div style="display:flex;justify-content:space-between;border-top:1px solid var(--border);margin-top:6px;padding-top:6px">
               <span style="font-weight:700">Покупатель заплатит:</span>
-              <span id="price-total" style="font-weight:800;color:var(--black);font-size:1rem"></span>
+              <span id="price-total" style="font-weight:700;color:var(--black);font-size:1rem"></span>
             </div>
-            <div style="margin-top:6px;font-size:.76rem;color:var(--gray);text-align:center">✅ Комиссия платформы включена</div>
+            <div style="margin-top:6px;font-size:.78rem;color:var(--gray);text-align:center">✅ Комиссия платформы включена в цену</div>
           </div>
         </div>
         <div class="form-group">
@@ -826,14 +224,11 @@ footer p { font-size:.78rem; }
             <option value="">— Выберите —</option>
             <option>Душанбе</option><option>Худжанд</option><option>Куляб</option>
             <option>Бохтар</option><option>Вахдат</option><option>Турсунзода</option>
-            <option>Исфара</option><option>Шахринав</option><option>Дангара</option>
-            <option>Регар</option><option>Бустон</option>
+            <option>Исфара</option><option>Шахринав</option><option>Дангара</option><option>Регар</option><option>Бустон</option>
           </select>
         </div>
-
-        <!-- Contacts -->
-        <div class="form-group fg-full" style="background:var(--light);border-radius:14px;padding:18px;border:1.5px solid var(--border)">
-          <p style="font-weight:700;margin-bottom:14px;font-size:.9rem;">🔐 Ваши контакты (видит только администратор)</p>
+        <div class="form-group fg-full" style="background:var(--warm);border-radius:14px;padding:16px;border:1.5px solid var(--border)">
+          <p style="font-weight:700;margin-bottom:12px;color:var(--mid)">🔐 Ваши контакты (видит только администратор)</p>
           <div class="fgrid">
             <div class="form-group">
               <label>Ваше имя</label>
@@ -849,7 +244,7 @@ footer p { font-size:.78rem; }
             </div>
             <div class="form-group">
               <label>Адрес</label>
-              <input type="text" id="sell-address" placeholder="ул. Рудаки, 12">
+              <input type="text" id="sell-address" placeholder="ул. Рудаки, 12" required>
             </div>
             <div class="form-group">
               <label>Время получения</label>
@@ -857,30 +252,31 @@ footer p { font-size:.78rem; }
             </div>
             <div class="form-group">
               <label>Цена в других магазинах <span style="color:var(--gray);font-weight:400">(необязательно)</span></label>
-              <input type="number" id="sell-market-price" placeholder="350" min="0">
+              <input type="number" id="sell-market-price" placeholder="Например: 350" min="0">
             </div>
-
-            <!-- Size -->
             <div class="form-group fg-full" id="size-field">
-              <label id="size-label">Размер *</label>
-              <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:6px" id="size-chips">
-                <button type="button" class="chip" onclick="selectSize('Маленький',this)">🟢 Маленький</button>
-                <button type="button" class="chip" onclick="selectSize('Средний',this)">🟡 Средний</button>
-                <button type="button" class="chip" onclick="selectSize('Большой',this)">🔴 Большой</button>
+              <label id="size-label">Размер * <span style="color:var(--gray);font-weight:400">(обязательно)</span></label>
+              <div id="size-chips-wrap" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:6px">
+                <div id="size-chips" style="display:flex;flex-wrap:wrap;gap:8px">
+                  <button type="button" class="chip" onclick="selectSize('Маленький',this)">🟢 Маленький</button>
+                  <button type="button" class="chip" onclick="selectSize('Средний',this)">🟡 Средний</button>
+                  <button type="button" class="chip" onclick="selectSize('Большой',this)">🔴 Большой</button>
+                </div>
               </div>
               <div id="size-text-wrap" style="display:none;margin-top:6px">
                 <div style="display:flex;align-items:center;gap:8px">
-                  <input type="number" id="sell-size-text" placeholder="60" min="1" max="999" oninput="updateBearSizeInput()" style="width:120px">
+                  <input type="number" id="sell-size-text" placeholder="Например: 60" min="1" max="999"
+                    oninput="updateBearSizeInput()"
+                    style="width:120px;padding:10px 12px;border:1.5px solid var(--border);border-radius:9px;font-size:.95rem">
                   <span style="color:var(--gray);font-size:.9rem">см</span>
                 </div>
+                <p style="font-size:.78rem;color:var(--gray);margin-top:5px">Укажите высоту мишки в сантиметрах</p>
               </div>
               <input type="hidden" id="sell-size">
               <div id="size-error" style="display:none;color:#dc3545;font-size:.82rem;margin-top:4px">Выберите или введите размер</div>
             </div>
-
-            <!-- Gift when -->
-            <div class="form-group fg-full" id="gift-when-field">
-              <label>Когда получили *</label>
+            <div class="form-group fg-full">
+              <label>Когда получили * <span style="color:var(--gray);font-weight:400">(обязательно)</span></label>
               <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:6px" id="gift-when-chips">
                 <button type="button" class="chip" onclick="selectGiftWhen('Только что',this)">⚡ Только что</button>
                 <button type="button" class="chip" onclick="selectGiftWhen('Сегодня',this)">📅 Сегодня</button>
@@ -892,13 +288,13 @@ footer p { font-size:.78rem; }
               <div id="gift-when-error" style="display:none;color:#dc3545;font-size:.82rem;margin-top:4px">Выберите когда получили</div>
             </div>
           </div>
-          <p style="font-size:.76rem;color:var(--gray);margin-top:10px">Покупатели увидят только контакты администратора.</p>
+          <p style="font-size:.78rem;color:var(--gray);margin-top:10px">
+            Покупатели увидят только кнопки Instagram и Telegram администратора. Ваши личные контакты защищены.
+          </p>
         </div>
-
-        <!-- Photos -->
         <div class="form-group fg-full">
           <label>Фотографии * <span style="color:var(--gray);font-weight:400">(минимум 3 фото)</span></label>
-          <label class="photo-area" for="sell-photos">
+          <label class="photo-area" for="sell-photos" style="cursor:pointer">
             <span class="icon">📸</span>
             <b>Нажмите для загрузки</b>
             <p style="color:var(--gray);font-size:.82rem;margin-top:3px">JPG, PNG, WebP — до 10 МБ каждое</p>
@@ -908,35 +304,34 @@ footer p { font-size:.78rem; }
           <p class="photo-hint" id="photo-hint">Загружено 0 из 3 (минимум 3 фото)</p>
         </div>
       </div>
-
-      <button class="btn btn-primary" id="sell-btn" style="width:100%;padding:14px;margin-top:10px;font-size:1rem" onclick="submitListing()">
+      <button class="btn btn-primary" id="sell-btn" style="width:100%;padding:14px;margin-top:8px;font-size:1rem" onclick="submitListing()">
         ✅ Разместить объявление
       </button>
     </div>
   </div>
 </div>
 
-<!-- ════ ADMIN ════════════════════════════════════════════ -->
+<!-- ADMIN -->
 <div id="page-admin" class="page">
   <div class="section">
-    <div id="a-login" class="a-login-box">
+    <div id="a-login" style="max-width:400px;margin:50px auto;background:#fff;border-radius:var(--rr);padding:40px;box-shadow:0 8px 40px rgba(0,0,0,.10);text-align:center;border:1.5px solid var(--border)">
       <div style="font-size:2.8rem;margin-bottom:14px">🔐</div>
       <h2 style="margin-bottom:5px">Панель администратора</h2>
       <div class="form-group" style="margin-bottom:14px">
         <input type="text" id="a-user" placeholder="Логин" style="text-align:center" onkeydown="if(event.key==='Enter')adminLogin()">
       </div>
-      <div class="form-group" style="margin-bottom:22px">
+      <div class="form-group" style="margin-bottom:20px">
         <input type="password" id="a-pass" placeholder="Пароль" style="text-align:center" onkeydown="if(event.key==='Enter')adminLogin()">
       </div>
-      <button class="btn btn-black" id="a-btn" style="width:100%" onclick="adminLogin()">Войти</button>
+      <button class="btn btn-primary" id="a-btn" style="width:100%" onclick="adminLogin()">Войти</button>
     </div>
     <div id="a-dash" style="display:none">
       <div class="a-hdr">
         <div>
           <h2>rebuket.tj — Администратор</h2>
-          <p id="a-welcome" style="opacity:.6;font-size:.82rem;margin-top:2px"></p>
+          <p id="a-welcome" style="opacity:.65;font-size:.82rem;margin-top:2px"></p>
         </div>
-        <button class="btn btn-outline" onclick="adminLogout()" style="font-size:.82rem;padding:7px 16px;border-color:rgba(255,255,255,.3);color:#fff">Выйти</button>
+        <button class="btn btn-outline" onclick="adminLogout()" style="font-size:.82rem;padding:7px 16px;border-color:rgba(255,255,255,.4);color:#fff">Выйти</button>
       </div>
       <div class="stats-bar" id="a-stats">
         <div class="s-card"><em>⏳</em><b>—</b><small>Загрузка…</small></div>
@@ -953,300 +348,131 @@ footer p { font-size:.78rem; }
   </div>
 </div>
 
-<!-- ════ INQUIRY MODAL ═══════════════════════════════════ -->
+<!-- INQUIRY MODAL -->
 <div class="overlay" id="inq-modal">
   <div class="modal">
-    <button class="modal-x" onclick="document.getElementById('inq-modal').classList.remove('open')">✕</button>
-    <h3>Оставить заявку</h3>
-    <p style="color:var(--gray);margin-bottom:22px;font-size:.88rem">Ваши данные увидит только администратор</p>
+    <button class="modal-x" onclick="closeModal('inq-modal')">✕</button>
+    <h3 id="inq-title">Оставить заявку</h3>
+    <p style="color:var(--gray);margin-bottom:20px;font-size:.88rem">Ваши данные увидит только администратор</p>
     <input type="hidden" id="inq-pid">
     <input type="hidden" id="inq-slug">
     <div class="form-group" style="margin-bottom:13px"><label>Имя</label><input type="text" id="inq-name" placeholder="Необязательно"></div>
     <div class="form-group" style="margin-bottom:13px"><label>Телефон *</label><input type="tel" id="inq-phone" placeholder="+992 900 000000"></div>
     <div class="form-group" style="margin-bottom:13px"><label>Telegram</label><input type="text" id="inq-tg" placeholder="@username"></div>
-    <div class="form-group" style="margin-bottom:22px"><label>Пожелания</label><textarea id="inq-note" placeholder="Желаемое время, особые пожелания…" style="height:72px"></textarea></div>
-    <button class="btn btn-black" id="inq-btn" style="width:100%" onclick="submitInquiry()">📩 Отправить заявку</button>
+    <div class="form-group" style="margin-bottom:20px"><label>Пожелания</label><textarea id="inq-note" placeholder="Желаемое время, особые пожелания…" style="height:72px"></textarea></div>
+    <button class="btn btn-primary" id="inq-btn" style="width:100%" onclick="submitInquiry()">📩 Отправить заявку</button>
   </div>
 </div>
 
-<!-- ════ STORE LOGIN MODAL ════════════════════════════════ -->
+<!-- STORE LOGIN MODAL -->
 <div class="overlay" id="store-modal">
-  <div class="modal store-modal">
-    <button class="modal-x" onclick="document.getElementById('store-modal').classList.remove('open')">✕</button>
-    <div style="font-size:2.2rem;margin-bottom:12px">🏪</div>
+  <div class="modal">
+    <button class="modal-x" onclick="closeModal('store-modal')">✕</button>
+    <div style="font-size:2.4rem;margin-bottom:12px">🏪</div>
     <h3>Войти как магазин</h3>
-    <p class="subtitle">Для профессиональных флористов и магазинов цветов</p>
-    <div class="form-group" style="margin-bottom:13px"><label>Email или телефон</label><input type="text" id="store-login-email" placeholder="example@mail.com"></div>
-    <div class="form-group" style="margin-bottom:22px"><label>Пароль</label><input type="password" id="store-login-pass" placeholder="••••••••"></div>
-    <button class="btn btn-black" style="width:100%;margin-bottom:12px" onclick="storeLoginSubmit()">Войти</button>
+    <p style="color:var(--gray);margin-bottom:22px;font-size:.88rem">Для профессиональных флористов и магазинов</p>
+    <div class="form-group" style="margin-bottom:13px"><label>Email или телефон</label><input type="text" id="store-email" placeholder="example@mail.com"></div>
+    <div class="form-group" style="margin-bottom:22px"><label>Пароль</label><input type="password" id="store-pass" placeholder="••••••••"></div>
+    <button class="btn btn-primary" style="width:100%;margin-bottom:12px" onclick="storeLogin()">Войти</button>
     <div style="text-align:center;color:var(--gray);font-size:.82rem">
-      Нет аккаунта? <a href="#" style="color:var(--green);font-weight:700" onclick="openStoreRegister()">Зарегистрировать магазин</a>
+      Нет аккаунта? <a href="#" style="color:var(--green);font-weight:700" onclick="storeRegister()">Зарегистрировать магазин</a>
     </div>
-    <div style="margin-top:18px;padding:14px;background:var(--light);border-radius:12px;font-size:.8rem;color:var(--gray);border:1.5px solid var(--border)">
-      🌿 <strong style="color:var(--dark)">Эко-раздел</strong> — для частных лиц, которые перепродают полученные цветы и подарки.<br>
-      🏪 <strong style="color:var(--dark)">Магазинный раздел</strong> — только для верифицированных магазинов.
+    <div style="margin-top:18px;padding:14px;background:var(--warm);border-radius:11px;font-size:.8rem;color:var(--mid);line-height:1.6;border:1.5px solid var(--border)">
+      🌿 <strong>Эко-раздел</strong> — для частных лиц (перепродажа).<br>
+      🏪 <strong>Магазинный раздел</strong> — только для верифицированных магазинов.
     </div>
   </div>
 </div>
 
-<!-- ════ TOAST ═══════════════════════════════════════════ -->
+<!-- TOAST -->
 <div class="toast" id="toast"></div>
-<button id="scroll-top" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑</button>
 
-<!-- ════ LIGHTBOX ═══════════════════════════════════════ -->
-<div id="lightbox" onclick="closeLightbox()">
+<button id="scroll-top" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑</button>
+<script>
+  window.addEventListener('scroll', () => {
+    document.getElementById('scroll-top').style.display = window.scrollY > 300 ? 'block' : 'none';
+  });
+</script>
+
+<!-- LIGHTBOX -->
+<div id="lightbox" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.93);z-index:9998;align-items:center;justify-content:center;padding:16px" onclick="closeLightbox()">
   <button onclick="lightboxPrev(event)" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);background:rgba(255,255,255,.15);border:none;color:#fff;font-size:1.8rem;width:48px;height:48px;border-radius:50%;cursor:pointer;z-index:1">‹</button>
   <img id="lb-img" src="" style="max-width:100%;max-height:90vh;object-fit:contain;border-radius:10px;user-select:none">
   <button onclick="lightboxNext(event)" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:rgba(255,255,255,.15);border:none;color:#fff;font-size:1.8rem;width:48px;height:48px;border-radius:50%;cursor:pointer;z-index:1">›</button>
-  <button onclick="closeLightbox()" style="position:absolute;top:14px;right:14px;background:rgba(255,255,255,.15);border:none;color:#fff;font-size:1.1rem;width:38px;height:38px;border-radius:50%;cursor:pointer">✕</button>
+  <button onclick="closeLightbox()" style="position:absolute;top:14px;right:14px;background:rgba(255,255,255,.15);border:none;color:#fff;font-size:1.1rem;width:36px;height:36px;border-radius:50%;cursor:pointer">✕</button>
 </div>
 
 <footer>
-  <div class="logo">rebuket<em>.tj</em></div>
+  <div class="logo" style="justify-content:center;margin-bottom:8px;pointer-events:none;color:#fff">rebuket<em>.tj</em></div>
   <p>© 2025 rebuket.tj — Подарки по всему Таджикистану</p>
 </footer>
 
-<script>
-// ── UI helpers ──────────────────────────────────────────
-function goPage(p) {
-  document.querySelectorAll('.page').forEach(el => el.classList.remove('active'));
-  const pg = document.getElementById('page-'+p);
-  if (pg) { pg.classList.add('active'); window.scrollTo(0,0); }
-  document.querySelectorAll('[data-nav]').forEach(a => {
-    a.classList.toggle('active', a.dataset.nav === p);
-  });
-  window.dispatchEvent(new CustomEvent('rbt:page', { detail:p }));
-}
-
-function toast(msg, type='') {
-  const t = document.getElementById('toast');
-  t.textContent = msg; t.className = 'toast show ' + type;
-  clearTimeout(t._t);
-  t._t = setTimeout(() => t.classList.remove('show'), 3000);
-}
-
-// ── Nav ─────────────────────────────────────────────────
-function toggleBurger() {
-  document.getElementById('burger').classList.toggle('open');
-  document.getElementById('nav-drawer').classList.toggle('open');
-}
-function closeBurger() {
-  document.getElementById('burger').classList.remove('open');
-  document.getElementById('nav-drawer').classList.remove('open');
-}
-
-// ── Scroll top ──────────────────────────────────────────
-window.addEventListener('scroll', () => {
-  document.getElementById('scroll-top').style.display = window.scrollY > 300 ? 'block' : 'none';
-});
-
-// ── Store login modal ───────────────────────────────────
-function openStoreLogin() { document.getElementById('store-modal').classList.add('open'); }
-function openStoreRegister() { toast('Регистрация магазина скоро будет доступна',''); }
-function storeLoginSubmit() { toast('Функция входа для магазинов скоро будет доступна',''); }
-
-// ── Overlay close on bg ─────────────────────────────────
-document.querySelectorAll('.overlay').forEach(el => {
-  el.addEventListener('click', e => { if(e.target===el) el.classList.remove('open'); });
-});
-
-// ── Home mode switch ────────────────────────────────────
-let homeMode = 'eco';
-function switchHomeMode(mode) {
-  homeMode = mode;
-  document.getElementById('cats-eco').style.display  = mode==='eco'  ? 'grid' : 'none';
-  document.getElementById('cats-shop').style.display = mode==='shop' ? 'grid' : 'none';
-  document.getElementById('home-mode-eco').classList.toggle('active',  mode==='eco');
-  document.getElementById('home-mode-shop').classList.toggle('active', mode==='shop');
-}
-
-// ── Catalog mode switch ─────────────────────────────────
-let catalogMode = 'eco';
-function setCatalogMode(mode) {
-  catalogMode = mode;
-  document.getElementById('cat-mode-eco').classList.toggle('active',  mode==='eco');
-  document.getElementById('cat-mode-shop').classList.toggle('active', mode==='shop');
-  const lbl = document.getElementById('catalog-mode-label');
-  if (mode==='eco') {
-    lbl.className = 'mode-label eco'; lbl.textContent = '🌿 Показаны Эко-объявления (перепродажа)';
-  } else {
-    lbl.className = 'mode-label shop'; lbl.textContent = '🏪 Показаны объявления от магазинов';
-  }
-  // trigger reload with filter if the original loadCatalog is available
-  if (typeof applyFilters === 'function') applyFilters();
-}
-
-function setModeAndGo(mode) {
-  homeMode = mode; catalogMode = mode;
-  switchHomeMode(mode);
-  setCatalogMode(mode);
-  goPage('catalog');
-}
-
-function filterAndGo(cat, mode) {
-  if (mode) { homeMode = mode; catalogMode = mode; setCatalogMode(mode); }
-  goPage('catalog');
-  // try to set chip
-  document.querySelectorAll('#cat-chips .chip').forEach(c => {
-    const matches = c.textContent.toLowerCase().includes(cat.toLowerCase());
-    c.classList.toggle('active', matches);
-    if (matches && typeof setCat === 'function') {} // original sets activeCategory
-  });
-}
-
-// ── Sell type toggle ────────────────────────────────────
-let sellType = 'eco';
-function setSellType(t) {
-  sellType = t;
-  document.getElementById('stt-eco').classList.toggle('active',  t==='eco');
-  document.getElementById('stt-shop').classList.toggle('active', t==='shop');
-  document.getElementById('stt-desc').textContent = t==='eco'
-    ? 'Вы перепродаёте подаренный букет или сладости'
-    : 'Ваш магазин размещает профессиональное объявление';
-  const gwf = document.getElementById('gift-when-field');
-  if (gwf) gwf.style.display = t==='eco' ? '' : 'none';
-}
-
-// ── Size chips ──────────────────────────────────────────
-function selectSize(v, el) {
-  document.querySelectorAll('#size-chips .chip').forEach(c => c.classList.remove('active'));
-  el.classList.add('active');
-  document.getElementById('sell-size').value = v;
-}
-
-// ── Gift when chips ─────────────────────────────────────
-function selectGiftWhen(v, el) {
-  document.querySelectorAll('#gift-when-chips .chip').forEach(c => c.classList.remove('active'));
-  el.classList.add('active');
-  document.getElementById('sell-gift-when').value = v;
-}
-
-// ── Cat select ──────────────────────────────────────────
-function selectCat(el) {
-  document.querySelectorAll('.cat-sel').forEach(c => c.classList.remove('active'));
-  el.classList.add('active');
-  document.getElementById('sell-cat-val').value = el.dataset.val;
-  const isBear = el.dataset.val === 'bear';
-  document.getElementById('size-text-wrap').style.display = isBear ? 'block' : 'none';
-  document.querySelectorAll('#size-chips .chip').forEach(c => {
-    c.style.display = isBear ? 'none' : 'inline-flex';
-  });
-}
-
-// ── Bear size ───────────────────────────────────────────
-function updateBearSizeInput() {
-  const v = document.getElementById('sell-size-text').value;
-  document.getElementById('sell-size').value = v ? v+'см' : '';
-}
-
-// ── Price preview ───────────────────────────────────────
-function updatePricePreview() {
-  const raw = parseFloat(document.getElementById('sell-price').value);
-  const pp = document.getElementById('price-preview');
-  if (!raw || raw<=0) { pp.style.display='none'; return; }
-  const comm = Math.round(raw * 0.10);
-  const total = raw + comm;
-  pp.style.display = 'block';
-  document.getElementById('price-seller').textContent = raw.toFixed(2)+' TJS';
-  document.getElementById('price-total').textContent  = total.toFixed(2)+' TJS';
-}
-
-// ── Photo handling ──────────────────────────────────────
-let uploadedPhotos = [];
-function handlePhotos(e) {
-  const files = Array.from(e.target.files);
-  files.forEach(f => {
-    const reader = new FileReader();
-    reader.onload = ev => {
-      uploadedPhotos.push({ name:f.name, data:ev.target.result });
-      renderPhotoGrid();
-    };
-    reader.readAsDataURL(f);
-  });
-}
-function renderPhotoGrid() {
-  const grid = document.getElementById('sell-photo-grid');
-  const hint = document.getElementById('photo-hint');
-  grid.innerHTML = uploadedPhotos.map((p,i) => `
-    <div class="photo-thumb">
-      <img src="${p.data}" alt="${p.name}">
-      <button class="photo-del" onclick="removePhoto(${i})">✕</button>
-    </div>
-  `).join('');
-  const n = uploadedPhotos.length;
-  hint.textContent = `Загружено ${n} из 3 (минимум 3 фото)`;
-  hint.style.color = n >= 3 ? 'var(--green)' : '#dc3545';
-}
-function removePhoto(i) { uploadedPhotos.splice(i,1); renderPhotoGrid(); }
-
-// ── Filters ─────────────────────────────────────────────
-let activeCategory = 'Все';
-function setCat(cat, el) {
-  activeCategory = cat;
-  document.querySelectorAll('#cat-chips .chip').forEach(c => c.classList.remove('active'));
-  if (el) el.classList.add('active');
-  applyFilters();
-}
-function applyFilters() { /* hooked by main.js */ }
-
-// ── Placeholders for main.js hooks ──────────────────────
-function loadCatalog() {}
-function loadCounts() {
-  // set placeholder counts
-  ['eco-bouquet','eco-basket','eco-bear','eco-sweets',
-   'shop-bouquet','shop-basket','shop-bear','shop-sweets'].forEach(id => {
-    const el = document.getElementById('cnt-'+id);
-    if (el) el.textContent = '0 шт';
-  });
-}
-function loadCities(id) {}
-function submitListing() { toast('Функция размещения скоро будет доступна',''); }
-function submitInquiry() { toast('Заявка отправлена!','ok'); document.getElementById('inq-modal').classList.remove('open'); }
-function adminLogin() { toast('Неверный логин или пароль','err'); }
-function adminLogout() {}
-function switchTab(t) {
-  document.querySelectorAll('.atab').forEach(a => a.classList.toggle('active', a.dataset.tab===t));
-  document.querySelectorAll('.atab-pane').forEach(p => p.style.display='none');
-  const pane = document.getElementById('tab-'+t);
-  if (pane) pane.style.display='block';
-}
-
-// ── Lightbox ─────────────────────────────────────────────
-let lbImages=[], lbIdx=0;
-function openLightbox(imgs, i) {
-  lbImages=imgs; lbIdx=i||0;
-  document.getElementById('lb-img').src = lbImages[lbIdx];
-  document.getElementById('lightbox').style.display='flex';
-}
-function closeLightbox() { document.getElementById('lightbox').style.display='none'; }
-function lightboxPrev(e) { e.stopPropagation(); lbIdx=(lbIdx-1+lbImages.length)%lbImages.length; document.getElementById('lb-img').src=lbImages[lbIdx]; }
-function lightboxNext(e) { e.stopPropagation(); lbIdx=(lbIdx+1)%lbImages.length; document.getElementById('lb-img').src=lbImages[lbIdx]; }
-
-// ── Route handler ─────────────────────────────────────────
-function handleRoute() { goPage('home'); }
-
-// Init
-loadCounts();
-</script>
-
-<!-- If original JS modules exist, they can be imported below -->
-<!-- <script type="module">
+<script type="module">
 import { api, isAuth, setTok, clrTok } from './js/api.js';
-import { goPage as _goPage, toast as _toast } from './js/utils.js';
+import { goPage, toast, openModal, closeModal } from './js/utils.js';
 import { loadCatalog, loadCounts, loadCities, filterAndGo, handleRoute, loadConfig } from './js/main.js';
 import { checkAdminAuth } from './js/admin.js';
+
+// Mobile nav
+window.toggleBurger = () => {
+  document.getElementById('burger').classList.toggle('open');
+  document.getElementById('nav-drawer').classList.toggle('open');
+};
+
+// Store modal
+window.openStoreModal = () => openModal('store-modal');
+window.storeLogin = () => toast('Функция входа для магазинов скоро будет доступна', '');
+window.storeRegister = () => { closeModal('store-modal'); toast('Регистрация магазина скоро будет доступна', ''); return false; };
+
+// Mode switch
+window.switchHomeMode = (mode) => {
+  document.getElementById('cats-eco').style.display  = mode === 'eco'  ? 'grid' : 'none';
+  document.getElementById('cats-shop').style.display = mode === 'shop' ? 'grid' : 'none';
+  document.getElementById('home-mode-eco').classList.toggle('active',  mode === 'eco');
+  document.getElementById('home-mode-shop').classList.toggle('active', mode === 'shop');
+};
+
+window.setCatalogMode = (mode) => {
+  document.getElementById('cat-mode-eco').classList.toggle('active',  mode === 'eco');
+  document.getElementById('cat-mode-shop').classList.toggle('active', mode === 'shop');
+  const banner = document.getElementById('catalog-mode-banner');
+  if (mode === 'eco') {
+    banner.className = 'mode-banner eco-banner';
+    banner.textContent = '🌿 Показаны Эко-объявления — перепродажа от частных лиц';
+  } else {
+    banner.className = 'mode-banner shop-banner';
+    banner.textContent = '🏪 Показаны объявления от профессиональных магазинов';
+  }
+  loadCatalog();
+};
+
+window.setModeAndGo = (mode) => {
+  window.switchHomeMode(mode);
+  window.setCatalogMode(mode);
+  goPage('catalog');
+};
+
+// Overlays close on bg click
+document.querySelectorAll('.overlay').forEach(el => {
+  el.addEventListener('click', e => { if (e.target === el) el.classList.remove('open'); });
+});
+
+window.addEventListener('rbt:unauth', () => { toast('Сессия истекла', 'err'); goPage('admin'); });
+
 window.addEventListener('rbt:page', e => {
   const p = e.detail;
-  if (p==='catalog') loadCatalog();
-  if (p==='home')    loadCounts();
-  if (p==='admin')   checkAdminAuth();
+  if (p === 'catalog') loadCatalog();
+  if (p === 'home')    loadCounts();
+  if (p === 'admin')   checkAdminAuth();
 });
+
 await loadConfig();
 await loadCounts();
 loadCities('f-city');
+
 window.addEventListener('popstate', () => handleRoute());
 handleRoute();
-</script> -->
+</script>
 
 </body>
 </html>
