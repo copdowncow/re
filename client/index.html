@@ -140,6 +140,8 @@ nav {
   transition: all .2s; white-space: nowrap;
 }
 .btn-shop-login:hover { background: var(--green); border-color: var(--green); color: #fff; }
+/* Когда магазин вошёл */
+.btn-shop-login.logged-in { background: var(--green-l); border-color: rgba(34,160,91,.3); color: var(--green-d); }
 
 .burger {
   display: none; flex-direction: column; justify-content: center;
@@ -164,10 +166,6 @@ nav {
 }
 .nav-drawer a:hover { background: var(--green-l); }
 .nav-drawer .drawer-shop { color: var(--green); font-weight: 700; }
-.drawer-cart-row {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 12px 14px; border-radius: 10px;
-}
 
 /* ============================================================
    PAGES
@@ -236,11 +234,7 @@ nav {
 .dot-eco  { background: #4caf50; }
 .dot-shop { background: #2196f3; }
 
-.cats {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 18px;
-}
+.cats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; }
 
 .cat-card {
   background: #fff; border: 1.5px solid var(--border);
@@ -248,34 +242,17 @@ nav {
   transition: transform .25s, box-shadow .25s, border-color .25s;
   position: relative;
 }
-.cat-card:hover {
-  transform: translateY(-6px);
-  box-shadow: 0 16px 48px rgba(0,0,0,.10);
-  border-color: rgba(34,160,91,.3);
-}
-.cat-img {
-  position: relative; height: 110px;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 3rem;
-}
+.cat-card:hover { transform: translateY(-6px); box-shadow: 0 16px 48px rgba(0,0,0,.10); border-color: rgba(34,160,91,.3); }
+.cat-img { position: relative; height: 110px; display: flex; align-items: center; justify-content: center; font-size: 3rem; }
 .cat-card.eco  .cat-img { background: linear-gradient(145deg, #e8f5e9 0%, #f1f8e9 100%); }
 .cat-card.shop .cat-img { background: linear-gradient(145deg, #e3f2fd 0%, #ede7f6 100%); }
-
-.cat-type-badge {
-  position: absolute; top: 10px; right: 10px;
-  padding: 4px 10px; border-radius: 50px;
-  font-size: .68rem; font-weight: 700; letter-spacing: .03em;
-}
+.cat-type-badge { position: absolute; top: 10px; right: 10px; padding: 4px 10px; border-radius: 50px; font-size: .68rem; font-weight: 700; letter-spacing: .03em; }
 .eco-badge  { background: rgba(34,160,91,.15); color: #0f6b34; }
 .shop-badge { background: rgba(33,150,243,.15); color: #1565c0; }
-
 .cat-body { padding: 16px; }
 .cat-body h3 { font-size: 1.05rem; margin-bottom: 4px; font-family: 'Outfit', sans-serif; font-weight: 600; }
 .cat-body p  { font-size: .78rem; color: var(--gray); margin-bottom: 10px; }
-.cat-cnt {
-  display: inline-block; padding: 4px 12px; border-radius: 50px;
-  font-size: .74rem; font-weight: 700;
-}
+.cat-cnt { display: inline-block; padding: 4px 12px; border-radius: 50px; font-size: .74rem; font-weight: 700; }
 .eco-cnt  { background: rgba(34,160,91,.10);  color: #0f6b34; }
 .shop-cnt { background: rgba(33,150,243,.10); color: #1565c0; }
 
@@ -288,19 +265,12 @@ nav {
   display: inline-flex; align-items: center; gap: 6px; transition: color .15s;
 }
 .back:hover { color: var(--black); }
-
-.mode-banner {
-  padding: 11px 18px; border-radius: 12px; font-size: .85rem; font-weight: 600; margin-bottom: 22px;
-}
+.mode-banner { padding: 11px 18px; border-radius: 12px; font-size: .85rem; font-weight: 600; margin-bottom: 22px; }
 .eco-banner  { background: rgba(34,160,91,.08);  color: #0f6b34; border: 1px solid rgba(34,160,91,.18); }
 .shop-banner { background: rgba(33,150,243,.08); color: #1565c0; border: 1px solid rgba(33,150,243,.18); }
-
-.filters {
-  display: flex; flex-wrap: wrap; gap: 16px; margin-bottom: 32px; align-items: flex-end;
-}
+.filters { display: flex; flex-wrap: wrap; gap: 16px; margin-bottom: 32px; align-items: flex-end; }
 .fg { display: flex; flex-direction: column; gap: 0; }
 .fg input, .fg select { width: auto; }
-
 .chips { display: flex; flex-wrap: wrap; gap: 7px; }
 .chip {
   padding: 7px 16px; border-radius: 50px; border: 1.5px solid var(--border);
@@ -308,18 +278,12 @@ nav {
   transition: all .15s; font-family: 'Outfit', sans-serif;
 }
 .chip.active, .chip:hover { background: var(--green); border-color: var(--green); color: #fff; }
-
-.pgrid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 24px;
-  margin-bottom: 36px;
-}
+.pgrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin-bottom: 36px; }
 .loader { grid-column: 1/-1; text-align: center; color: var(--gray); padding: 60px 0; font-size: 1rem; }
 .pgn { display: flex; justify-content: center; gap: 6px; flex-wrap: wrap; }
 
 /* ============================================================
-   PRODUCT CARD — p-card (renderProductCard)
+   PRODUCT CARD — p-card
    ============================================================ */
 .p-card {
   background: #fff; border: 1.5px solid var(--border); border-radius: 22px;
@@ -328,80 +292,25 @@ nav {
   position: relative; display: flex; flex-direction: column;
 }
 .p-card:hover { transform: translateY(-5px); box-shadow: 0 20px 56px rgba(0,0,0,.11); border-color: rgba(34,160,91,.25); }
-
-/* ── Photo scroll wrapper ── */
-.pc-img-wrap {
-  position: relative;
-  height: 220px;
-  flex-shrink: 0;
-  overflow: hidden;
-}
-.pc-img {
-  display: flex;
-  height: 100%;
-  overflow-x: auto;
-  overflow-y: hidden;
-  scroll-snap-type: x mandatory;
-  scroll-behavior: smooth;
-  scrollbar-width: none;
-  background: linear-gradient(145deg,#f0faf5,#e8f5e9);
-}
+.pc-img-wrap { position: relative; height: 220px; flex-shrink: 0; overflow: hidden; }
+.pc-img { display: flex; height: 100%; overflow-x: auto; overflow-y: hidden; scroll-snap-type: x mandatory; scroll-behavior: smooth; scrollbar-width: none; background: linear-gradient(145deg,#f0faf5,#e8f5e9); }
 .pc-img::-webkit-scrollbar { display: none; }
-.pc-img img {
-  width: 100%; height: 100%;
-  object-fit: cover;
-  flex-shrink: 0;
-  scroll-snap-align: start;
-  transition: none;
-  display: block;
-}
-.pc-img-placeholder {
-  width: 100%; height: 100%;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 4rem; flex-shrink: 0;
-}
-
-/* dot indicators */
-.img-dots {
-  position: absolute; bottom: 8px; left: 50%;
-  transform: translateX(-50%);
-  display: flex; gap: 5px; z-index: 3;
-  pointer-events: none;
-}
-.img-dot {
-  width: 6px; height: 6px; border-radius: 50%;
-  background: rgba(255,255,255,.5);
-  border: 1px solid rgba(255,255,255,.55);
-  transition: background .2s, transform .2s;
-  pointer-events: all; cursor: pointer;
-}
+.pc-img img { width: 100%; height: 100%; object-fit: cover; flex-shrink: 0; scroll-snap-align: start; transition: none; display: block; }
+.pc-img-placeholder { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 4rem; flex-shrink: 0; }
+.img-dots { position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%); display: flex; gap: 5px; z-index: 3; pointer-events: none; }
+.img-dot { width: 6px; height: 6px; border-radius: 50%; background: rgba(255,255,255,.5); border: 1px solid rgba(255,255,255,.55); transition: background .2s, transform .2s; pointer-events: all; cursor: pointer; }
 .img-dot.active { background: #fff; transform: scale(1.35); }
-
-/* arrow buttons */
-.img-arrow {
-  position: absolute; top: 50%; transform: translateY(-50%);
-  width: 30px; height: 30px;
-  background: rgba(255,255,255,.9);
-  border: none; border-radius: 50%;
-  font-size: .85rem; cursor: pointer; z-index: 4;
-  display: none; align-items: center; justify-content: center;
-  box-shadow: 0 2px 10px rgba(0,0,0,.18);
-  transition: background .15s, transform .15s;
-  line-height: 1;
-}
+.img-arrow { position: absolute; top: 50%; transform: translateY(-50%); width: 30px; height: 30px; background: rgba(255,255,255,.9); border: none; border-radius: 50%; font-size: .85rem; cursor: pointer; z-index: 4; display: none; align-items: center; justify-content: center; box-shadow: 0 2px 10px rgba(0,0,0,.18); transition: background .15s, transform .15s; line-height: 1; }
 .img-arrow:hover { background: #fff; transform: translateY(-50%) scale(1.1); }
 .img-arrow.left  { left: 8px; }
 .img-arrow.right { right: 8px; }
-.p-card:hover .img-arrow,
-.pcard:hover .img-arrow { display: flex; }
-
+.p-card:hover .img-arrow, .pcard:hover .img-arrow { display: flex; }
 .pc-badges { position: absolute; top: 12px; left: 12px; display: flex; flex-direction: column; gap: 5px; z-index: 2; pointer-events: none; }
 .pc-badge { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 50px; font-size: .68rem; font-weight: 700; letter-spacing: .02em; backdrop-filter: blur(8px); }
 .pcb-eco  { background: rgba(34,160,91,.85); color: #fff; }
 .pcb-shop { background: rgba(33,150,243,.85); color: #fff; }
 .pcb-city { background: rgba(255,255,255,.92); color: var(--mid); }
 .pcb-new  { background: rgba(255,80,80,.85); color: #fff; }
-
 .pc-body { padding: 16px 16px 12px; display: flex; flex-direction: column; gap: 0; flex: 1; }
 .pc-meta { display: flex; align-items: center; justify-content: space-between; margin-bottom: 7px; }
 .pc-cat { font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--green-d); }
@@ -414,169 +323,56 @@ nav {
 .pc-price-main span { font-size: .75rem; font-weight: 500; color: var(--gray); margin-left: 2px; }
 .pc-price-orig { font-size: .72rem; color: var(--gray); text-decoration: line-through; margin-top: 2px; }
 .pc-size { display: inline-flex; align-items: center; padding: 4px 11px; border-radius: 50px; background: var(--warm); border: 1px solid var(--border); font-size: .72rem; font-weight: 600; color: var(--mid); }
-
-/* ── Add to cart button on p-card ── */
 .pc-actions { padding: 0; }
 .pc-cart-btn {
-  width: 100%;
-  display: flex; align-items: center; justify-content: center; gap: 8px;
-  padding: 12px 16px;
-  background: linear-gradient(135deg, var(--green) 0%, var(--green-d) 100%);
-  color: #fff;
-  border: none;
-  border-radius: 14px;
-  font-size: .85rem; font-weight: 700;
-  font-family: 'Outfit', sans-serif;
-  cursor: pointer;
-  transition: all .22s;
-  letter-spacing: .01em;
-  position: relative;
-  overflow: hidden;
+  width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 12px 16px; background: linear-gradient(135deg, var(--green) 0%, var(--green-d) 100%);
+  color: #fff; border: none; border-radius: 14px; font-size: .85rem; font-weight: 700;
+  font-family: 'Outfit', sans-serif; cursor: pointer; transition: all .22s;
+  letter-spacing: .01em; position: relative; overflow: hidden;
 }
-.pc-cart-btn::before {
-  content: '';
-  position: absolute; inset: 0;
-  background: linear-gradient(135deg, rgba(255,255,255,.15) 0%, transparent 60%);
-  border-radius: inherit;
-}
-.pc-cart-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(34,160,91,.42);
-  background: linear-gradient(135deg, #28b566 0%, var(--green-d) 100%);
-}
+.pc-cart-btn::before { content: ''; position: absolute; inset: 0; background: linear-gradient(135deg, rgba(255,255,255,.15) 0%, transparent 60%); border-radius: inherit; }
+.pc-cart-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(34,160,91,.42); background: linear-gradient(135deg, #28b566 0%, var(--green-d) 100%); }
 .pc-cart-btn:active { transform: translateY(0); }
-.pc-cart-btn.added {
-  background: linear-gradient(135deg, #0f6b34 0%, #0d5a2c 100%);
-  box-shadow: none;
-}
+.pc-cart-btn.added { background: linear-gradient(135deg, #0f6b34 0%, #0d5a2c 100%); box-shadow: none; }
 .pc-cart-btn .btn-icon { font-size: 1rem; transition: transform .3s; }
 .pc-cart-btn:hover .btn-icon { transform: scale(1.2) rotate(-8deg); }
 
 /* ============================================================
-   PRODUCT CARD — pcard (main.js pCard())
+   PRODUCT CARD — pcard
    ============================================================ */
-#pgrid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 24px;
-  margin-bottom: 36px;
-}
-#pgrid .empty {
-  grid-column: 1 / -1; display: flex; flex-direction: column;
-  align-items: center; justify-content: center;
-  gap: 12px; padding: 72px 24px; color: var(--gray); text-align: center;
-}
+#pgrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin-bottom: 36px; }
+#pgrid .empty { grid-column: 1 / -1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; padding: 72px 24px; color: var(--gray); text-align: center; }
 #pgrid .empty span { font-size: 3rem; }
 #pgrid .empty h3 { font-size: 1.15rem; color: var(--black); font-family: 'Outfit',sans-serif; }
 #pgrid .empty p { font-size: .88rem; }
-
-.pcard {
-  background: #fff; border: 1.5px solid var(--border); border-radius: 22px;
-  overflow: hidden; cursor: pointer; display: flex; flex-direction: column;
-  transition: transform .26s cubic-bezier(.22,1,.36,1), box-shadow .26s, border-color .26s;
-  position: relative;
-}
+.pcard { background: #fff; border: 1.5px solid var(--border); border-radius: 22px; overflow: hidden; cursor: pointer; display: flex; flex-direction: column; transition: transform .26s cubic-bezier(.22,1,.36,1), box-shadow .26s, border-color .26s; position: relative; }
 .pcard:hover { transform: translateY(-5px); box-shadow: 0 20px 56px rgba(0,0,0,.11); border-color: rgba(34,160,91,.28); }
-
-/* ── Photo scroll wrapper for pcard ── */
-.pcard-img-wrap {
-  position: relative;
-  height: 220px;
-  flex-shrink: 0;
-  overflow: hidden;
-}
-.pcard-img {
-  display: flex;
-  height: 100%;
-  overflow-x: auto;
-  overflow-y: hidden;
-  scroll-snap-type: x mandatory;
-  scroll-behavior: smooth;
-  scrollbar-width: none;
-  background: linear-gradient(145deg,#f0faf5,#e8f5e9);
-}
+.pcard-img-wrap { position: relative; height: 220px; flex-shrink: 0; overflow: hidden; }
+.pcard-img { display: flex; height: 100%; overflow-x: auto; overflow-y: hidden; scroll-snap-type: x mandatory; scroll-behavior: smooth; scrollbar-width: none; background: linear-gradient(145deg,#f0faf5,#e8f5e9); }
 .pcard-img::-webkit-scrollbar { display: none; }
-.pcard-img img {
-  width: 100%; height: 100%;
-  object-fit: cover;
-  flex-shrink: 0;
-  scroll-snap-align: start;
-  transition: none;
-  display: block;
-}
-.pcard-ph {
-  width: 100%; height: 100%;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 4.5rem; flex-shrink: 0;
-}
+.pcard-img img { width: 100%; height: 100%; object-fit: cover; flex-shrink: 0; scroll-snap-align: start; transition: none; display: block; }
+.pcard-ph { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 4.5rem; flex-shrink: 0; }
 .pi-bouquet { background: linear-gradient(145deg,#fce4ec,#f8bbd0); }
 .pi-basket  { background: linear-gradient(145deg,#fff8e1,#ffe082); }
 .pi-bear    { background: linear-gradient(145deg,#e8eaf6,#c5cae9); }
 .pi-sweets  { background: linear-gradient(145deg,#fce4ec,#f48fb1); }
-
-.pbadge {
-  position: absolute; top: 12px; left: 12px;
-  padding: 4px 12px; border-radius: 50px;
-  font-size: .68rem; font-weight: 700; letter-spacing: .04em;
-  background: rgba(34,160,91,.88); color: #fff;
-  backdrop-filter: blur(6px); z-index: 2;
-  pointer-events: none;
-}
-
-.timer-badge {
-  position: absolute; top: 12px; right: 12px;
-  padding: 4px 10px; border-radius: 50px;
-  font-size: .68rem; font-weight: 700;
-  background: rgba(255,255,255,.92); color: var(--mid);
-  backdrop-filter: blur(6px); z-index: 2;
-  border: 1px solid rgba(0,0,0,.07);
-  pointer-events: none;
-}
+.pbadge { position: absolute; top: 12px; left: 12px; padding: 4px 12px; border-radius: 50px; font-size: .68rem; font-weight: 700; letter-spacing: .04em; background: rgba(34,160,91,.88); color: #fff; backdrop-filter: blur(6px); z-index: 2; pointer-events: none; }
+.timer-badge { position: absolute; top: 12px; right: 12px; padding: 4px 10px; border-radius: 50px; font-size: .68rem; font-weight: 700; background: rgba(255,255,255,.92); color: var(--mid); backdrop-filter: blur(6px); z-index: 2; border: 1px solid rgba(0,0,0,.07); pointer-events: none; }
 .timer-badge.urgent { background: rgba(229,57,53,.88); color: #fff; border-color: transparent; animation: pulse 1.4s ease-in-out infinite; }
 .timer-badge.expired { background: rgba(120,120,120,.8); color: #fff; border-color: transparent; }
 @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.7} }
-
 .pcard-body { padding: 16px 16px 14px; display: flex; flex-direction: column; flex: 1; gap: 6px; }
 .pcard-body h4 { font-size: 1rem; font-weight: 700; color: var(--black); line-height: 1.3; font-family: 'Outfit',sans-serif; margin: 0; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .pcard-body p { font-size: .79rem; color: var(--gray); line-height: 1.5; margin: 0; flex: 1; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-
 .pmeta { display: flex; align-items: center; justify-content: space-between; padding: 10px 0 4px; border-top: 1px solid var(--border); margin-top: auto; gap: 8px; }
 .pprice { font-size: 1.15rem; font-weight: 800; color: var(--black); white-space: nowrap; }
 .pcity { font-size: .75rem; font-weight: 600; color: var(--gray); background: var(--warm); padding: 4px 10px; border-radius: 50px; border: 1px solid var(--border); white-space: nowrap; max-width: 120px; overflow: hidden; text-overflow: ellipsis; }
-
-/* ── Add to cart button on pcard ── */
-.pcard-cart-btn {
-  width: 100%; margin-top: 10px;
-  display: flex; align-items: center; justify-content: center; gap: 8px;
-  padding: 12px 16px;
-  background: linear-gradient(135deg, var(--green) 0%, var(--green-d) 100%);
-  color: #fff;
-  border: none;
-  border-radius: 14px;
-  font-size: .85rem; font-weight: 700;
-  font-family: 'Outfit', sans-serif;
-  cursor: pointer;
-  transition: all .22s;
-  letter-spacing: .01em;
-  position: relative;
-  overflow: hidden;
-}
-.pcard-cart-btn::before {
-  content: '';
-  position: absolute; inset: 0;
-  background: linear-gradient(135deg, rgba(255,255,255,.15) 0%, transparent 60%);
-  border-radius: inherit;
-}
-.pcard-cart-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(34,160,91,.42);
-}
+.pcard-cart-btn { width: 100%; margin-top: 10px; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 12px 16px; background: linear-gradient(135deg, var(--green) 0%, var(--green-d) 100%); color: #fff; border: none; border-radius: 14px; font-size: .85rem; font-weight: 700; font-family: 'Outfit', sans-serif; cursor: pointer; transition: all .22s; letter-spacing: .01em; position: relative; overflow: hidden; }
+.pcard-cart-btn::before { content: ''; position: absolute; inset: 0; background: linear-gradient(135deg, rgba(255,255,255,.15) 0%, transparent 60%); border-radius: inherit; }
+.pcard-cart-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(34,160,91,.42); }
 .pcard-cart-btn:active { transform: translateY(0); }
-.pcard-cart-btn.added {
-  background: linear-gradient(135deg, #0f6b34 0%, #0d5a2c 100%);
-  box-shadow: none;
-}
-
+.pcard-cart-btn.added { background: linear-gradient(135deg, #0f6b34 0%, #0d5a2c 100%); box-shadow: none; }
 .pgn-btn { min-width: 40px; height: 40px; padding: 0 12px; border: 1.5px solid var(--border); border-radius: 10px; background: #fff; font-size: .88rem; font-weight: 700; color: var(--mid); cursor: pointer; font-family: 'Outfit',sans-serif; transition: all .18s; }
 .pgn-btn:hover  { background: var(--green-l); border-color: var(--green); color: var(--green-d); }
 .pgn-btn.active { background: var(--green); border-color: var(--green); color: #fff; }
@@ -585,13 +381,20 @@ nav {
    PRODUCT DETAIL
    ============================================================ */
 .pd-wrap { display: grid; grid-template-columns: 1fr 1fr; gap: 48px; max-width: 1000px; }
-.pd-gallery { position: relative; }
+.pd-gallery { display: flex; flex-direction: column; gap: 12px; }
+.pd-main { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 22px; border: 1.5px solid var(--border); display: block; background: var(--warm); }
+.pd-main-ph { width: 100%; aspect-ratio: 1; border-radius: 22px; border: 1.5px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 7rem; background: var(--warm); }
 .pd-main-img { width: 100%; aspect-ratio: 1; border-radius: 24px; object-fit: cover; background: var(--warm); border: 1.5px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 6rem; overflow: hidden; }
 .pd-main-img img { width: 100%; height: 100%; object-fit: cover; cursor: zoom-in; }
 .pd-thumbs { display: flex; gap: 10px; margin-top: 12px; flex-wrap: wrap; }
 .pd-thumb { width: 68px; height: 68px; border-radius: 12px; object-fit: cover; border: 2px solid var(--border); cursor: pointer; transition: border-color .15s; }
 .pd-thumb.active { border-color: var(--green); }
 .pd-thumb:hover  { border-color: var(--green-d); }
+.pd-body { display: flex; flex-direction: column; gap: 14px; }
+.pd-chips { display: flex; flex-wrap: wrap; gap: 7px; }
+.pd-chip { padding: 5px 13px; border-radius: 50px; font-size: .74rem; font-weight: 700; letter-spacing: .03em; background: var(--warm); border: 1px solid var(--border); color: var(--mid); }
+.pd-chip.rose { background: var(--green-l); border-color: rgba(34,160,91,.2); color: #0f6b34; }
+.pd-body h2 { font-size: 1.8rem; font-weight: 700; line-height: 1.15; color: var(--black); font-family: 'Cormorant Garamond',serif; margin: 0; }
 .pd-badges { display: flex; gap: 7px; flex-wrap: wrap; margin-bottom: 16px; }
 .pd-badge { padding: 5px 13px; border-radius: 50px; font-size: .72rem; font-weight: 700; letter-spacing: .03em; }
 .pd-badge-eco  { background: var(--green-l); color: #0f6b34; border: 1px solid rgba(34,160,91,.2); }
@@ -600,6 +403,8 @@ nav {
 .pd-badge-size { background: var(--warm); color: var(--mid); border: 1px solid var(--border); }
 .pd-badge-when { background: #fff8e1; color: #8b6914; border: 1px solid #f0d96e; }
 .pd-title { font-size: 2rem; font-weight: 700; line-height: 1.15; color: var(--black); margin-bottom: 12px; }
+.pd-price { font-size: 2.1rem; font-weight: 800; color: var(--black); font-family: 'Outfit',sans-serif; }
+.pd-desc  { font-size: .95rem; color: var(--mid); line-height: 1.7; margin: 0; }
 .pd-desc-text { font-size: .95rem; color: var(--mid); line-height: 1.7; margin-bottom: 24px; }
 .pd-price-box { background: var(--warm); border: 1.5px solid var(--border); border-radius: 16px; padding: 20px 22px; margin-bottom: 24px; }
 .pd-price-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
@@ -609,52 +414,11 @@ nav {
 .pd-commission-note { font-size: .78rem; color: var(--gray); padding-top: 10px; border-top: 1px solid var(--border); margin-top: 10px; }
 .pd-actions { display: flex; flex-direction: column; gap: 10px; }
 .pd-actions .btn { width: 100%; padding: 14px 22px; font-size: .95rem; border-radius: 14px; }
-
-/* ── Big cart button in detail ── */
-.pd-cart-btn {
-  width: 100%;
-  display: flex; align-items: center; justify-content: center; gap: 10px;
-  padding: 16px 22px;
-  background: linear-gradient(135deg, var(--green) 0%, var(--green-d) 100%);
-  color: #fff;
-  border: none; border-radius: 16px;
-  font-size: 1rem; font-weight: 700;
-  font-family: 'Outfit', sans-serif;
-  cursor: pointer;
-  transition: all .22s;
-  position: relative; overflow: hidden;
-  letter-spacing: .01em;
-  box-shadow: 0 4px 20px rgba(34,160,91,.25);
-}
-.pd-cart-btn::before {
-  content: '';
-  position: absolute; top: 0; left: -60%;
-  width: 40%; height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,.2), transparent);
-  transform: skewX(-20deg);
-  transition: left .5s;
-}
+.pd-cart-btn { width: 100%; display: flex; align-items: center; justify-content: center; gap: 10px; padding: 16px 22px; background: linear-gradient(135deg, var(--green) 0%, var(--green-d) 100%); color: #fff; border: none; border-radius: 16px; font-size: 1rem; font-weight: 700; font-family: 'Outfit', sans-serif; cursor: pointer; transition: all .22s; position: relative; overflow: hidden; letter-spacing: .01em; box-shadow: 0 4px 20px rgba(34,160,91,.25); }
+.pd-cart-btn::before { content: ''; position: absolute; top: 0; left: -60%; width: 40%; height: 100%; background: linear-gradient(90deg, transparent, rgba(255,255,255,.2), transparent); transform: skewX(-20deg); transition: left .5s; }
 .pd-cart-btn:hover::before { left: 120%; }
-.pd-cart-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 10px 32px rgba(34,160,91,.45);
-}
-.pd-cart-btn.added {
-  background: linear-gradient(135deg, #0f6b34 0%, #0d5a2c 100%);
-  box-shadow: none;
-}
-
-/* main.js detail styles */
-.pd-gallery { display: flex; flex-direction: column; gap: 12px; }
-.pd-main { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 22px; border: 1.5px solid var(--border); display: block; background: var(--warm); }
-.pd-main-ph { width: 100%; aspect-ratio: 1; border-radius: 22px; border: 1.5px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 7rem; background: var(--warm); }
-.pd-body { display: flex; flex-direction: column; gap: 14px; }
-.pd-chips { display: flex; flex-wrap: wrap; gap: 7px; }
-.pd-chip { padding: 5px 13px; border-radius: 50px; font-size: .74rem; font-weight: 700; letter-spacing: .03em; background: var(--warm); border: 1px solid var(--border); color: var(--mid); }
-.pd-chip.rose { background: var(--green-l); border-color: rgba(34,160,91,.2); color: #0f6b34; }
-.pd-body h2 { font-size: 1.8rem; font-weight: 700; line-height: 1.15; color: var(--black); font-family: 'Cormorant Garamond',serif; margin: 0; }
-.pd-price { font-size: 2.1rem; font-weight: 800; color: var(--black); font-family: 'Outfit',sans-serif; }
-.pd-desc  { font-size: .95rem; color: var(--mid); line-height: 1.7; margin: 0; }
+.pd-cart-btn:hover { transform: translateY(-2px); box-shadow: 0 10px 32px rgba(34,160,91,.45); }
+.pd-cart-btn.added { background: linear-gradient(135deg, #0f6b34 0%, #0d5a2c 100%); box-shadow: none; }
 .share-row { display: flex; align-items: center; gap: 8px; padding: 10px 14px; background: var(--warm); border: 1.5px solid var(--border); border-radius: 12px; font-size: .82rem; color: var(--gray); font-weight: 600; }
 .share-row input { flex: 1; border: none; background: transparent; padding: 0; font-size: .82rem; color: var(--mid); min-width: 0; outline: none; width: auto; }
 .share-row button { padding: 6px 14px; border-radius: 8px; background: var(--green); color: #fff; border: none; font-size: .78rem; font-weight: 700; cursor: pointer; font-family: 'Outfit',sans-serif; transition: background .2s; white-space: nowrap; }
@@ -770,6 +534,17 @@ nav {
 .modal-x:hover { background: var(--border); color: var(--black); }
 .modal h3 { font-size: 1.4rem; margin-bottom: 8px; }
 
+/* Store modal tabs */
+.store-tabs { display: flex; border-bottom: 2px solid var(--border); margin-bottom: 24px; }
+.store-tab-btn {
+  flex: 1; padding: 11px 10px; background: none; border: none;
+  border-bottom: 2.5px solid transparent; margin-bottom: -2px;
+  font-size: .92rem; font-weight: 600; color: var(--gray);
+  cursor: pointer; font-family: 'Outfit', sans-serif;
+  transition: color .2s, border-color .2s;
+}
+.store-tab-btn.active { color: var(--green); border-bottom-color: var(--green); }
+
 /* ============================================================
    TOAST
    ============================================================ */
@@ -786,7 +561,6 @@ nav {
 footer { background: var(--black); color: rgba(255,255,255,.45); text-align: center; padding: 36px 24px; font-size: .82rem; }
 .footer-logo { font-family: 'Cormorant Garamond',serif; font-size: 1.5rem; font-weight: 700; color: #fff; margin-bottom: 10px; display: block; }
 .footer-logo em { color: var(--green); font-style: normal; }
-#lightbox { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.94); z-index: 9998; align-items: center; justify-content: center; padding: 16px; }
 
 /* ============================================================
    RESPONSIVE
@@ -834,6 +608,10 @@ footer { background: var(--black); color: rgba(255,255,255,.45); text-align: cen
   .cats { grid-template-columns: 1fr 1fr; }
   .mode-switch { flex-wrap: wrap; }
 }
+@media (max-width:900px) {
+  #mob-cart-btn { display:flex !important; }
+  .nav-right .nav-cart { display:none !important; }
+}
 </style>
 </head>
 <body>
@@ -851,8 +629,8 @@ footer { background: var(--black); color: rgba(255,255,255,.45); text-align: cen
       <li><a class="nav-admin" onclick="goPage('admin')">⚙ Панель</a></li>
     </ul>
     <div class="nav-right">
-      <button class="btn-shop-login" onclick="openStoreModal()">
-        <span>🏪</span> Войти как магазин
+      <button class="btn-shop-login" id="nav-shop-btn" onclick="onShopBtnClick()">
+        <span>🏪</span> <span id="nav-shop-label">Войти как магазин</span>
       </button>
       <button class="nav-cart" onclick="openCart()" title="Корзина">
         🛒
@@ -872,7 +650,7 @@ footer { background: var(--black); color: rgba(255,255,255,.45); text-align: cen
     <a onclick="goPage('catalog');closeDrawer()">🛍 Каталог</a>
     <a onclick="goPage('sell');closeDrawer()">➕ Разместить объявление</a>
     <a class="nav-admin" onclick="goPage('admin');closeDrawer()">⚙ Панель администратора</a>
-    <a class="drawer-shop" onclick="openStoreModal();closeDrawer()">🏪 Войти как магазин</a>
+    <a class="drawer-shop" onclick="onShopBtnClick();closeDrawer()">🏪 <span id="drawer-shop-label">Войти как магазин</span></a>
     <a onclick="openCart();closeDrawer()">🛒 Корзина <span id="drawer-cart-count" style="background:var(--red);color:#fff;border-radius:50px;padding:2px 8px;font-size:.72rem;font-weight:700;margin-left:6px;display:none">0</span></a>
   </div>
 </nav>
@@ -884,10 +662,7 @@ footer { background: var(--black); color: rgba(255,255,255,.45); text-align: cen
 <div class="cart-drawer" id="cart-drawer">
   <div class="cart-head">
     <div class="cart-head-left">
-      <div class="cart-head-title">
-        🛒 Корзина
-        <span class="cart-count-pill" id="cart-head-count">0</span>
-      </div>
+      <div class="cart-head-title">🛒 Корзина <span class="cart-count-pill" id="cart-head-count">0</span></div>
       <div class="cart-head-sub">Ваши выбранные букеты и подарки</div>
     </div>
     <button class="cart-close" onclick="closeCart()">✕</button>
@@ -903,19 +678,14 @@ footer { background: var(--black); color: rgba(255,255,255,.45); text-align: cen
   </div>
   <div class="cart-foot" id="cart-foot" style="display:none">
     <div class="cart-summary">
-      <div class="cart-summary-row">
-        <span>Товаров</span>
-        <span id="cart-items-count">0 шт.</span>
-      </div>
+      <div class="cart-summary-row"><span>Товаров</span><span id="cart-items-count">0 шт.</span></div>
       <div class="cart-summary-divider"></div>
       <div class="cart-summary-row">
         <span class="cart-total-label">Итого</span>
         <span class="cart-total-value" id="cart-total">0 сом.</span>
       </div>
     </div>
-    <button class="cart-checkout-btn" onclick="cartCheckout()">
-      <span>💬</span> Оформить через Telegram
-    </button>
+    <button class="cart-checkout-btn" onclick="cartCheckout()"><span>💬</span> Оформить через Telegram</button>
     <button class="cart-clear-btn" onclick="clearCartConfirm()">Очистить корзину</button>
     <p class="cart-note">Свяжемся через @rebuket_admin</p>
   </div>
@@ -945,7 +715,7 @@ footer { background: var(--black); color: rgba(255,255,255,.45); text-align: cen
       </div>
       <div class="mode-switch">
         <button class="mode-btn active" id="home-mode-eco"  onclick="switchHomeMode('eco')"><span class="dot dot-eco"></span> Эко</button>
-        <button class="mode-btn" id="home-mode-shop" onclick="switchHomeMode('shop')"><span class="dot dot-shop"></span> Магазинные</button>
+        <button class="mode-btn"        id="home-mode-shop" onclick="switchHomeMode('shop')"><span class="dot dot-shop"></span> Магазинные</button>
       </div>
     </div>
     <div id="cats-eco" class="cats">
@@ -976,7 +746,7 @@ footer { background: var(--black); color: rgba(255,255,255,.45); text-align: cen
       </div>
       <div class="mode-switch">
         <button class="mode-btn active" id="cat-mode-eco"  onclick="setCatalogMode('eco')"><span class="dot dot-eco"></span> Эко</button>
-        <button class="mode-btn" id="cat-mode-shop" onclick="setCatalogMode('shop')"><span class="dot dot-shop"></span> Магазинные</button>
+        <button class="mode-btn"        id="cat-mode-shop" onclick="setCatalogMode('shop')"><span class="dot dot-shop"></span> Магазинные</button>
       </div>
     </div>
     <div id="catalog-mode-banner" class="mode-banner eco-banner">🌿 Показаны Эко-объявления — перепродажа от частных лиц</div>
@@ -1158,7 +928,9 @@ footer { background: var(--black); color: rgba(255,255,255,.45); text-align: cen
   </div>
 </div>
 
-<!-- INQUIRY MODAL (kept for admin use, not shown to buyers) -->
+<!-- ══════════════════════════════════════
+     INQUIRY MODAL
+══════════════════════════════════════ -->
 <div class="overlay" id="inq-modal">
   <div class="modal">
     <button class="modal-x" onclick="closeModal('inq-modal')">✕</button>
@@ -1174,22 +946,79 @@ footer { background: var(--black); color: rgba(255,255,255,.45); text-align: cen
   </div>
 </div>
 
-<!-- STORE LOGIN MODAL -->
+<!-- ══════════════════════════════════════
+     STORE MODAL — Вход и Регистрация
+══════════════════════════════════════ -->
 <div class="overlay" id="store-modal">
   <div class="modal">
     <button class="modal-x" onclick="closeModal('store-modal')">✕</button>
-    <div style="font-size:2.6rem;margin-bottom:14px">🏪</div>
-    <h3>Войти как магазин</h3>
-    <p style="color:var(--gray);margin-bottom:24px;font-size:.88rem">Для профессиональных флористов и магазинов</p>
-    <div class="form-group" style="margin-bottom:13px"><label>Email или телефон</label><input type="text" id="store-email" placeholder="example@mail.com"></div>
-    <div class="form-group" style="margin-bottom:24px"><label>Пароль</label><input type="password" id="store-pass" placeholder="••••••••"></div>
-    <button class="btn btn-primary" style="width:100%;margin-bottom:12px" onclick="storeLogin()">Войти</button>
-    <div style="text-align:center;color:var(--gray);font-size:.82rem">
-      Нет аккаунта? <a href="#" style="color:var(--green);font-weight:700" onclick="storeRegister()">Зарегистрировать магазин</a>
+
+    <div style="font-size:2.4rem;margin-bottom:10px;text-align:center">🏪</div>
+    <h3 style="text-align:center;margin-bottom:4px">Магазин на ReBuket</h3>
+    <p style="color:var(--gray);font-size:.83rem;text-align:center;margin-bottom:20px">Для профессиональных флористов и магазинов</p>
+
+    <!-- Табы -->
+    <div class="store-tabs">
+      <button class="store-tab-btn active" id="stab-login" onclick="switchStoreTab('login')">Вход</button>
+      <button class="store-tab-btn"        id="stab-reg"   onclick="switchStoreTab('register')">Регистрация</button>
     </div>
-    <div style="margin-top:20px;padding:14px;background:var(--warm);border-radius:12px;font-size:.8rem;color:var(--mid);line-height:1.65;border:1.5px solid var(--border)">
-      🌿 <strong>Эко-раздел</strong> — для частных лиц (перепродажа).<br>
-      🏪 <strong>Магазинный раздел</strong> — только для верифицированных магазинов.
+
+    <!-- ── ВХОД ── -->
+    <div id="store-tab-login">
+      <div class="form-group" style="margin-bottom:14px">
+        <label>Номер телефона</label>
+        <input type="tel" id="store-phone-login" placeholder="+992 900 000000"
+          onkeydown="if(event.key==='Enter')storeDoLogin()">
+      </div>
+      <div class="form-group" style="margin-bottom:20px">
+        <label>Пароль</label>
+        <input type="password" id="store-pass-login" placeholder="••••••••"
+          onkeydown="if(event.key==='Enter')storeDoLogin()">
+      </div>
+      <button class="btn btn-primary" style="width:100%;border-radius:14px;padding:14px" onclick="storeDoLogin()">
+        Войти в магазин
+      </button>
+      <div id="store-login-msg" style="margin-top:12px;font-size:.84rem;text-align:center;line-height:1.5;min-height:20px"></div>
+      <div style="text-align:center;margin-top:14px;font-size:.83rem;color:var(--gray)">
+        Нет аккаунта?
+        <button onclick="switchStoreTab('register')" style="background:none;border:none;color:var(--green);font-weight:700;cursor:pointer;font-size:.83rem;font-family:inherit;padding:0">
+          Зарегистрировать магазин
+        </button>
+      </div>
+    </div>
+
+    <!-- ── РЕГИСТРАЦИЯ ── -->
+    <div id="store-tab-register" style="display:none">
+      <div class="form-group" style="margin-bottom:14px">
+        <label>Название магазина</label>
+        <input type="text" id="store-reg-name" placeholder="Цветы Душанбе">
+      </div>
+      <div class="form-group" style="margin-bottom:14px">
+        <label>Номер телефона *</label>
+        <input type="tel" id="store-reg-phone" placeholder="+992 900 000000">
+      </div>
+      <div class="form-group" style="margin-bottom:20px">
+        <label>Пароль * <span style="color:var(--gray);font-weight:400">(минимум 6 символов)</span></label>
+        <input type="password" id="store-reg-pass" placeholder="••••••••"
+          onkeydown="if(event.key==='Enter')storeDoRegister()">
+      </div>
+      <button class="btn btn-primary" style="width:100%;border-radius:14px;padding:14px" onclick="storeDoRegister()">
+        Отправить заявку на регистрацию
+      </button>
+      <div id="store-reg-msg" style="margin-top:12px;font-size:.84rem;text-align:center;line-height:1.5;min-height:20px"></div>
+      <div style="text-align:center;margin-top:14px;font-size:.83rem;color:var(--gray)">
+        Уже есть аккаунт?
+        <button onclick="switchStoreTab('login')" style="background:none;border:none;color:var(--green);font-weight:700;cursor:pointer;font-size:.83rem;font-family:inherit;padding:0">
+          Войти
+        </button>
+      </div>
+    </div>
+
+    <!-- Инфо -->
+    <div style="margin-top:20px;padding:13px 15px;background:var(--warm);border-radius:12px;font-size:.78rem;color:var(--mid);line-height:1.7;border:1.5px solid var(--border)">
+      🌿 <b>Эко-раздел</b> — для частных лиц (перепродажа).<br>
+      🏪 <b>Магазинный раздел</b> — только для верифицированных магазинов.<br>
+      После регистрации администратор рассмотрит заявку и одобрит доступ.
     </div>
   </div>
 </div>
@@ -1209,19 +1038,15 @@ footer { background: var(--black); color: rgba(255,255,255,.45); text-align: cen
   <p>© 2025 rebuket.tj — Подарки по всему Таджикистану</p>
 </footer>
 
-<style>
-@media (max-width:900px) {
-  #mob-cart-btn { display:flex !important; }
-  .nav-right .nav-cart { display:none !important; }
-}
-</style>
-
 <script type="module">
 import { api, isAuth, setTok, clrTok } from './js/api.js';
 import { goPage, toast } from './js/utils.js';
 import { loadCatalog, loadCounts, loadCities, filterAndGo, handleRoute, loadConfig } from './js/main.js';
 import { checkAdminAuth } from './js/admin.js';
 
+/* ══════════════════════════════════════
+   КОРЗИНА
+══════════════════════════════════════ */
 window._cart = JSON.parse(localStorage.getItem('rbt_cart') || '[]');
 
 function saveCart() {
@@ -1306,38 +1131,133 @@ window.cartCheckout = () => {
   window.open(`https://t.me/rebuket_admin?text=${msg}`, '_blank');
 };
 
-function catEmoji(cat) {
-  if (!cat) return '🌸';
-  if (cat.includes('Букет'))  return '💐';
-  if (cat.includes('Корзин')) return '🧺';
-  if (cat.includes('Мишк'))   return '🧸';
-  return '🍰';
+/* ══════════════════════════════════════
+   МАГАЗИН — Авторизация
+══════════════════════════════════════ */
+function updateShopUI() {
+  const name  = localStorage.getItem('shop_name');
+  const token = localStorage.getItem('shop_token');
+  const btn   = document.getElementById('nav-shop-btn');
+  const lbl   = document.getElementById('nav-shop-label');
+  const dlbl  = document.getElementById('drawer-shop-label');
+  if (token && name) {
+    if (lbl)  lbl.textContent  = '🏪 ' + name;
+    if (dlbl) dlbl.textContent = '🏪 ' + name + ' (выйти)';
+    if (btn)  btn.classList.add('logged-in');
+  } else {
+    if (lbl)  lbl.textContent  = 'Войти как магазин';
+    if (dlbl) dlbl.textContent = 'Войти как магазин';
+    if (btn)  btn.classList.remove('logged-in');
+  }
 }
 
-/* ─────────────────────────────────────────────────────────
-   Photo scroll helpers
-   ───────────────────────────────────────────────────────── */
+window.onShopBtnClick = () => {
+  const token = localStorage.getItem('shop_token');
+  if (token) {
+    if (confirm('Выйти из аккаунта магазина?')) {
+      localStorage.removeItem('shop_token');
+      localStorage.removeItem('shop_name');
+      updateShopUI();
+      toast('Вы вышли из аккаунта магазина');
+    }
+  } else {
+    openStoreModal();
+  }
+};
+
+window.openStoreModal = () => {
+  document.getElementById('store-modal').classList.add('open');
+  switchStoreTab('login');
+};
+
+window.switchStoreTab = (tab) => {
+  const isLogin = tab === 'login';
+  document.getElementById('store-tab-login').style.display    = isLogin ? '' : 'none';
+  document.getElementById('store-tab-register').style.display = isLogin ? 'none' : '';
+  document.getElementById('stab-login').classList.toggle('active', isLogin);
+  document.getElementById('stab-reg').classList.toggle('active', !isLogin);
+  // сброс сообщений
+  document.getElementById('store-login-msg').textContent = '';
+  document.getElementById('store-reg-msg').textContent   = '';
+};
+
+window.storeDoLogin = async () => {
+  const phone    = document.getElementById('store-phone-login').value.trim();
+  const password = document.getElementById('store-pass-login').value;
+  const msgEl    = document.getElementById('store-login-msg');
+  if (!phone || !password) {
+    msgEl.style.color = 'var(--red)'; msgEl.textContent = 'Введите телефон и пароль'; return;
+  }
+  msgEl.style.color = 'var(--gray)'; msgEl.textContent = 'Входим…';
+  try {
+    const r = await fetch('/api/shops/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ phone, password })
+    });
+    const d = await r.json();
+    if (!r.ok) { msgEl.style.color = 'var(--red)'; msgEl.textContent = d.error; return; }
+    localStorage.setItem('shop_token', d.token);
+    localStorage.setItem('shop_name',  d.shop_name || d.phone);
+    document.getElementById('store-phone-login').value = '';
+    document.getElementById('store-pass-login').value  = '';
+    msgEl.textContent = '';
+    closeModal('store-modal');
+    updateShopUI();
+    toast('✅ Добро пожаловать, ' + (d.shop_name || d.phone) + '!', 'success');
+  } catch(e) {
+    msgEl.style.color = 'var(--red)'; msgEl.textContent = 'Ошибка соединения с сервером';
+  }
+};
+
+window.storeDoRegister = async () => {
+  const shop_name = document.getElementById('store-reg-name').value.trim();
+  const phone     = document.getElementById('store-reg-phone').value.trim();
+  const password  = document.getElementById('store-reg-pass').value;
+  const msgEl     = document.getElementById('store-reg-msg');
+  if (!phone || !password) {
+    msgEl.style.color = 'var(--red)'; msgEl.textContent = 'Телефон и пароль обязательны'; return;
+  }
+  if (password.length < 6) {
+    msgEl.style.color = 'var(--red)'; msgEl.textContent = 'Пароль минимум 6 символов'; return;
+  }
+  msgEl.style.color = 'var(--gray)'; msgEl.textContent = 'Отправляем заявку…';
+  try {
+    const r = await fetch('/api/shops/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ phone, password, shop_name })
+    });
+    const d = await r.json();
+    if (!r.ok) { msgEl.style.color = 'var(--red)'; msgEl.textContent = d.error; return; }
+    msgEl.style.color = '#0f6b34';
+    msgEl.textContent = '✅ Заявка отправлена! Администратор рассмотрит её и одобрит доступ.';
+    document.getElementById('store-reg-name').value  = '';
+    document.getElementById('store-reg-phone').value = '';
+    document.getElementById('store-reg-pass').value  = '';
+  } catch(e) {
+    msgEl.style.color = 'var(--red)'; msgEl.textContent = 'Ошибка соединения с сервером';
+  }
+};
+
+/* ══════════════════════════════════════
+   ФОТО-СКРОЛЛ ХЕЛПЕРЫ
+══════════════════════════════════════ */
 function buildPhotoScroll(imgs, wrapId, scrollId) {
   if (!imgs || imgs.length === 0) return '';
   if (imgs.length === 1) {
     return `<div class="pc-img-wrap" id="${wrapId}">
-      <div class="pc-img" id="${scrollId}">
-        <img src="${imgs[0]}" alt="" loading="lazy">
-      </div>
+      <div class="pc-img" id="${scrollId}"><img src="${imgs[0]}" alt="" loading="lazy"></div>
     </div>`;
   }
   const dotHtml = imgs.map((_, i) =>
     `<span class="img-dot ${i===0?'active':''}" onclick="scrollToPhoto('${scrollId}','${wrapId}',${i},event)"></span>`
   ).join('');
-  const imgHtml = imgs.map(src =>
-    `<img src="${src}" alt="" loading="lazy">`
-  ).join('');
+  const imgHtml = imgs.map(src => `<img src="${src}" alt="" loading="lazy">`).join('');
   return `<div class="pc-img-wrap" id="${wrapId}">
     <button class="img-arrow left"  onclick="scrollPhotoBy('${scrollId}','${wrapId}',-1,event)">‹</button>
     <button class="img-arrow right" onclick="scrollPhotoBy('${scrollId}','${wrapId}', 1,event)">›</button>
-    <div class="pc-img" id="${scrollId}" onscroll="syncDots('${scrollId}','${wrapId}')">
-      ${imgHtml}
-    </div>
+    <div class="pc-img" id="${scrollId}" onscroll="syncDots('${scrollId}','${wrapId}')">${imgHtml}</div>
     <div class="img-dots">${dotHtml}</div>
   </div>`;
 }
@@ -1352,22 +1272,30 @@ window.scrollPhotoBy = (scrollId, wrapId, dir, e) => {
   if (e) e.stopPropagation();
   const el = document.getElementById(scrollId);
   if (!el) return;
-  const cur = Math.round(el.scrollLeft / el.clientWidth);
+  const cur  = Math.round(el.scrollLeft / el.clientWidth);
   const imgs = el.querySelectorAll('img');
   const next = Math.max(0, Math.min(imgs.length - 1, cur + dir));
   el.scrollTo({ left: el.clientWidth * next, behavior: 'smooth' });
 };
 window.syncDots = (scrollId, wrapId) => {
-  const el = document.getElementById(scrollId);
+  const el   = document.getElementById(scrollId);
   const wrap = document.getElementById(wrapId);
   if (!el || !wrap) return;
   const idx = Math.round(el.scrollLeft / el.clientWidth);
   wrap.querySelectorAll('.img-dot').forEach((d, i) => d.classList.toggle('active', i === idx));
 };
 
-/* ─────────────────────────────────────────────────────────
-   renderProductCard — p-card with photo scroll
-   ───────────────────────────────────────────────────────── */
+/* ══════════════════════════════════════
+   PRODUCT CARD
+══════════════════════════════════════ */
+function catEmoji(cat) {
+  if (!cat) return '🌸';
+  if (cat.includes('Букет'))  return '💐';
+  if (cat.includes('Корзин')) return '🧺';
+  if (cat.includes('Мишк'))   return '🧸';
+  return '🍰';
+}
+
 window.renderProductCard = (p) => {
   const imgs  = p.photos || [];
   const cat   = p.category || '';
@@ -1376,15 +1304,9 @@ window.renderProductCard = (p) => {
   const price = p.buyer_price || p.price || 0;
   const pJson = JSON.stringify(p).replace(/"/g,'&quot;');
   const uid   = 'pc-' + (p.id || p.pub_id || Math.random().toString(36).slice(2));
-
   const photoHtml = imgs.length > 0
     ? buildPhotoScroll(imgs, uid + '-wrap', uid + '-scroll')
-    : `<div class="pc-img-wrap" id="${uid}-wrap">
-        <div class="pc-img" id="${uid}-scroll">
-          <div class="pc-img-placeholder">${emoji}</div>
-        </div>
-       </div>`;
-
+    : `<div class="pc-img-wrap" id="${uid}-wrap"><div class="pc-img" id="${uid}-scroll"><div class="pc-img-placeholder">${emoji}</div></div></div>`;
   return `
   <div class="p-card" onclick="window.openProduct && window.openProduct(${pJson})">
     ${photoHtml}
@@ -1417,8 +1339,7 @@ window.renderProductCard = (p) => {
 };
 
 window.cardAddToCart = (p, btn) => {
-  const cat   = p.category || '';
-  const emoji = catEmoji(cat);
+  const emoji = catEmoji(p.category || '');
   window.addToCart({ id: p.id || p.pub_id, title: p.title, price: p.buyer_price || p.price || 0, city: p.city, size: p.size, img: (p.photos || [])[0] || null, emoji });
   const orig = btn.innerHTML;
   btn.innerHTML = '✓ Добавлено в корзину'; btn.classList.add('added'); btn.disabled = true;
@@ -1426,9 +1347,9 @@ window.cardAddToCart = (p, btn) => {
 };
 window.quickAddToCart = window.cardAddToCart;
 
-/* ─────────────────────────────────────────────────────────
-   renderProductDetail — with big cart button, no inquiry btn
-   ───────────────────────────────────────────────────────── */
+/* ══════════════════════════════════════
+   PRODUCT DETAIL
+══════════════════════════════════════ */
 window.renderProductDetail = (p) => {
   const imgs  = p.photos || [];
   const cat   = p.category || '';
@@ -1490,9 +1411,17 @@ window.switchPdImg = (src, thumb, imgs, idx) => {
   thumb.classList.add('active');
 };
 
-window.toggleBurger = () => { document.getElementById('burger').classList.toggle('open'); document.getElementById('nav-drawer').classList.toggle('open'); };
-window.closeDrawer  = () => { document.getElementById('burger').classList.remove('open'); document.getElementById('nav-drawer').classList.remove('open'); };
-window.openStoreModal = () => document.getElementById('store-modal').classList.add('open');
+/* ══════════════════════════════════════
+   NAV / UI
+══════════════════════════════════════ */
+window.toggleBurger = () => {
+  document.getElementById('burger').classList.toggle('open');
+  document.getElementById('nav-drawer').classList.toggle('open');
+};
+window.closeDrawer = () => {
+  document.getElementById('burger').classList.remove('open');
+  document.getElementById('nav-drawer').classList.remove('open');
+};
 window.closeModal = (id) => document.getElementById(id).classList.remove('open');
 
 window.switchHomeMode = (mode) => {
@@ -1510,7 +1439,38 @@ window.setCatalogMode = (mode) => {
 };
 window.setModeAndGo = (mode) => { window.switchHomeMode(mode); window.setCatalogMode(mode); goPage('catalog'); loadCatalog(); };
 
-document.querySelectorAll('.overlay').forEach(el => { el.addEventListener('click', e => { if (e.target === el) el.classList.remove('open'); }); });
+/* ══════════════════════════════════════
+   LIGHTBOX
+══════════════════════════════════════ */
+window.openLightbox = (imgs, idx) => {
+  window._lbPhotos = Array.isArray(imgs) ? imgs : [];
+  window._lbIdx    = idx || 0;
+  if (!window._lbPhotos.length) return;
+  document.getElementById('lb-img').src = window._lbPhotos[window._lbIdx];
+  document.getElementById('lightbox').style.display = 'flex';
+};
+window.closeLightbox = () => { document.getElementById('lightbox').style.display = 'none'; };
+window.lightboxPrev = (e) => {
+  e.stopPropagation();
+  const p = window._lbPhotos || [];
+  if (!p.length) return;
+  window._lbIdx = (window._lbIdx - 1 + p.length) % p.length;
+  document.getElementById('lb-img').src = p[window._lbIdx];
+};
+window.lightboxNext = (e) => {
+  e.stopPropagation();
+  const p = window._lbPhotos || [];
+  if (!p.length) return;
+  window._lbIdx = (window._lbIdx + 1) % p.length;
+  document.getElementById('lb-img').src = p[window._lbIdx];
+};
+
+/* ══════════════════════════════════════
+   СОБЫТИЯ
+══════════════════════════════════════ */
+document.querySelectorAll('.overlay').forEach(el => {
+  el.addEventListener('click', e => { if (e.target === el) el.classList.remove('open'); });
+});
 window.addEventListener('rbt:unauth', () => { toast('Сессия истекла', 'err'); goPage('admin'); });
 window.addEventListener('rbt:page', e => {
   const p = e.detail;
@@ -1518,9 +1478,15 @@ window.addEventListener('rbt:page', e => {
   if (p === 'home')    loadCounts();
   if (p === 'admin')   checkAdminAuth();
 });
-window.addEventListener('scroll', () => { document.getElementById('scroll-top').style.display = window.scrollY > 400 ? 'flex' : 'none'; });
+window.addEventListener('scroll', () => {
+  document.getElementById('scroll-top').style.display = window.scrollY > 400 ? 'flex' : 'none';
+});
 
+/* ══════════════════════════════════════
+   ИНИЦИАЛИЗАЦИЯ
+══════════════════════════════════════ */
 updateCartUI();
+updateShopUI();
 await loadConfig();
 await loadCounts();
 loadCities('f-city');
