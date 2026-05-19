@@ -1,4 +1,4 @@
-'use strict';
+use strict';
 import { api }  from './api.js';
 import { esc, fmt, toast, openModal, goPage } from './utils.js';
 
@@ -94,39 +94,43 @@ async function renderGrid() {
 
 // ── pCard with photo scroll + add-to-cart button ──────────
 let _cardUid = 0;
-// rebuild pCard cleanly to avoid string replacement mess
+
+const IMG_H = '200px'; // единое место для высоты фото в карточке
+
 function pCard(p) {
   const photos = Array.isArray(p.photos) ? p.photos : [];
   const price  = priceWithCommission(p);
   const uid    = 'pci' + (++_cardUid);
   const slug   = esc(p.slug || p.id);
 
-  // encode p for onclick (safe JSON attr)
   const pAttr = encodeURIComponent(JSON.stringify(p));
 
   // ── photo block ──
   let photoBlock;
+
   if (photos.length === 0) {
     photoBlock =
       '<div class="pcard-img-wrap">' +
-        '<div class="pcard-img" id="' + uid + '">' +
+        '<div class="pcard-img" id="' + uid + '" style="height:' + IMG_H + ';display:flex;align-items:center;justify-content:center;overflow:hidden">' +
           '<div class="pcard-ph ' + (CAT_CLS[p.category]||'') + '">' + (CAT_EM[p.category]||'🌸') + '</div>' +
         '</div>' +
         '<span class="pbadge">' + esc(CAT_LABEL[p.category]||p.category) + '</span>' +
         timerBadge(p) +
       '</div>';
+
   } else if (photos.length === 1) {
     photoBlock =
       '<div class="pcard-img-wrap">' +
-        '<div class="pcard-img" id="' + uid + '">' +
-          '<img src="' + esc(imgUrl(photos[0],400)) + '" alt="' + esc(p.title) + '" loading="lazy" decoding="async">' +
+        '<div class="pcard-img" id="' + uid + '" style="height:' + IMG_H + ';overflow:hidden">' +
+          '<img src="' + esc(imgUrl(photos[0],400)) + '" alt="' + esc(p.title) + '" loading="lazy" decoding="async" style="width:100%;height:100%;object-fit:cover;display:block">' +
         '</div>' +
         '<span class="pbadge">' + esc(CAT_LABEL[p.category]||p.category) + '</span>' +
         timerBadge(p) +
       '</div>';
+
   } else {
     const imgs = photos.map(ph =>
-      '<img src="' + esc(imgUrl(ph,400)) + '" alt="' + esc(p.title) + '" loading="lazy" decoding="async">'
+      '<img src="' + esc(imgUrl(ph,400)) + '" alt="' + esc(p.title) + '" loading="lazy" decoding="async" style="flex:0 0 100%;width:100%;height:100%;object-fit:cover;scroll-snap-align:start">'
     ).join('');
     const dots = photos.map((_,i) =>
       '<span class="img-dot' + (i===0?' active':'') + '" onclick="event.stopPropagation();_scrollCard(\'' + uid + '\',' + i + ')"></span>'
@@ -135,7 +139,9 @@ function pCard(p) {
       '<div class="pcard-img-wrap" id="' + uid + '-wrap">' +
         '<button class="img-arrow left"  onclick="event.stopPropagation();_scrollCard(\'' + uid + '\',-1,true)">&#8249;</button>' +
         '<button class="img-arrow right" onclick="event.stopPropagation();_scrollCard(\'' + uid + '\', 1,true)">&#8250;</button>' +
-        '<div class="pcard-img" id="' + uid + '" onscroll="_syncDots(\'' + uid + '\')">' + imgs + '</div>' +
+        '<div class="pcard-img" id="' + uid + '" onscroll="_syncDots(\'' + uid + '\')" style="display:flex;height:' + IMG_H + ';overflow-x:scroll;scroll-snap-type:x mandatory;scroll-behavior:smooth;-webkit-overflow-scrolling:touch;scrollbar-width:none">' +
+          imgs +
+        '</div>' +
         '<span class="pbadge">' + esc(CAT_LABEL[p.category]||p.category) + '</span>' +
         timerBadge(p) +
         '<div class="img-dots">' + dots + '</div>' +
@@ -249,7 +255,6 @@ function renderDetail(p, el) {
     (p.pickup_time ? '<div><div class="pd-info-lbl">Время</div><div>🕐 ' + esc(p.pickup_time) + '</div></div>' : '') +
     '</div>' : '';
 
-  // store p for cart button
   window._detailProduct = p;
   window._detailPrice   = price;
 
@@ -268,7 +273,6 @@ function renderDetail(p, el) {
         '<p class="pd-desc">' + esc(p.description||'') + '</p>' +
         '<div class="share-row">🔗 <input id="share-inp" type="text" value="' + esc(pUrl) + '" readonly><button onclick="copyLink()">Копировать</button></div>' +
         infoHtml +
-        // ── ADD TO CART BUTTON ──
         '<button class="pd-cart-btn" id="pd-detail-cartbtn" onclick="_pdDetailAddToCart(this)">' +
           '<span style="font-size:1.2rem">🛒</span> Добавить в корзину' +
         '</button>' +
