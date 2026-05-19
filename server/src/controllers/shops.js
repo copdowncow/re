@@ -1,5 +1,7 @@
 /* =====================================================
    shop.js — авторизация магазина (глобальный скрипт)
+   Подключается как обычный <script> (не module),
+   поэтому все функции доступны глобально сразу.
 ===================================================== */
 
 function updateShopUI() {
@@ -60,6 +62,7 @@ function storeDoLogin() {
     msgEl.textContent = 'Введите телефон и пароль';
     return;
   }
+
   msgEl.style.color = 'var(--gray)';
   msgEl.textContent = 'Входим…';
 
@@ -106,6 +109,7 @@ function storeDoRegister() {
     msgEl.textContent = 'Пароль минимум 6 символов';
     return;
   }
+
   msgEl.style.color = 'var(--gray)';
   msgEl.textContent = 'Отправляем заявку…';
 
@@ -133,6 +137,7 @@ function storeDoRegister() {
   });
 }
 
+/* Простой toast без зависимости от модуля */
 function shopToast(msg, type) {
   var el = document.getElementById('toast');
   if (!el) return;
@@ -143,8 +148,11 @@ function shopToast(msg, type) {
   el._st = setTimeout(function() { el.classList.remove('show'); }, 3600);
 }
 
+/* Инициализация при загрузке страницы */
 document.addEventListener('DOMContentLoaded', function() {
   updateShopUI();
+
+  /* Закрытие overlay по клику на фон */
   var storeOverlay = document.getElementById('store-modal');
   if (storeOverlay) {
     storeOverlay.addEventListener('click', function(e) {
