@@ -24,6 +24,7 @@ const auth = require('./middleware/auth');
 const A    = require('./controllers/auth');
 const P    = require('./controllers/products');
 const I    = require('./controllers/inquiries');
+const S    = require('./controllers/shops');   // ← ДОБАВЛЕНО
 
 const app    = express();
 const PORT   = process.env.PORT || 3000;
@@ -39,6 +40,9 @@ router.get('/cities',       P.getCities);
 router.post('/products',    uploadMiddleware, P.createProduct);
 
 router.post('/inquiries', I.createInquiry);
+
+router.post('/shops/register', S.register);   // ← ДОБАВЛЕНО
+router.post('/shops/login',    S.login);       // ← ДОБАВЛЕНО
 
 router.get('/admin/products',         auth, P.adminList);
 router.get('/admin/products/:id',     auth, P.adminGet);
