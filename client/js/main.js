@@ -93,62 +93,6 @@ async function renderGrid() {
 }
 
 // ── pCard with photo scroll + add-to-cart button ──────────
-let _cardUid = 0;
-function pCard(p) {
-  const photos = Array.isArray(p.photos) ? p.photos : [];
-  const price  = priceWithCommission(p);
-  const uid    = 'pci' + (++_cardUid);
-  const pJson  = JSON.stringify(p).replace(/\\/g,'\\\\').replace(/"/g,'&quot;').replace(/'/g,"\\'");
-
-  // ── photo area ──
-  let photoHtml;
-  if (photos.length === 0) {
-    photoHtml =
-      '<div class="pcard-img-wrap">' +
-        '<div class="pcard-img">' +
-          '<div class="pcard-ph ' + (CAT_CLS[p.category]||'') + '">' + (CAT_EM[p.category]||'🌸') + '</div>' +
-        '</div>' +
-      '</div>';
-  } else if (photos.length === 1) {
-    photoHtml =
-      '<div class="pcard-img-wrap">' +
-        '<div class="pcard-img">' +
-          '<img src="' + esc(imgUrl(photos[0], 400)) + '" alt="' + esc(p.title) + '" loading="lazy" decoding="async">' +
-        '</div>' +
-      '</div>';
-  } else {
-    const imgs = photos.map(ph =>
-      '<img src="' + esc(imgUrl(ph, 400)) + '" alt="' + esc(p.title) + '" loading="lazy" decoding="async">'
-    ).join('');
-    const dots = photos.map((_, i) =>
-      '<span class="img-dot' + (i===0?' active':'') + '" onclick="event.stopPropagation();_scrollCard(\'' + uid + '\',' + i + ')"></span>'
-    ).join('');
-    photoHtml =
-      '<div class="pcard-img-wrap" id="' + uid + '-wrap">' +
-        '<button class="img-arrow left"  onclick="event.stopPropagation();_scrollCard(\'' + uid + '\',-1,true)">&#8249;</button>' +
-        '<button class="img-arrow right" onclick="event.stopPropagation();_scrollCard(\'' + uid + '\', 1,true)">&#8250;</button>' +
-        '<div class="pcard-img" id="' + uid + '" onscroll="_syncDots(\'' + uid + '\')">' +
-          imgs +
-        '</div>' +
-        '<div class="img-dots">' + dots + '</div>' +
-      '</div>';
-  }
-
-  // ── badge row ──
-  const badges =
-    '<span class="pbadge">' + (CAT_LABEL[p.category]||p.category) + '</span>' +
-    timerBadge(p);
-
-  return (
-    '<div class="pcard" onclick="openProduct(\'' + esc(p.slug||p.id) + '\')">' +
-      photoHtml.replace('>', '>' + badges.replace(/'/g, "\\'")).replace('>' + badges.replace(/'/g, "\\'"), '') +
-      /* badges are inside the wrap — rebuild properly: */
-      '' +
-    '</div>'
-  );
-
-  // ↑ rebuild cleanly:
-}
 
 // rebuild pCard cleanly to avoid string replacement mess
 function pCard(p) {
