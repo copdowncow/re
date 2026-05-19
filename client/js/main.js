@@ -1,4 +1,4 @@
-use strict';
+'use strict';
 import { api }  from './api.js';
 import { esc, fmt, toast, openModal, goPage } from './utils.js';
 
