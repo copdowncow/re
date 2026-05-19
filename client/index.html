@@ -1040,7 +1040,7 @@ footer { background: var(--black); color: rgba(255,255,255,.45); text-align: cen
 
 <script type="module">
 import { api, isAuth, setTok, clrTok } from './js/api.js';
-import { goPage, toast } from './js/utils.js';
+import { goPage, toast, closeModal, openModal } from './js/utils.js';
 import { loadCatalog, loadCounts, loadCities, filterAndGo, handleRoute, loadConfig } from './js/main.js';
 import { checkAdminAuth } from './js/admin.js';
 
@@ -1132,113 +1132,8 @@ window.cartCheckout = () => {
 };
 
 /* ══════════════════════════════════════
-   МАГАЗИН — Авторизация
+   МАГАЗИН — логика вынесена в /js/shop.js
 ══════════════════════════════════════ */
-function updateShopUI() {
-  const name  = localStorage.getItem('shop_name');
-  const token = localStorage.getItem('shop_token');
-  const btn   = document.getElementById('nav-shop-btn');
-  const lbl   = document.getElementById('nav-shop-label');
-  const dlbl  = document.getElementById('drawer-shop-label');
-  if (token && name) {
-    if (lbl)  lbl.textContent  = '🏪 ' + name;
-    if (dlbl) dlbl.textContent = '🏪 ' + name + ' (выйти)';
-    if (btn)  btn.classList.add('logged-in');
-  } else {
-    if (lbl)  lbl.textContent  = 'Войти как магазин';
-    if (dlbl) dlbl.textContent = 'Войти как магазин';
-    if (btn)  btn.classList.remove('logged-in');
-  }
-}
-
-window.onShopBtnClick = () => {
-  const token = localStorage.getItem('shop_token');
-  if (token) {
-    if (confirm('Выйти из аккаунта магазина?')) {
-      localStorage.removeItem('shop_token');
-      localStorage.removeItem('shop_name');
-      updateShopUI();
-      toast('Вы вышли из аккаунта магазина');
-    }
-  } else {
-    openStoreModal();
-  }
-};
-
-window.openStoreModal = () => {
-  document.getElementById('store-modal').classList.add('open');
-  switchStoreTab('login');
-};
-
-window.switchStoreTab = (tab) => {
-  const isLogin = tab === 'login';
-  document.getElementById('store-tab-login').style.display    = isLogin ? '' : 'none';
-  document.getElementById('store-tab-register').style.display = isLogin ? 'none' : '';
-  document.getElementById('stab-login').classList.toggle('active', isLogin);
-  document.getElementById('stab-reg').classList.toggle('active', !isLogin);
-  // сброс сообщений
-  document.getElementById('store-login-msg').textContent = '';
-  document.getElementById('store-reg-msg').textContent   = '';
-};
-
-window.storeDoLogin = async () => {
-  const phone    = document.getElementById('store-phone-login').value.trim();
-  const password = document.getElementById('store-pass-login').value;
-  const msgEl    = document.getElementById('store-login-msg');
-  if (!phone || !password) {
-    msgEl.style.color = 'var(--red)'; msgEl.textContent = 'Введите телефон и пароль'; return;
-  }
-  msgEl.style.color = 'var(--gray)'; msgEl.textContent = 'Входим…';
-  try {
-    const r = await fetch('/api/shops/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ phone, password })
-    });
-    const d = await r.json();
-    if (!r.ok) { msgEl.style.color = 'var(--red)'; msgEl.textContent = d.error; return; }
-    localStorage.setItem('shop_token', d.token);
-    localStorage.setItem('shop_name',  d.shop_name || d.phone);
-    document.getElementById('store-phone-login').value = '';
-    document.getElementById('store-pass-login').value  = '';
-    msgEl.textContent = '';
-    closeModal('store-modal');
-    updateShopUI();
-    toast('✅ Добро пожаловать, ' + (d.shop_name || d.phone) + '!', 'success');
-  } catch(e) {
-    msgEl.style.color = 'var(--red)'; msgEl.textContent = 'Ошибка соединения с сервером';
-  }
-};
-
-window.storeDoRegister = async () => {
-  const shop_name = document.getElementById('store-reg-name').value.trim();
-  const phone     = document.getElementById('store-reg-phone').value.trim();
-  const password  = document.getElementById('store-reg-pass').value;
-  const msgEl     = document.getElementById('store-reg-msg');
-  if (!phone || !password) {
-    msgEl.style.color = 'var(--red)'; msgEl.textContent = 'Телефон и пароль обязательны'; return;
-  }
-  if (password.length < 6) {
-    msgEl.style.color = 'var(--red)'; msgEl.textContent = 'Пароль минимум 6 символов'; return;
-  }
-  msgEl.style.color = 'var(--gray)'; msgEl.textContent = 'Отправляем заявку…';
-  try {
-    const r = await fetch('/api/shops/register', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ phone, password, shop_name })
-    });
-    const d = await r.json();
-    if (!r.ok) { msgEl.style.color = 'var(--red)'; msgEl.textContent = d.error; return; }
-    msgEl.style.color = '#0f6b34';
-    msgEl.textContent = '✅ Заявка отправлена! Администратор рассмотрит её и одобрит доступ.';
-    document.getElementById('store-reg-name').value  = '';
-    document.getElementById('store-reg-phone').value = '';
-    document.getElementById('store-reg-pass').value  = '';
-  } catch(e) {
-    msgEl.style.color = 'var(--red)'; msgEl.textContent = 'Ошибка соединения с сервером';
-  }
-};
 
 /* ══════════════════════════════════════
    ФОТО-СКРОЛЛ ХЕЛПЕРЫ
@@ -1486,12 +1381,12 @@ window.addEventListener('scroll', () => {
    ИНИЦИАЛИЗАЦИЯ
 ══════════════════════════════════════ */
 updateCartUI();
-updateShopUI();
 await loadConfig();
 await loadCounts();
 loadCities('f-city');
 window.addEventListener('popstate', () => handleRoute());
 handleRoute();
 </script>
+<script src="./js/shop.js"></script>
 </body>
 </html>
