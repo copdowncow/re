@@ -9,7 +9,6 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,600;0,700;1,500&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="./css/style.css">
 
 <style>
 /* ============================================================
@@ -310,7 +309,175 @@ nav {
 }
 .chip.active, .chip:hover { background: var(--green); border-color: var(--green); color: #fff; }
 
+.pgrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+  margin-bottom: 36px;
+}
 .loader { grid-column: 1/-1; text-align: center; color: var(--gray); padding: 60px 0; font-size: 1rem; }
+.pgn { display: flex; justify-content: center; gap: 6px; flex-wrap: wrap; }
+
+/* ── PRODUCT CARD (p-card — renderProductCard in index.html) ── */
+.p-card {
+  background: #fff; border: 1.5px solid var(--border); border-radius: 22px;
+  overflow: hidden; cursor: pointer;
+  transition: transform .26s cubic-bezier(.22,1,.36,1), box-shadow .26s, border-color .26s;
+  position: relative; display: flex; flex-direction: column;
+}
+.p-card:hover { transform: translateY(-5px); box-shadow: 0 20px 56px rgba(0,0,0,.11); border-color: rgba(34,160,91,.25); }
+.pc-img { position: relative; height: 220px; overflow: hidden; background: linear-gradient(145deg,#f0faf5,#e8f5e9); flex-shrink: 0; }
+.pc-img img { width: 100%; height: 100%; object-fit: cover; transition: transform .4s cubic-bezier(.22,1,.36,1); }
+.p-card:hover .pc-img img { transform: scale(1.05); }
+.pc-img-placeholder { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 4rem; }
+.pc-badges { position: absolute; top: 12px; left: 12px; display: flex; flex-direction: column; gap: 5px; z-index: 2; }
+.pc-badge { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 50px; font-size: .68rem; font-weight: 700; letter-spacing: .02em; backdrop-filter: blur(8px); }
+.pcb-eco  { background: rgba(34,160,91,.85); color: #fff; }
+.pcb-shop { background: rgba(33,150,243,.85); color: #fff; }
+.pcb-city { background: rgba(255,255,255,.92); color: var(--mid); }
+.pcb-new  { background: rgba(255,80,80,.85); color: #fff; }
+.pc-body { padding: 16px 16px 12px; display: flex; flex-direction: column; gap: 0; flex: 1; }
+.pc-meta { display: flex; align-items: center; justify-content: space-between; margin-bottom: 7px; }
+.pc-cat { font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--green-d); }
+.pc-freshness { font-size: .72rem; font-weight: 600; color: var(--gray); background: var(--warm); padding: 3px 9px; border-radius: 50px; }
+.pc-title { font-size: 1rem; font-weight: 600; color: var(--black); line-height: 1.3; margin-bottom: 5px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.pc-desc { font-size: .78rem; color: var(--gray); line-height: 1.5; margin-bottom: 12px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; flex: 1; }
+.pc-price-row { display: flex; align-items: center; justify-content: space-between; padding-top: 10px; border-top: 1px solid var(--border); margin-bottom: 12px; }
+.pc-price { display: flex; flex-direction: column; }
+.pc-price-main { font-size: 1.2rem; font-weight: 700; color: var(--black); line-height: 1; }
+.pc-price-main span { font-size: .75rem; font-weight: 500; color: var(--gray); margin-left: 2px; }
+.pc-price-orig { font-size: .72rem; color: var(--gray); text-decoration: line-through; margin-top: 2px; }
+.pc-size { display: inline-flex; align-items: center; padding: 4px 11px; border-radius: 50px; background: var(--warm); border: 1px solid var(--border); font-size: .72rem; font-weight: 600; color: var(--mid); }
+.pc-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.pc-btn { display: flex; align-items: center; justify-content: center; gap: 5px; padding: 9px 10px; border-radius: 12px; border: none; font-size: .75rem; font-weight: 700; font-family: 'Outfit',sans-serif; transition: all .2s; white-space: nowrap; cursor: pointer; }
+.pc-btn-cart { background: var(--green); color: #fff; }
+.pc-btn-cart:hover { background: var(--green-d); transform: translateY(-1px); box-shadow: 0 4px 14px rgba(34,160,91,.4); }
+.pc-btn-cart.added { background: #0f6b34; }
+.pc-btn-tg { background: #e8f6ff; color: #0a6fa0; border: 1.5px solid #b8def5; }
+.pc-btn-tg:hover { background: #229ED9; color: #fff; border-color: #229ED9; transform: translateY(-1px); box-shadow: 0 4px 14px rgba(34,158,217,.35); }
+
+/* ── PRODUCT CARD (pcard — main.js → pCard()) ── */
+#pgrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+  margin-bottom: 36px;
+}
+#pgrid .empty {
+  grid-column: 1 / -1; display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 12px; padding: 72px 24px; color: var(--gray); text-align: center;
+}
+#pgrid .empty span { font-size: 3rem; }
+#pgrid .empty h3 { font-size: 1.15rem; color: var(--black); font-family: 'Outfit',sans-serif; }
+#pgrid .empty p { font-size: .88rem; }
+
+.pcard {
+  background: #fff; border: 1.5px solid var(--border); border-radius: 22px;
+  overflow: hidden; cursor: pointer; display: flex; flex-direction: column;
+  transition: transform .26s cubic-bezier(.22,1,.36,1), box-shadow .26s, border-color .26s;
+  position: relative;
+}
+.pcard:hover { transform: translateY(-5px); box-shadow: 0 20px 56px rgba(0,0,0,.11); border-color: rgba(34,160,91,.28); }
+
+.pcard-img {
+  position: relative; height: 220px; overflow: hidden;
+  background: linear-gradient(145deg,#f0faf5,#e8f5e9); flex-shrink: 0;
+}
+.pcard-img img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform .4s cubic-bezier(.22,1,.36,1); }
+.pcard:hover .pcard-img img { transform: scale(1.05); }
+
+.pcard-ph { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 4.5rem; }
+.pi-bouquet { background: linear-gradient(145deg,#fce4ec,#f8bbd0); }
+.pi-basket  { background: linear-gradient(145deg,#fff8e1,#ffe082); }
+.pi-bear    { background: linear-gradient(145deg,#e8eaf6,#c5cae9); }
+.pi-sweets  { background: linear-gradient(145deg,#fce4ec,#f48fb1); }
+
+.pbadge {
+  position: absolute; top: 12px; left: 12px;
+  padding: 4px 12px; border-radius: 50px;
+  font-size: .68rem; font-weight: 700; letter-spacing: .04em;
+  background: rgba(34,160,91,.88); color: #fff;
+  backdrop-filter: blur(6px); z-index: 2;
+}
+
+.timer-badge {
+  position: absolute; top: 12px; right: 12px;
+  padding: 4px 10px; border-radius: 50px;
+  font-size: .68rem; font-weight: 700;
+  background: rgba(255,255,255,.92); color: var(--mid);
+  backdrop-filter: blur(6px); z-index: 2;
+  border: 1px solid rgba(0,0,0,.07);
+}
+.timer-badge.urgent { background: rgba(229,57,53,.88); color: #fff; border-color: transparent; animation: pulse 1.4s ease-in-out infinite; }
+.timer-badge.expired { background: rgba(120,120,120,.8); color: #fff; border-color: transparent; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.7} }
+
+.pcard-body { padding: 16px 16px 14px; display: flex; flex-direction: column; flex: 1; gap: 6px; }
+.pcard-body h4 { font-size: 1rem; font-weight: 700; color: var(--black); line-height: 1.3; font-family: 'Outfit',sans-serif; margin: 0; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.pcard-body p { font-size: .79rem; color: var(--gray); line-height: 1.5; margin: 0; flex: 1; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+
+.pmeta { display: flex; align-items: center; justify-content: space-between; padding-top: 10px; border-top: 1px solid var(--border); margin-top: auto; gap: 8px; }
+.pprice { font-size: 1.15rem; font-weight: 800; color: var(--black); white-space: nowrap; }
+.pcity { font-size: .75rem; font-weight: 600; color: var(--gray); background: var(--warm); padding: 4px 10px; border-radius: 50px; border: 1px solid var(--border); white-space: nowrap; max-width: 120px; overflow: hidden; text-overflow: ellipsis; }
+
+.pgn-btn { min-width: 40px; height: 40px; padding: 0 12px; border: 1.5px solid var(--border); border-radius: 10px; background: #fff; font-size: .88rem; font-weight: 700; color: var(--mid); cursor: pointer; font-family: 'Outfit',sans-serif; transition: all .18s; }
+.pgn-btn:hover  { background: var(--green-l); border-color: var(--green); color: var(--green-d); }
+.pgn-btn.active { background: var(--green); border-color: var(--green); color: #fff; }
+
+/* ============================================================
+   PRODUCT DETAIL  (main.js → renderDetail())
+   ============================================================ */
+.pd-wrap { display: grid; grid-template-columns: 1fr 1fr; gap: 48px; max-width: 1000px; }
+.pd-gallery { position: relative; }
+.pd-main-img { width: 100%; aspect-ratio: 1; border-radius: 24px; object-fit: cover; background: var(--warm); border: 1.5px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 6rem; overflow: hidden; }
+.pd-main-img img { width: 100%; height: 100%; object-fit: cover; cursor: zoom-in; }
+.pd-thumbs { display: flex; gap: 10px; margin-top: 12px; flex-wrap: wrap; }
+.pd-thumb { width: 68px; height: 68px; border-radius: 12px; object-fit: cover; border: 2px solid var(--border); cursor: pointer; transition: border-color .15s; }
+.pd-thumb.active { border-color: var(--green); }
+.pd-thumb:hover  { border-color: var(--green-d); }
+.pd-badges { display: flex; gap: 7px; flex-wrap: wrap; margin-bottom: 16px; }
+.pd-badge { padding: 5px 13px; border-radius: 50px; font-size: .72rem; font-weight: 700; letter-spacing: .03em; }
+.pd-badge-eco  { background: var(--green-l); color: #0f6b34; border: 1px solid rgba(34,160,91,.2); }
+.pd-badge-shop { background: #e3f2fd; color: #1565c0; }
+.pd-badge-city { background: var(--warm); color: var(--mid); border: 1px solid var(--border); }
+.pd-badge-size { background: var(--warm); color: var(--mid); border: 1px solid var(--border); }
+.pd-badge-when { background: #fff8e1; color: #8b6914; border: 1px solid #f0d96e; }
+.pd-title { font-size: 2rem; font-weight: 700; line-height: 1.15; color: var(--black); margin-bottom: 12px; }
+.pd-desc-text { font-size: .95rem; color: var(--mid); line-height: 1.7; margin-bottom: 24px; }
+.pd-price-box { background: var(--warm); border: 1.5px solid var(--border); border-radius: 16px; padding: 20px 22px; margin-bottom: 24px; }
+.pd-price-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
+.pd-price-label { font-size: .82rem; color: var(--gray); font-weight: 500; }
+.pd-price-value { font-size: 2rem; font-weight: 700; color: var(--black); font-family: 'Outfit',sans-serif; }
+.pd-price-value span { font-size: 1rem; font-weight: 500; color: var(--gray); }
+.pd-commission-note { font-size: .78rem; color: var(--gray); padding-top: 10px; border-top: 1px solid var(--border); margin-top: 10px; }
+.pd-actions { display: flex; flex-direction: column; gap: 10px; }
+.pd-actions .btn { width: 100%; padding: 14px 22px; font-size: .95rem; border-radius: 14px; }
+
+/* main.js detail styles */
+.pd-gallery { display: flex; flex-direction: column; gap: 12px; }
+.pd-main { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 22px; border: 1.5px solid var(--border); display: block; background: var(--warm); }
+.pd-main-ph { width: 100%; aspect-ratio: 1; border-radius: 22px; border: 1.5px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 7rem; background: var(--warm); }
+.pd-body { display: flex; flex-direction: column; gap: 14px; }
+.pd-chips { display: flex; flex-wrap: wrap; gap: 7px; }
+.pd-chip { padding: 5px 13px; border-radius: 50px; font-size: .74rem; font-weight: 700; letter-spacing: .03em; background: var(--warm); border: 1px solid var(--border); color: var(--mid); }
+.pd-chip.rose { background: var(--green-l); border-color: rgba(34,160,91,.2); color: #0f6b34; }
+.pd-body h2 { font-size: 1.8rem; font-weight: 700; line-height: 1.15; color: var(--black); font-family: 'Cormorant Garamond',serif; margin: 0; }
+.pd-price { font-size: 2.1rem; font-weight: 800; color: var(--black); font-family: 'Outfit',sans-serif; }
+.pd-desc  { font-size: .95rem; color: var(--mid); line-height: 1.7; margin: 0; }
+.share-row { display: flex; align-items: center; gap: 8px; padding: 10px 14px; background: var(--warm); border: 1.5px solid var(--border); border-radius: 12px; font-size: .82rem; color: var(--gray); font-weight: 600; }
+.share-row input { flex: 1; border: none; background: transparent; padding: 0; font-size: .82rem; color: var(--mid); min-width: 0; outline: none; width: auto; }
+.share-row button { padding: 6px 14px; border-radius: 8px; background: var(--green); color: #fff; border: none; font-size: .78rem; font-weight: 700; cursor: pointer; font-family: 'Outfit',sans-serif; transition: background .2s; white-space: nowrap; }
+.share-row button:hover { background: var(--green-d); }
+.pd-info { display: flex; flex-direction: column; gap: 10px; padding: 14px 16px; background: var(--warm); border: 1.5px solid var(--border); border-radius: 14px; font-size: .88rem; color: var(--mid); line-height: 1.5; }
+.pd-info-lbl { font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--gray); margin-bottom: 2px; }
+.pd-contact { grid-column: 1/-1; background: linear-gradient(135deg,#f4faf7 0%,#eef7f2 100%); border: 1.5px solid rgba(34,160,91,.15); border-radius: 20px; padding: 28px 28px 24px; display: flex; flex-direction: column; gap: 16px; }
+.pd-contact > p:first-child { font-size: 1.05rem; font-weight: 700; color: var(--black); margin: 0; }
+.pd-contact-btns { display: flex; flex-wrap: wrap; gap: 10px; }
+.pd-contact-btns .btn { flex: 1; min-width: 140px; }
+.pd-contact-note { font-size: .78rem; color: var(--gray); line-height: 1.5; margin: 0; }
+.btn-ig { background: linear-gradient(135deg,#f09433 0%,#e6683c 25%,#dc2743 50%,#cc2366 75%,#bc1888 100%); color: #fff; display: inline-flex; align-items: center; justify-content: center; gap: 7px; padding: 12px 24px; border-radius: 50px; font-size: .9rem; font-weight: 600; border: none; transition: opacity .2s,transform .2s; text-decoration: none; white-space: nowrap; font-family: 'Outfit',sans-serif; }
+.btn-ig:hover { opacity: .88; transform: translateY(-1px); }
 
 /* ============================================================
    SELL FORM
@@ -319,350 +486,780 @@ nav {
 .fgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
 .fg-full { grid-column: 1 / -1; }
 .form-group { display: flex; flex-direction: column; }
-
 .cat-select-row { display: flex; gap: 10px; flex-wrap: wrap; }
-.cat-sel {
-  flex: 1; min-width: 80px; display: flex; flex-direction: column;
-  align-items: center; gap: 7px; padding: 16px 10px;
-  border: 2px solid var(--border); border-radius: 14px;
-  cursor: pointer; transition: all .2s; background: #fff;
-}
+.cat-sel { flex: 1; min-width: 80px; display: flex; flex-direction: column; align-items: center; gap: 7px; padding: 16px 10px; border: 2px solid var(--border); border-radius: 14px; cursor: pointer; transition: all .2s; background: #fff; }
 .cat-sel.active { border-color: var(--green); background: rgba(34,160,91,.05); }
 .cs-em { font-size: 1.9rem; }
 .cs-txt { font-size: .8rem; font-weight: 600; color: var(--mid); }
-
-.photo-area {
-  display: flex; flex-direction: column; align-items: center; justify-content: center;
-  gap: 8px; padding: 36px 20px; border: 2px dashed var(--border);
-  border-radius: 16px; background: var(--warm); text-align: center; transition: border-color .2s;
-}
+.photo-area { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; padding: 36px 20px; border: 2px dashed var(--border); border-radius: 16px; background: var(--warm); text-align: center; transition: border-color .2s; }
 .photo-area:hover { border-color: var(--green); }
 .photo-area .icon { font-size: 2.2rem; }
 .photo-grid { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; }
 .photo-hint { font-size: .8rem; color: var(--gray); margin-top: 8px; }
-
-#price-preview {
-  display: none; margin-top: 12px; padding: 14px;
-  background: var(--green-l); border-radius: 12px;
-  font-size: .88rem; line-height: 1.9;
-  border: 1.5px solid rgba(34,160,91,.2);
-}
+.photo-thumb { position: relative; width: 90px; height: 90px; border-radius: 12px; overflow: hidden; border: 1.5px solid var(--border); }
+.photo-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.photo-del { position: absolute; top: 4px; right: 4px; width: 22px; height: 22px; border-radius: 50%; background: rgba(0,0,0,.55); color: #fff; border: none; font-size: .7rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background .15s; }
+.photo-del:hover { background: var(--red); }
+#price-preview { display: none; margin-top: 12px; padding: 14px; background: var(--green-l); border-radius: 12px; font-size: .88rem; line-height: 1.9; border: 1.5px solid rgba(34,160,91,.2); }
 
 /* ============================================================
    ADMIN
    ============================================================ */
-.a-hdr {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 22px 26px;
-  background: linear-gradient(135deg, var(--green), var(--green-d));
-  color: #fff; border-radius: 20px; margin-bottom: 24px;
-  gap: 16px; flex-wrap: wrap;
-}
+.a-hdr { display: flex; align-items: center; justify-content: space-between; padding: 22px 26px; background: linear-gradient(135deg,var(--green),var(--green-d)); color: #fff; border-radius: 20px; margin-bottom: 24px; gap: 16px; flex-wrap: wrap; }
 .a-hdr h2 { font-size: 1.2rem; color: #fff; }
-.stats-bar { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px,1fr)); gap: 14px; margin-bottom: 24px; }
-.s-card {
-  background: #fff; border: 1.5px solid var(--border);
-  border-radius: var(--rr); padding: 18px 16px; text-align: center;
-}
+.stats-bar { display: grid; grid-template-columns: repeat(auto-fill,minmax(160px,1fr)); gap: 14px; margin-bottom: 24px; }
+.s-card { background: #fff; border: 1.5px solid var(--border); border-radius: var(--rr); padding: 18px 16px; text-align: center; }
 .s-card em { font-size: 1.6rem; font-style: normal; display: block; margin-bottom: 6px; }
 .s-card b  { display: block; font-size: 1.5rem; font-weight: 700; }
 .s-card small { color: var(--gray); font-size: .78rem; }
-
-.atabs {
-  display: flex; gap: 6px; border-bottom: 1.5px solid var(--border);
-  margin-bottom: 24px; flex-wrap: wrap;
-}
-.atab {
-  padding: 10px 18px; border: none; background: none;
-  font-size: .88rem; font-weight: 600; color: var(--gray);
-  border-bottom: 2.5px solid transparent; margin-bottom: -1.5px; transition: all .15s;
-}
+.atabs { display: flex; gap: 6px; border-bottom: 1.5px solid var(--border); margin-bottom: 24px; flex-wrap: wrap; }
+.atab { padding: 10px 18px; border: none; background: none; font-size: .88rem; font-weight: 600; color: var(--gray); border-bottom: 2.5px solid transparent; margin-bottom: -1.5px; transition: all .15s; }
 .atab.active { color: var(--green); border-bottom-color: var(--green); }
 
 /* ============================================================
    CART SIDEBAR
    ============================================================ */
-.cart-overlay {
-  display: none; position: fixed; inset: 0;
-  background: rgba(15,17,23,.55);
-  z-index: 1100;
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
-}
+.cart-overlay { display: none; position: fixed; inset: 0; background: rgba(15,17,23,.55); z-index: 1100; backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
 .cart-overlay.open { display: block; animation: fadeOverlay .3s ease; }
-@keyframes fadeOverlay { from { opacity: 0; } to { opacity: 1; } }
-
-.cart-drawer {
-  position: fixed; top: 0; right: -100%; bottom: 0;
-  width: 100%; max-width: 440px;
-  background: #fff;
-  z-index: 1101;
-  display: flex; flex-direction: column;
-  box-shadow: -16px 0 80px rgba(0,0,0,.18);
-  transition: right .4s cubic-bezier(.22,1,.36,1);
-  border-radius: 24px 0 0 24px;
-}
+@keyframes fadeOverlay { from{opacity:0} to{opacity:1} }
+.cart-drawer { position: fixed; top: 0; right: -100%; bottom: 0; width: 100%; max-width: 440px; background: #fff; z-index: 1101; display: flex; flex-direction: column; box-shadow: -16px 0 80px rgba(0,0,0,.18); transition: right .4s cubic-bezier(.22,1,.36,1); border-radius: 24px 0 0 24px; }
 .cart-drawer.open { right: 0; }
-
-.cart-head {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 24px 26px 20px;
-  background: linear-gradient(135deg, #0f1117 0%, #1e2330 100%);
-  border-radius: 24px 0 0 0;
-  flex-shrink: 0;
-  position: relative;
-  overflow: hidden;
-}
-.cart-head::before {
-  content: '';
-  position: absolute; top: -30px; right: -30px;
-  width: 140px; height: 140px;
-  background: radial-gradient(circle, rgba(34,160,91,.25) 0%, transparent 70%);
-  border-radius: 50%;
-}
+.cart-head { display: flex; align-items: center; justify-content: space-between; padding: 24px 26px 20px; background: linear-gradient(135deg,#0f1117 0%,#1e2330 100%); border-radius: 24px 0 0 0; flex-shrink: 0; position: relative; overflow: hidden; }
+.cart-head::before { content: ''; position: absolute; top: -30px; right: -30px; width: 140px; height: 140px; background: radial-gradient(circle,rgba(34,160,91,.25) 0%,transparent 70%); border-radius: 50%; }
 .cart-head-left { display: flex; flex-direction: column; gap: 4px; z-index: 1; }
-.cart-head-title {
-  font-family: 'Cormorant Garamond', serif;
-  font-size: 1.6rem; font-weight: 700; color: #fff;
-  display: flex; align-items: center; gap: 10px;
-}
+.cart-head-title { font-family: 'Cormorant Garamond',serif; font-size: 1.6rem; font-weight: 700; color: #fff; display: flex; align-items: center; gap: 10px; }
 .cart-head-sub { font-size: .78rem; color: rgba(255,255,255,.45); font-weight: 400; }
-.cart-count-pill {
-  display: inline-flex; align-items: center; justify-content: center;
-  background: var(--green); color: #fff;
-  font-size: .7rem; font-weight: 700;
-  min-width: 22px; height: 22px; border-radius: 50px;
-  padding: 0 6px;
-}
-
-.cart-close {
-  width: 38px; height: 38px; border-radius: 50%; border: 1.5px solid rgba(255,255,255,.15);
-  background: rgba(255,255,255,.08); color: rgba(255,255,255,.7);
-  font-size: .9rem; transition: all .2s; z-index: 1;
-  display: flex; align-items: center; justify-content: center;
-}
+.cart-count-pill { display: inline-flex; align-items: center; justify-content: center; background: var(--green); color: #fff; font-size: .7rem; font-weight: 700; min-width: 22px; height: 22px; border-radius: 50px; padding: 0 6px; }
+.cart-close { width: 38px; height: 38px; border-radius: 50%; border: 1.5px solid rgba(255,255,255,.15); background: rgba(255,255,255,.08); color: rgba(255,255,255,.7); font-size: .9rem; transition: all .2s; z-index: 1; display: flex; align-items: center; justify-content: center; }
 .cart-close:hover { background: rgba(255,255,255,.18); color: #fff; border-color: rgba(255,255,255,.3); }
-
-.cart-body {
-  flex: 1; overflow-y: auto; padding: 20px 24px 0;
-  scrollbar-width: thin;
-  scrollbar-color: var(--border) transparent;
-}
+.cart-body { flex: 1; overflow-y: auto; padding: 20px 24px 0; scrollbar-width: thin; scrollbar-color: var(--border) transparent; }
 .cart-body::-webkit-scrollbar { width: 4px; }
 .cart-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
-
-.cart-empty {
-  display: flex; flex-direction: column; align-items: center; justify-content: center;
-  height: 100%; gap: 16px; color: var(--gray);
-  padding-bottom: 60px;
-}
-.ce-icon-wrap {
-  width: 96px; height: 96px; border-radius: 50%;
-  background: linear-gradient(145deg, #f0faf5, #e8f5e9);
-  display: flex; align-items: center; justify-content: center;
-  font-size: 2.6rem;
-  border: 2px solid rgba(34,160,91,.12);
-}
-.cart-empty h4 { font-size: 1.1rem; font-weight: 700; color: var(--black); font-family: 'Outfit', sans-serif; }
+.cart-empty { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; gap: 16px; color: var(--gray); padding-bottom: 60px; }
+.ce-icon-wrap { width: 96px; height: 96px; border-radius: 50%; background: linear-gradient(145deg,#f0faf5,#e8f5e9); display: flex; align-items: center; justify-content: center; font-size: 2.6rem; border: 2px solid rgba(34,160,91,.12); }
+.cart-empty h4 { font-size: 1.1rem; font-weight: 700; color: var(--black); font-family: 'Outfit',sans-serif; }
 .cart-empty p { font-size: .85rem; text-align: center; line-height: 1.6; max-width: 220px; }
-.cart-browse-btn {
-  padding: 10px 24px; background: var(--green); color: #fff;
-  border: none; border-radius: 50px; font-size: .85rem; font-weight: 700;
-  font-family: 'Outfit', sans-serif; cursor: pointer; transition: all .2s;
-}
+.cart-browse-btn { padding: 10px 24px; background: var(--green); color: #fff; border: none; border-radius: 50px; font-size: .85rem; font-weight: 700; font-family: 'Outfit',sans-serif; cursor: pointer; transition: all .2s; }
 .cart-browse-btn:hover { background: var(--green-d); transform: translateY(-1px); }
-
-.cart-section-label {
-  font-size: .72rem; font-weight: 700; text-transform: uppercase;
-  letter-spacing: .08em; color: var(--gray); margin-bottom: 14px;
-  display: flex; align-items: center; gap: 8px;
-}
-.cart-section-label::after {
-  content: ''; flex: 1; height: 1px; background: var(--border);
-}
-
-.cart-item {
-  display: flex; gap: 14px; padding: 16px 0;
-  border-bottom: 1px solid var(--border); align-items: flex-start;
-  animation: slideInCart .25s cubic-bezier(.22,1,.36,1);
-  position: relative;
-}
-@keyframes slideInCart {
-  from { opacity: 0; transform: translateX(24px); }
-  to   { opacity: 1; transform: translateX(0); }
-}
-
-.ci-img {
-  width: 72px; height: 72px; border-radius: 14px; object-fit: cover;
-  background: var(--green-l); flex-shrink: 0;
-  display: flex; align-items: center; justify-content: center; font-size: 2rem;
-  overflow: hidden; border: 1.5px solid var(--border);
-}
+.cart-section-label { font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--gray); margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
+.cart-section-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+.cart-item { display: flex; gap: 14px; padding: 16px 0; border-bottom: 1px solid var(--border); align-items: flex-start; animation: slideInCart .25s cubic-bezier(.22,1,.36,1); position: relative; }
+@keyframes slideInCart { from{opacity:0;transform:translateX(24px)} to{opacity:1;transform:translateX(0)} }
+.ci-img { width: 72px; height: 72px; border-radius: 14px; object-fit: cover; background: var(--green-l); flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 2rem; overflow: hidden; border: 1.5px solid var(--border); }
 .ci-img img { width: 100%; height: 100%; object-fit: cover; }
-
 .ci-info { flex: 1; min-width: 0; }
 .ci-title { font-size: .9rem; font-weight: 700; line-height: 1.3; color: var(--black); margin-bottom: 3px; }
-.ci-sub   { font-size: .74rem; color: var(--gray); margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
+.ci-sub { font-size: .74rem; color: var(--gray); margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
 .ci-sub-dot { width: 3px; height: 3px; border-radius: 50%; background: var(--border); }
 .ci-price { font-size: 1.05rem; font-weight: 700; color: var(--green-d); }
-
-.ci-remove {
-  background: none; border: none; color: var(--gray);
-  font-size: .75rem; padding: 6px; transition: all .15s; border-radius: 8px;
-  display: flex; align-items: center; justify-content: center;
-  width: 28px; height: 28px; flex-shrink: 0; margin-top: 2px;
-}
+.ci-remove { background: none; border: none; color: var(--gray); font-size: .75rem; padding: 6px; transition: all .15s; border-radius: 8px; display: flex; align-items: center; justify-content: center; width: 28px; height: 28px; flex-shrink: 0; margin-top: 2px; }
 .ci-remove:hover { color: var(--red); background: #fdecea; }
-
-.cart-foot {
-  padding: 16px 24px 28px;
-  border-top: 1px solid var(--border);
-  flex-shrink: 0; background: #fff;
-  border-radius: 0 0 0 24px;
-}
-
-.cart-summary {
-  background: var(--warm); border-radius: 16px;
-  padding: 16px 18px; margin-bottom: 16px;
-  border: 1.5px solid var(--border);
-}
-.cart-summary-row {
-  display: flex; justify-content: space-between; align-items: center;
-  font-size: .83rem; color: var(--gray); margin-bottom: 8px;
-}
+.cart-foot { padding: 16px 24px 28px; border-top: 1px solid var(--border); flex-shrink: 0; background: #fff; border-radius: 0 0 0 24px; }
+.cart-summary { background: var(--warm); border-radius: 16px; padding: 16px 18px; margin-bottom: 16px; border: 1.5px solid var(--border); }
+.cart-summary-row { display: flex; justify-content: space-between; align-items: center; font-size: .83rem; color: var(--gray); margin-bottom: 8px; }
 .cart-summary-row:last-child { margin-bottom: 0; }
-.cart-summary-divider {
-  height: 1px; background: var(--border); margin: 10px 0;
-}
+.cart-summary-divider { height: 1px; background: var(--border); margin: 10px 0; }
 .cart-total-label { font-size: .95rem; font-weight: 700; color: var(--black); }
 .cart-total-value { font-size: 1.4rem; font-weight: 700; color: var(--black); }
-
-.cart-checkout-btn {
-  width: 100%; padding: 16px; background: var(--green); color: #fff;
-  border: none; border-radius: 16px; font-size: .95rem; font-weight: 700;
-  font-family: 'Outfit', sans-serif; transition: all .22s;
-  display: flex; align-items: center; justify-content: center; gap: 8px;
-  cursor: pointer;
-}
-.cart-checkout-btn:hover {
-  background: var(--green-d);
-  box-shadow: 0 8px 28px rgba(34,160,91,.35);
-  transform: translateY(-1px);
-}
+.cart-checkout-btn { width: 100%; padding: 16px; background: var(--green); color: #fff; border: none; border-radius: 16px; font-size: .95rem; font-weight: 700; font-family: 'Outfit',sans-serif; transition: all .22s; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; }
+.cart-checkout-btn:hover { background: var(--green-d); box-shadow: 0 8px 28px rgba(34,160,91,.35); transform: translateY(-1px); }
 .cart-checkout-btn:active { transform: translateY(0); }
-
-.cart-clear-btn {
-  width: 100%; padding: 10px; background: none; color: var(--gray);
-  border: 1.5px solid var(--border); border-radius: 12px;
-  font-size: .8rem; font-weight: 600; font-family: 'Outfit', sans-serif;
-  transition: all .2s; margin-top: 8px; cursor: pointer;
-}
+.cart-clear-btn { width: 100%; padding: 10px; background: none; color: var(--gray); border: 1.5px solid var(--border); border-radius: 12px; font-size: .8rem; font-weight: 600; font-family: 'Outfit',sans-serif; transition: all .2s; margin-top: 8px; cursor: pointer; }
 .cart-clear-btn:hover { color: var(--red); border-color: #fca5a5; background: #fef2f2; }
-
-.cart-note {
-  font-size: .73rem; color: var(--gray); text-align: center;
-  margin-top: 10px; line-height: 1.5;
-  display: flex; align-items: center; justify-content: center; gap: 6px;
-}
+.cart-note { font-size: .73rem; color: var(--gray); text-align: center; margin-top: 10px; line-height: 1.5; display: flex; align-items: center; justify-content: center; gap: 6px; }
 .cart-note::before { content: '🔒'; font-size: .9rem; }
 
 /* ============================================================
    MODALS
    ============================================================ */
-.overlay {
-  display: none; position: fixed; inset: 0;
-  background: rgba(0,0,0,.45); z-index: 1000;
-  align-items: center; justify-content: center;
-  padding: 20px; backdrop-filter: blur(3px);
-}
+.overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 1000; align-items: center; justify-content: center; padding: 20px; backdrop-filter: blur(3px); }
 .overlay.open { display: flex; }
-.modal {
-  background: #fff; border-radius: 24px; padding: 36px;
-  width: 100%; max-width: 480px; max-height: 90vh;
-  overflow-y: auto; position: relative;
-  box-shadow: 0 24px 80px rgba(0,0,0,.16);
-  animation: popIn .28s cubic-bezier(.34,1.56,.64,1);
-}
-@keyframes popIn { from { opacity:0; transform:scale(.92) translateY(10px); } to { opacity:1; transform:none; } }
-.modal-x {
-  position: absolute; top: 16px; right: 16px;
-  width: 34px; height: 34px; border-radius: 50%; border: none;
-  background: var(--warm); color: var(--gray); font-size: .85rem; transition: all .15s;
-}
+.modal { background: #fff; border-radius: 24px; padding: 36px; width: 100%; max-width: 480px; max-height: 90vh; overflow-y: auto; position: relative; box-shadow: 0 24px 80px rgba(0,0,0,.16); animation: popIn .28s cubic-bezier(.34,1.56,.64,1); }
+@keyframes popIn { from{opacity:0;transform:scale(.92) translateY(10px)} to{opacity:1;transform:none} }
+.modal-x { position: absolute; top: 16px; right: 16px; width: 34px; height: 34px; border-radius: 50%; border: none; background: var(--warm); color: var(--gray); font-size: .85rem; transition: all .15s; }
 .modal-x:hover { background: var(--border); color: var(--black); }
 .modal h3 { font-size: 1.4rem; margin-bottom: 8px; }
 
 /* ============================================================
    TOAST
    ============================================================ */
-.toast {
-  position: fixed; bottom: 28px; left: 50%;
-  transform: translateX(-50%) translateY(80px);
-  background: var(--black); color: #fff;
-  padding: 13px 26px; border-radius: 50px;
-  font-size: .88rem; font-weight: 600; z-index: 9999;
-  opacity: 0; transition: all .3s; white-space: nowrap;
-  max-width: calc(100vw - 40px); box-shadow: 0 8px 32px rgba(0,0,0,.25);
-}
+.toast { position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%) translateY(80px); background: var(--black); color: #fff; padding: 13px 26px; border-radius: 50px; font-size: .88rem; font-weight: 600; z-index: 9999; opacity: 0; transition: all .3s; white-space: nowrap; max-width: calc(100vw - 40px); box-shadow: 0 8px 32px rgba(0,0,0,.25); }
 .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 .toast.success { background: var(--green); }
 .toast.err     { background: var(--red); }
 
 /* ============================================================
-   SCROLL-TOP
+   SCROLL-TOP / FOOTER / LIGHTBOX
    ============================================================ */
-#scroll-top {
-  display: none; position: fixed; bottom: 28px; right: 24px;
-  width: 44px; height: 44px; background: var(--black); color: #fff;
-  border: none; border-radius: 50%; font-size: 1.1rem; z-index: 800;
-  box-shadow: 0 6px 20px rgba(0,0,0,.2); transition: all .2s;
-}
+#scroll-top { display: none; position: fixed; bottom: 28px; right: 24px; width: 44px; height: 44px; background: var(--black); color: #fff; border: none; border-radius: 50%; font-size: 1.1rem; z-index: 800; box-shadow: 0 6px 20px rgba(0,0,0,.2); transition: all .2s; }
 #scroll-top:hover { background: var(--green); transform: translateY(-3px); }
-
-/* ============================================================
-   FOOTER
-   ============================================================ */
-footer {
-  background: var(--black); color: rgba(255,255,255,.45);
-  text-align: center; padding: 36px 24px; font-size: .82rem;
-}
-.footer-logo {
-  font-family: 'Cormorant Garamond', serif;
-  font-size: 1.5rem; font-weight: 700; color: #fff;
-  margin-bottom: 10px; display: block;
-}
+footer { background: var(--black); color: rgba(255,255,255,.45); text-align: center; padding: 36px 24px; font-size: .82rem; }
+.footer-logo { font-family: 'Cormorant Garamond',serif; font-size: 1.5rem; font-weight: 700; color: #fff; margin-bottom: 10px; display: block; }
 .footer-logo em { color: var(--green); font-style: normal; }
-
-/* ============================================================
-   LIGHTBOX
-   ============================================================ */
-#lightbox {
-  display: none; position: fixed; inset: 0;
-  background: rgba(0,0,0,.94); z-index: 9998;
-  align-items: center; justify-content: center; padding: 16px;
-}
+#lightbox { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.94); z-index: 9998; align-items: center; justify-content: center; padding: 16px; }
 
 /* ============================================================
    RESPONSIVE
    ============================================================ */
-@media (max-width: 1024px) {
-  .pgrid { grid-template-columns: repeat(2, 1fr); }
-}
+@media (max-width: 1024px) { .pgrid,#pgrid { grid-template-columns: repeat(2,1fr); } }
 @media (max-width: 900px) {
-  .cats { grid-template-columns: repeat(2, 1fr); }
+  .cats { grid-template-columns: repeat(2,1fr); }
   .nav-links, .nav-right .btn-shop-login { display: none; }
   .burger { display: flex; }
   .pd-wrap { grid-template-columns: 1fr; gap: 28px; }
 }
 @media (max-width: 640px) {
-  .pgrid { grid-template-columns: repeat(2, 1fr); gap: 14px; }
-  .pc-img { height: 170px; }
+  .pgrid,#pgrid { grid-template-columns: repeat(2,1fr); gap: 14px; }
+  .pc-img,.pcard-img { height: 170px; }
   .pc-btn { font-size: .68rem; padding: 8px 6px; }
 }
 @media (max-width: 480px) {
-  .pgrid { grid-template-columns: 1fr 1fr; gap: 12px; }
+  .pgrid,#pgrid { grid-template-columns: 1fr 1fr; gap: 12px; }
   .cart-drawer { max-width: 100%; border-radius: 20px 20px 0 0; top: auto; height: 92vh; }
 }
 @media (max-width: 600px) {
   .hero { padding: 52px 20px 44px; }
-  .hero h1 { font-size: 2.4​​​​​​​​​​​​​​​​
+  .hero h1 { font-size: 2.4rem; }
+  .hero-btns { flex-direction: column; align-items: stretch; }
+  .hero-btns .btn { justify-content: center; }
+  .cats { grid-template-columns: repeat(2,1fr); gap: 12px; }
+  .cat-img { height: 88px; font-size: 2.2rem; }
+  .cat-body { padding: 12px; }
+  .fgrid { grid-template-columns: 1fr; }
+  .fg-full { grid-column: 1; }
+  .filters { gap: 12px; }
+  .home-cats-header { flex-direction: column; align-items: flex-start; }
+  .section { padding: 24px 16px 52px; }
+  .a-hdr { flex-direction: column; align-items: flex-start; }
+  .modal { padding: 24px 18px; border-radius: 18px; }
+  .atab { padding: 9px 11px; font-size: .8rem; }
+  .pd-contact { padding: 20px 16px; }
+  .pd-contact-btns { flex-direction: column; }
+  .pd-contact-btns .btn { min-width: 0; width: 100%; }
+  .pcard-body { padding: 12px 12px 10px; }
+  .pcard-body h4 { font-size: .9rem; }
+  .pprice { font-size: 1rem; }
+}
+@media (max-width: 400px) {
+  .cats { grid-template-columns: 1fr 1fr; }
+  .mode-switch { flex-wrap: wrap; }
+}
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════
+     NAV
+══════════════════════════════════════ -->
+<nav>
+  <div class="nav-wrap">
+    <div class="logo" onclick="goPage('home')">rebuket<em>.tj</em></div>
+    <ul class="nav-links">
+      <li><a onclick="goPage('home')">Главная</a></li>
+      <li><a onclick="goPage('catalog')">Каталог</a></li>
+      <li><a onclick="goPage('sell')">+ Разместить</a></li>
+      <li><a class="nav-admin" onclick="goPage('admin')">⚙ Панель</a></li>
+    </ul>
+    <div class="nav-right">
+      <button class="btn-shop-login" onclick="openStoreModal()">
+        <span>🏪</span> Войти как магазин
+      </button>
+      <button class="nav-cart" onclick="openCart()" title="Корзина">
+        🛒
+        <span class="cart-badge" id="cart-badge">0</span>
+      </button>
+    </div>
+    <button class="nav-cart" onclick="openCart()" title="Корзина" style="display:none" id="mob-cart-btn">
+      🛒
+      <span class="cart-badge" id="mob-cart-badge">0</span>
+    </button>
+    <button class="burger" id="burger" onclick="toggleBurger()" aria-label="Меню">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+  <div class="nav-drawer" id="nav-drawer">
+    <a onclick="goPage('home');closeDrawer()">🏠 Главная</a>
+    <a onclick="goPage('catalog');closeDrawer()">🛍 Каталог</a>
+    <a onclick="goPage('sell');closeDrawer()">➕ Разместить объявление</a>
+    <a class="nav-admin" onclick="goPage('admin');closeDrawer()">⚙ Панель администратора</a>
+    <a class="drawer-shop" onclick="openStoreModal();closeDrawer()">🏪 Войти как магазин</a>
+    <a onclick="openCart();closeDrawer()">🛒 Корзина <span id="drawer-cart-count" style="background:var(--red);color:#fff;border-radius:50px;padding:2px 8px;font-size:.72rem;font-weight:700;margin-left:6px;display:none">0</span></a>
+  </div>
+</nav>
+
+<!-- ══════════════════════════════════════
+     CART DRAWER
+══════════════════════════════════════ -->
+<div class="cart-overlay" id="cart-overlay" onclick="closeCart()"></div>
+<div class="cart-drawer" id="cart-drawer">
+  <div class="cart-head">
+    <div class="cart-head-left">
+      <div class="cart-head-title">
+        🛒 Корзина
+        <span class="cart-count-pill" id="cart-head-count">0</span>
+      </div>
+      <div class="cart-head-sub">Ваши выбранные букеты и подарки</div>
+    </div>
+    <button class="cart-close" onclick="closeCart()">✕</button>
+  </div>
+  <div class="cart-body" id="cart-body">
+    <div class="cart-empty" id="cart-empty-state">
+      <div class="ce-icon-wrap">🌸</div>
+      <h4>Корзина пуста</h4>
+      <p>Добавьте понравившиеся букеты и подарки</p>
+      <button class="cart-browse-btn" onclick="closeCart(); goPage('catalog')">Смотреть каталог</button>
+    </div>
+    <div id="cart-items-list"></div>
+  </div>
+  <div class="cart-foot" id="cart-foot" style="display:none">
+    <div class="cart-summary">
+      <div class="cart-summary-row">
+        <span>Товаров</span>
+        <span id="cart-items-count">0 шт.</span>
+      </div>
+      <div class="cart-summary-divider"></div>
+      <div class="cart-summary-row">
+        <span class="cart-total-label">Итого</span>
+        <span class="cart-total-value" id="cart-total">0 сом.</span>
+      </div>
+    </div>
+    <button class="cart-checkout-btn" onclick="cartCheckout()">
+      <span>💬</span> Оформить через Telegram
+    </button>
+    <button class="cart-clear-btn" onclick="clearCartConfirm()">Очистить корзину</button>
+    <p class="cart-note">Свяжемся через @rebuket_admin</p>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     HOME
+══════════════════════════════════════ -->
+<div id="page-home" class="page active">
+  <div class="hero">
+    <div class="hero-inner">
+      <div class="hero-badge">🌸 Таджикистан · Подарки с душой</div>
+      <h1>rebuket<span>.tj</span></h1>
+      <p>Купи или продай букеты, корзины, мишки и сладости.<br>Свежие цветы и угощения по всему Таджикистану.</p>
+      <div class="hero-btns">
+        <button class="btn btn-black"   onclick="setModeAndGo('eco')">🌿 Эко-букеты</button>
+        <button class="btn btn-primary" onclick="setModeAndGo('shop')">🏪 Магазинные цветы</button>
+        <button class="btn btn-outline" onclick="goPage('sell')">+ Разместить</button>
+      </div>
+    </div>
+  </div>
+  <div class="section">
+    <div class="home-cats-header">
+      <div>
+        <h2 class="section-title">Категории</h2>
+        <p class="section-sub">Выберите тип и категорию</p>
+      </div>
+      <div class="mode-switch">
+        <button class="mode-btn active" id="home-mode-eco"  onclick="switchHomeMode('eco')"><span class="dot dot-eco"></span> Эко</button>
+        <button class="mode-btn" id="home-mode-shop" onclick="switchHomeMode('shop')"><span class="dot dot-shop"></span> Магазинные</button>
+      </div>
+    </div>
+    <div id="cats-eco" class="cats">
+      <div class="cat-card eco" onclick="filterAndGo('Букет')"><div class="cat-img">💐<span class="cat-type-badge eco-badge">Эко</span></div><div class="cat-body"><h3>Букеты</h3><p>Перепродажа · частные</p><span class="cat-cnt eco-cnt" id="cnt-bouquet">…</span></div></div>
+      <div class="cat-card eco" onclick="filterAndGo('Корзина')"><div class="cat-img">🧺<span class="cat-type-badge eco-badge">Эко</span></div><div class="cat-body"><h3>Корзины</h3><p>Подарочные корзины</p><span class="cat-cnt eco-cnt" id="cnt-basket">…</span></div></div>
+      <div class="cat-card eco" onclick="filterAndGo('Мишка')"><div class="cat-img">🧸<span class="cat-type-badge eco-badge">Эко</span></div><div class="cat-body"><h3>Мишки</h3><p>Мишки с цветами</p><span class="cat-cnt eco-cnt" id="cnt-bear">…</span></div></div>
+      <div class="cat-card eco" onclick="filterAndGo('Сладости')"><div class="cat-img">🍰<span class="cat-type-badge eco-badge">Эко</span></div><div class="cat-body"><h3>Сладости</h3><p>Торты, трайфлы, капкейки</p><span class="cat-cnt eco-cnt" id="cnt-sweets">…</span></div></div>
+    </div>
+    <div id="cats-shop" class="cats" style="display:none">
+      <div class="cat-card shop" onclick="filterAndGo('Букет')"><div class="cat-img">💐<span class="cat-type-badge shop-badge">Магазин</span></div><div class="cat-body"><h3>Букеты</h3><p>От флористов</p><span class="cat-cnt shop-cnt" id="cnt-shop-bouquet">…</span></div></div>
+      <div class="cat-card shop" onclick="filterAndGo('Корзина')"><div class="cat-img">🧺<span class="cat-type-badge shop-badge">Магазин</span></div><div class="cat-body"><h3>Корзины</h3><p>Профессиональные</p><span class="cat-cnt shop-cnt" id="cnt-shop-basket">…</span></div></div>
+      <div class="cat-card shop" onclick="filterAndGo('Мишка')"><div class="cat-img">🧸<span class="cat-type-badge shop-badge">Магазин</span></div><div class="cat-body"><h3>Мишки</h3><p>Флористические</p><span class="cat-cnt shop-cnt" id="cnt-shop-bear">…</span></div></div>
+      <div class="cat-card shop" onclick="filterAndGo('Сладости')"><div class="cat-img">🍰<span class="cat-type-badge shop-badge">Магазин</span></div><div class="cat-body"><h3>Сладости</h3><p>Кондитерские изделия</p><span class="cat-cnt shop-cnt" id="cnt-shop-sweets">…</span></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     CATALOG
+══════════════════════════════════════ -->
+<div id="page-catalog" class="page">
+  <div class="section">
+    <button class="back" onclick="goPage('home')">← Назад</button>
+    <div class="home-cats-header" style="margin-bottom:18px">
+      <div>
+        <h2 class="section-title">Каталог</h2>
+        <p class="section-sub" style="margin-bottom:0">Найдите идеальный подарок</p>
+      </div>
+      <div class="mode-switch">
+        <button class="mode-btn active" id="cat-mode-eco"  onclick="setCatalogMode('eco')"><span class="dot dot-eco"></span> Эко</button>
+        <button class="mode-btn" id="cat-mode-shop" onclick="setCatalogMode('shop')"><span class="dot dot-shop"></span> Магазинные</button>
+      </div>
+    </div>
+    <div id="catalog-mode-banner" class="mode-banner eco-banner">🌿 Показаны Эко-объявления — перепродажа от частных лиц</div>
+    <div class="filters">
+      <div class="fg">
+        <label>Категория</label>
+        <div class="chips" id="cat-chips">
+          <button class="chip active" onclick="setCat('Все',this)">Все</button>
+          <button class="chip" onclick="setCat('Букеты',this)">💐 Букеты</button>
+          <button class="chip" onclick="setCat('Корзины',this)">🧺 Корзины</button>
+          <button class="chip" onclick="setCat('Мишки',this)">🧸 Мишки</button>
+          <button class="chip" onclick="setCat('Сладости',this)">🍰 Сладости</button>
+        </div>
+      </div>
+      <div class="fg">
+        <label>Город</label>
+        <select id="f-city" onchange="applyFilters()" style="min-width:140px"><option value="">Все города</option></select>
+      </div>
+      <div class="fg">
+        <label>Цена (TJS)</label>
+        <div style="display:flex;align-items:center;gap:6px">
+          <input type="number" id="f-price-min" placeholder="От" oninput="applyFilters()" style="width:80px">
+          <span style="color:var(--gray)">—</span>
+          <input type="number" id="f-price-max" placeholder="До" oninput="applyFilters()" style="width:80px">
+        </div>
+      </div>
+      <div class="fg">
+        <label>Поиск</label>
+        <input type="text" id="f-search" placeholder="Название…" oninput="applyFilters()" style="min-width:160px">
+      </div>
+    </div>
+    <div class="pgrid" id="pgrid"><div class="loader">🌿 Загружаем…</div></div>
+    <div id="pgn" class="pgn"></div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     PRODUCT DETAIL
+══════════════════════════════════════ -->
+<div id="page-product" class="page">
+  <div class="section">
+    <button class="back" onclick="goPage('catalog')">← Назад в каталог</button>
+    <div id="pd-content"></div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     SELL
+══════════════════════════════════════ -->
+<div id="page-sell" class="page">
+  <div class="section">
+    <button class="back" onclick="goPage('home')">← Назад</button>
+    <h2 class="section-title">Разместить объявление</h2>
+    <p class="section-sub">Ваш товар увидят покупатели после проверки администратором</p>
+    <div class="sell-wrap">
+      <div class="form-group" style="margin-bottom:22px">
+        <label>Категория *</label>
+        <div class="cat-select-row">
+          <div class="cat-sel active" data-val="bouquet" onclick="selectCat(this)"><span class="cs-em">💐</span><span class="cs-txt">Букет</span></div>
+          <div class="cat-sel" data-val="basket"  onclick="selectCat(this)"><span class="cs-em">🧺</span><span class="cs-txt">Корзина</span></div>
+          <div class="cat-sel" data-val="bear"    onclick="selectCat(this)"><span class="cs-em">🧸</span><span class="cs-txt">Мишка</span></div>
+          <div class="cat-sel" data-val="sweets"  onclick="selectCat(this)"><span class="cs-em">🍰</span><span class="cs-txt">Сладости</span></div>
+        </div>
+        <input type="hidden" name="sell-cat" id="sell-cat-val" value="bouquet">
+      </div>
+      <div class="fgrid">
+        <div class="form-group fg-full"><label>Название *</label><input type="text" id="sell-title" placeholder="Нежный букет из роз / Трайфл клубничный"></div>
+        <div class="form-group fg-full"><label>Описание</label><textarea id="sell-desc" placeholder="Состав, особенности, повод, вес (для сладостей)…"></textarea></div>
+        <div class="form-group">
+          <label>Ваша цена (TJS) *</label>
+          <input type="number" id="sell-price" placeholder="350" oninput="updatePricePreview()" min="1">
+          <div id="price-preview">
+            <div style="display:flex;justify-content:space-between"><span style="color:var(--gray)">Вы получите:</span><span id="price-seller" style="font-weight:700;color:var(--green)"></span></div>
+            <div style="display:flex;justify-content:space-between;border-top:1px solid rgba(34,160,91,.2);margin-top:6px;padding-top:6px"><span style="font-weight:700">Покупатель заплатит:</span><span id="price-total" style="font-weight:700;font-size:1rem"></span></div>
+            <div style="margin-top:6px;font-size:.78rem;color:var(--gray);text-align:center">✅ Комиссия платформы включена в цену</div>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Город *</label>
+          <select id="sell-city">
+            <option value="">— Выберите —</option>
+            <option>Душанбе</option><option>Худжанд</option><option>Куляб</option>
+            <option>Бохтар</option><option>Вахдат</option><option>Турсунзода</option>
+            <option>Исфара</option><option>Шахринав</option><option>Дангара</option>
+            <option>Регар</option><option>Бустон</option>
+          </select>
+        </div>
+        <div class="form-group fg-full" style="background:var(--warm);border-radius:16px;padding:18px;border:1.5px solid var(--border)">
+          <p style="font-weight:700;margin-bottom:14px;color:var(--mid)">🔐 Ваши контакты (видит только администратор)</p>
+          <div class="fgrid">
+            <div class="form-group"><label>Ваше имя</label><input type="text" id="sell-name" placeholder="Алина"></div>
+            <div class="form-group"><label>Телефон *</label><input type="tel" id="sell-phone" placeholder="+992 900 000000"></div>
+            <div class="form-group"><label>Telegram</label><input type="text" id="sell-tg" placeholder="@username"></div>
+            <div class="form-group"><label>Адрес</label><input type="text" id="sell-address" placeholder="ул. Рудаки, 12"></div>
+            <div class="form-group"><label>Время получения</label><input type="text" id="sell-time" placeholder="09:00–21:00 ежедневно"></div>
+            <div class="form-group"><label>Цена в других магазинах <span style="color:var(--gray);font-weight:400">(необязательно)</span></label><input type="number" id="sell-market-price" placeholder="Например: 350" min="0"></div>
+            <div class="form-group fg-full" id="size-field">
+              <label>Размер * <span style="color:var(--gray);font-weight:400">(обязательно)</span></label>
+              <div id="size-chips-wrap" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:6px">
+                <div id="size-chips" style="display:flex;flex-wrap:wrap;gap:8px">
+                  <button type="button" class="chip" onclick="selectSize('Маленький',this)">🟢 Маленький</button>
+                  <button type="button" class="chip" onclick="selectSize('Средний',this)">🟡 Средний</button>
+                  <button type="button" class="chip" onclick="selectSize('Большой',this)">🔴 Большой</button>
+                </div>
+              </div>
+              <div id="size-text-wrap" style="display:none;margin-top:6px">
+                <div style="display:flex;align-items:center;gap:8px">
+                  <input type="number" id="sell-size-text" placeholder="Например: 60" min="1" max="999" oninput="updateBearSizeInput()" style="width:120px;padding:10px 12px;border:1.5px solid var(--border);border-radius:9px;font-size:.95rem">
+                  <span style="color:var(--gray);font-size:.9rem">см</span>
+                </div>
+                <p style="font-size:.78rem;color:var(--gray);margin-top:5px">Укажите высоту мишки в сантиметрах</p>
+              </div>
+              <input type="hidden" id="sell-size">
+              <div id="size-error" style="display:none;color:var(--red);font-size:.82rem;margin-top:4px">Выберите или введите размер</div>
+            </div>
+            <div class="form-group fg-full">
+              <label>Когда получили * <span style="color:var(--gray);font-weight:400">(обязательно)</span></label>
+              <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:6px" id="gift-when-chips">
+                <button type="button" class="chip" onclick="selectGiftWhen('Только что',this)">⚡ Только что</button>
+                <button type="button" class="chip" onclick="selectGiftWhen('Сегодня',this)">📅 Сегодня</button>
+                <button type="button" class="chip" onclick="selectGiftWhen('Вчера',this)">🕐 Вчера</button>
+                <button type="button" class="chip" onclick="selectGiftWhen('2-3 дня назад',this)">📆 2-3 дня назад</button>
+                <button type="button" class="chip" onclick="selectGiftWhen('Неделю назад',this)">🗓 Неделю назад</button>
+              </div>
+              <input type="hidden" id="sell-gift-when">
+              <div id="gift-when-error" style="display:none;color:var(--red);font-size:.82rem;margin-top:4px">Выберите когда получили</div>
+            </div>
+          </div>
+          <p style="font-size:.78rem;color:var(--gray);margin-top:12px">Покупатели увидят только кнопки Instagram и Telegram администратора. Ваши личные контакты защищены.</p>
+        </div>
+        <div class="form-group fg-full">
+          <label>Фотографии * <span style="color:var(--gray);font-weight:400">(минимум 3 фото)</span></label>
+          <label class="photo-area" for="sell-photos">
+            <span class="icon">📸</span>
+            <b>Нажмите для загрузки</b>
+            <p style="color:var(--gray);font-size:.82rem;margin-top:4px">JPG, PNG, WebP — до 10 МБ каждое</p>
+          </label>
+          <input type="file" id="sell-photos" accept="image/*" multiple onchange="handlePhotos(event)" style="display:none">
+          <div class="photo-grid" id="sell-photo-grid"></div>
+          <p class="photo-hint" id="photo-hint">Загружено 0 из 3 (минимум 3 фото)</p>
+        </div>
+      </div>
+      <button class="btn btn-primary" id="sell-btn" style="width:100%;padding:15px;margin-top:10px;font-size:1rem" onclick="submitListing()">✅ Разместить объявление</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     ADMIN
+══════════════════════════════════════ -->
+<div id="page-admin" class="page">
+  <div class="section">
+    <div id="a-login" style="max-width:400px;margin:50px auto;background:#fff;border-radius:22px;padding:44px;box-shadow:var(--shadow-l);text-align:center;border:1.5px solid var(--border)">
+      <div style="font-size:3rem;margin-bottom:16px">🔐</div>
+      <h2 style="margin-bottom:5px">Панель администратора</h2>
+      <p style="color:var(--gray);font-size:.88rem;margin-bottom:24px">Доступ только для сотрудников rebuket.tj</p>
+      <div class="form-group" style="margin-bottom:12px"><input type="text" id="a-user" placeholder="Логин" style="text-align:center" onkeydown="if(event.key==='Enter')adminLogin()"></div>
+      <div class="form-group" style="margin-bottom:22px"><input type="password" id="a-pass" placeholder="Пароль" style="text-align:center" onkeydown="if(event.key==='Enter')adminLogin()"></div>
+      <button class="btn btn-primary" id="a-btn" style="width:100%" onclick="adminLogin()">Войти</button>
+    </div>
+    <div id="a-dash" style="display:none">
+      <div class="a-hdr">
+        <div>
+          <h2>rebuket.tj — Администратор</h2>
+          <p id="a-welcome" style="opacity:.65;font-size:.82rem;margin-top:2px"></p>
+        </div>
+        <button class="btn btn-outline" onclick="adminLogout()" style="font-size:.82rem;padding:7px 16px;border-color:rgba(255,255,255,.4);color:#fff">Выйти</button>
+      </div>
+      <div class="stats-bar" id="a-stats"><div class="s-card"><em>⏳</em><b>—</b><small>Загрузка…</small></div></div>
+      <div class="atabs">
+        <button class="atab active" data-tab="products"  onclick="switchTab('products')">📦 Объявления</button>
+        <button class="atab"        data-tab="inquiries" onclick="switchTab('inquiries')">🛒 Заявки</button>
+        <button class="atab"        data-tab="stats"     onclick="switchTab('stats')">📊 Статистика</button>
+      </div>
+      <div id="tab-products"  class="atab-pane"></div>
+      <div id="tab-inquiries" class="atab-pane" style="display:none"></div>
+      <div id="tab-stats"     class="atab-pane" style="display:none"></div>
+    </div>
+  </div>
+</div>
+
+<!-- INQUIRY MODAL -->
+<div class="overlay" id="inq-modal">
+  <div class="modal">
+    <button class="modal-x" onclick="closeModal('inq-modal')">✕</button>
+    <h3 id="inq-title">Оставить заявку</h3>
+    <p style="color:var(--gray);margin-bottom:22px;font-size:.88rem">Ваши данные увидит только администратор</p>
+    <input type="hidden" id="inq-pid">
+    <input type="hidden" id="inq-slug">
+    <div class="form-group" style="margin-bottom:13px"><label>Имя</label><input type="text" id="inq-name" placeholder="Необязательно"></div>
+    <div class="form-group" style="margin-bottom:13px"><label>Телефон *</label><input type="tel" id="inq-phone" placeholder="+992 900 000000"></div>
+    <div class="form-group" style="margin-bottom:13px"><label>Telegram</label><input type="text" id="inq-tg" placeholder="@username"></div>
+    <div class="form-group" style="margin-bottom:22px"><label>Пожелания</label><textarea id="inq-note" placeholder="Желаемое время, особые пожелания…" style="height:72px"></textarea></div>
+    <button class="btn btn-primary" id="inq-btn" style="width:100%" onclick="submitInquiry()">📩 Отправить заявку</button>
+  </div>
+</div>
+
+<!-- STORE LOGIN MODAL -->
+<div class="overlay" id="store-modal">
+  <div class="modal">
+    <button class="modal-x" onclick="closeModal('store-modal')">✕</button>
+    <div style="font-size:2.6rem;margin-bottom:14px">🏪</div>
+    <h3>Войти как магазин</h3>
+    <p style="color:var(--gray);margin-bottom:24px;font-size:.88rem">Для профессиональных флористов и магазинов</p>
+    <div class="form-group" style="margin-bottom:13px"><label>Email или телефон</label><input type="text" id="store-email" placeholder="example@mail.com"></div>
+    <div class="form-group" style="margin-bottom:24px"><label>Пароль</label><input type="password" id="store-pass" placeholder="••••••••"></div>
+    <button class="btn btn-primary" style="width:100%;margin-bottom:12px" onclick="storeLogin()">Войти</button>
+    <div style="text-align:center;color:var(--gray);font-size:.82rem">
+      Нет аккаунта? <a href="#" style="color:var(--green);font-weight:700" onclick="storeRegister()">Зарегистрировать магазин</a>
+    </div>
+    <div style="margin-top:20px;padding:14px;background:var(--warm);border-radius:12px;font-size:.8rem;color:var(--mid);line-height:1.65;border:1.5px solid var(--border)">
+      🌿 <strong>Эко-раздел</strong> — для частных лиц (перепродажа).<br>
+      🏪 <strong>Магазинный раздел</strong> — только для верифицированных магазинов.
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<button id="scroll-top" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑</button>
+
+<div id="lightbox" onclick="closeLightbox()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.94);z-index:9998;align-items:center;justify-content:center;padding:16px">
+  <button onclick="lightboxPrev(event)" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);background:rgba(255,255,255,.15);border:none;color:#fff;font-size:1.8rem;width:52px;height:52px;border-radius:50%;cursor:pointer;z-index:1">‹</button>
+  <img id="lb-img" src="" style="max-width:100%;max-height:90vh;object-fit:contain;border-radius:12px;user-select:none">
+  <button onclick="lightboxNext(event)" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:rgba(255,255,255,.15);border:none;color:#fff;font-size:1.8rem;width:52px;height:52px;border-radius:50%;cursor:pointer;z-index:1">›</button>
+  <button onclick="closeLightbox()" style="position:absolute;top:16px;right:16px;background:rgba(255,255,255,.15);border:none;color:#fff;font-size:1.1rem;width:40px;height:40px;border-radius:50%;cursor:pointer">✕</button>
+</div>
+
+<footer>
+  <span class="footer-logo">rebuket<em>.tj</em></span>
+  <p>© 2025 rebuket.tj — Подарки по всему Таджикистану</p>
+</footer>
+
+<style>
+@media (max-width:900px) {
+  #mob-cart-btn { display:flex !important; }
+  .nav-right .nav-cart { display:none !important; }
+}
+</style>
+
+<script type="module">
+import { api, isAuth, setTok, clrTok } from './js/api.js';
+import { goPage, toast } from './js/utils.js';
+import { loadCatalog, loadCounts, loadCities, filterAndGo, handleRoute, loadConfig } from './js/main.js';
+import { checkAdminAuth } from './js/admin.js';
+
+window._cart = JSON.parse(localStorage.getItem('rbt_cart') || '[]');
+
+function saveCart() {
+  localStorage.setItem('rbt_cart', JSON.stringify(window._cart));
+  updateCartUI();
+}
+
+function updateCartUI() {
+  const count = window._cart.length;
+  const total = window._cart.reduce((s, i) => s + (i.price || 0), 0);
+  ['cart-badge','mob-cart-badge'].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.textContent = count;
+    el.classList.toggle('show', count > 0);
+  });
+  const dc = document.getElementById('drawer-cart-count');
+  if (dc) { dc.textContent = count; dc.style.display = count > 0 ? 'inline-flex' : 'none'; }
+  const headCount = document.getElementById('cart-head-count');
+  if (headCount) headCount.textContent = count;
+  const emptyState = document.getElementById('cart-empty-state');
+  const itemsList  = document.getElementById('cart-items-list');
+  const foot       = document.getElementById('cart-foot');
+  if (count === 0) {
+    if (emptyState) emptyState.style.display = 'flex';
+    if (itemsList)  itemsList.innerHTML = '';
+    if (foot)       foot.style.display  = 'none';
+    return;
+  }
+  if (emptyState) emptyState.style.display = 'none';
+  if (foot) {
+    foot.style.display = 'block';
+    const countEl = document.getElementById('cart-items-count');
+    const totalEl = document.getElementById('cart-total');
+    if (countEl) countEl.textContent = count + ' шт.';
+    if (totalEl) totalEl.textContent = total.toLocaleString('ru') + ' сом.';
+  }
+  if (itemsList) {
+    itemsList.innerHTML = `
+      <div class="cart-section-label">Товары в корзине</div>
+      ${window._cart.map((item, idx) => `
+        <div class="cart-item" id="ci-${idx}">
+          <div class="ci-img">
+            ${item.img ? `<img src="${item.img}" alt="${item.title}">` : (item.emoji || '🌸')}
+          </div>
+          <div class="ci-info">
+            <div class="ci-title">${item.title}</div>
+            <div class="ci-sub">
+              ${item.city ? `<span>📍 ${item.city}</span>` : ''}
+              ${item.city && item.size ? `<span class="ci-sub-dot"></span>` : ''}
+              ${item.size ? `<span>📐 ${item.size}</span>` : ''}
+            </div>
+            <div class="ci-price">${(item.price || 0).toLocaleString('ru')} сом.</div>
+          </div>
+          <button class="ci-remove" onclick="window.removeFromCart(${idx})" title="Удалить">✕</button>
+        </div>
+      `).join('')}
+    `;
+  }
+}
+
+window.removeFromCart = (idx) => { window._cart.splice(idx, 1); saveCart(); toast('Удалено из корзины'); };
+window.addToCart = (item) => { window._cart.push(item); saveCart(); toast('🛒 Добавлено в корзину', 'success'); };
+window.clearCart = () => { window._cart = []; saveCart(); };
+window.clearCartConfirm = () => {
+  if (window._cart.length === 0) return;
+  if (confirm('Очистить всю корзину?')) { window.clearCart(); toast('Корзина очищена'); }
+};
+window.openCart = () => {
+  document.getElementById('cart-overlay').classList.add('open');
+  document.getElementById('cart-drawer').classList.add('open');
+};
+window.closeCart = () => {
+  document.getElementById('cart-overlay').classList.remove('open');
+  document.getElementById('cart-drawer').classList.remove('open');
+};
+window.cartCheckout = () => {
+  if (window._cart.length === 0) return;
+  const items = window._cart.map(i => `• ${i.title} — ${(i.price||0).toLocaleString('ru')} сом.`).join('\n');
+  const total = window._cart.reduce((s,i) => s + (i.price||0), 0);
+  const msg = encodeURIComponent(`Здравствуйте! Хочу заказать:\n${items}\n\nИтого: ${total.toLocaleString('ru')} сом.`);
+  window.open(`https://t.me/rebuket_admin?text=${msg}`, '_blank');
+};
+
+function catEmoji(cat) {
+  if (!cat) return '🌸';
+  if (cat.includes('Букет'))  return '💐';
+  if (cat.includes('Корзин')) return '🧺';
+  if (cat.includes('Мишк'))   return '🧸';
+  return '🍰';
+}
+
+window.renderProductCard = (p) => {
+  const imgs  = p.photos || [];
+  const first = imgs[0];
+  const cat   = p.category || '';
+  const emoji = catEmoji(cat);
+  const isEco = (p.listing_type || 'eco') === 'eco';
+  const price = p.buyer_price || p.price || 0;
+  const pJson = JSON.stringify(p).replace(/"/g,'&quot;');
+  return `
+  <div class="p-card" onclick="window.openProduct && window.openProduct(${pJson})">
+    <div class="pc-img">
+      ${first ? `<img src="${first}" alt="${p.title}" loading="lazy">` : `<div class="pc-img-placeholder">${emoji}</div>`}
+      <div class="pc-badges">
+        <span class="pc-badge ${isEco ? 'pcb-eco' : 'pcb-shop'}">${isEco ? '🌿 Эко' : '🏪 Магазин'}</span>
+        ${p.city ? `<span class="pc-badge pcb-city">📍 ${p.city}</span>` : ''}
+        ${p.gift_when === 'Только что' || p.gift_when === 'Сегодня' ? `<span class="pc-badge pcb-new">✨ Свежий</span>` : ''}
+      </div>
+    </div>
+    <div class="pc-body">
+      <div class="pc-meta">
+        <span class="pc-cat">${cat}</span>
+        ${p.gift_when ? `<span class="pc-freshness">⏱ ${p.gift_when}</span>` : ''}
+      </div>
+      <div class="pc-title">${p.title || 'Без названия'}</div>
+      <div class="pc-desc">${p.description || 'Нет описания'}</div>
+      <div class="pc-price-row">
+        <div class="pc-price">
+          <span class="pc-price-main">${price.toLocaleString('ru')} <span>сом.</span></span>
+          ${p.market_price && p.market_price > price ? `<span class="pc-price-orig">${p.market_price.toLocaleString('ru')} сом.</span>` : ''}
+        </div>
+        ${p.size ? `<span class="pc-size">${p.size}</span>` : ''}
+      </div>
+      <div class="pc-actions" onclick="event.stopPropagation()">
+        <button class="pc-btn pc-btn-cart" onclick="window.cardAddToCart(${pJson}, this)">🛒 В корзину</button>
+        <a class="pc-btn pc-btn-tg" href="https://t.me/rebuket_admin" target="_blank" rel="noopener" onclick="event.stopPropagation()">💬 Поддержка</a>
+      </div>
+    </div>
+  </div>`;
+};
+
+window.cardAddToCart = (p, btn) => {
+  const cat   = p.category || '';
+  const emoji = catEmoji(cat);
+  window.addToCart({ id: p.id || p.pub_id, title: p.title, price: p.buyer_price || p.price || 0, city: p.city, size: p.size, img: (p.photos || [])[0] || null, emoji });
+  const orig = btn.innerHTML;
+  btn.innerHTML = '✓ Добавлено'; btn.classList.add('added'); btn.disabled = true;
+  setTimeout(() => { btn.innerHTML = orig; btn.classList.remove('added'); btn.disabled = false; }, 1800);
+};
+window.quickAddToCart = window.cardAddToCart;
+
+window.renderProductDetail = (p) => {
+  const imgs  = p.photos || [];
+  const cat   = p.category || '';
+  const emoji = catEmoji(cat);
+  const isEco = (p.listing_type || 'eco') === 'eco';
+  const price = p.buyer_price || p.price || 0;
+  const pJson = JSON.stringify(p).replace(/"/g,'&quot;');
+  const galleryHtml = `
+    <div class="pd-gallery">
+      <div class="pd-main-img" id="pd-main-img">
+        ${imgs[0] ? `<img src="${imgs[0]}" id="pd-main-img-tag" alt="${p.title}" onclick="openLightbox(${JSON.stringify(imgs).replace(/"/g,'&quot;')},0)">` : emoji}
+      </div>
+      ${imgs.length > 1 ? `<div class="pd-thumbs">${imgs.map((src,i) => `<img class="pd-thumb ${i===0?'active':''}" src="${src}" onclick="switchPdImg('${src}',this,${JSON.stringify(imgs).replace(/"/g,'&quot;')},${i})">`).join('')}</div>` : ''}
+    </div>`;
+  const infoHtml = `
+    <div class="pd-info">
+      <div class="pd-badges">
+        <span class="pd-badge ${isEco ? 'pd-badge-eco' : 'pd-badge-shop'}">${isEco ? '🌿 Эко' : '🏪 Магазин'}</span>
+        ${p.city      ? `<span class="pd-badge pd-badge-city">📍 ${p.city}</span>` : ''}
+        ${p.size      ? `<span class="pd-badge pd-badge-size">📐 ${p.size}</span>` : ''}
+        ${p.gift_when ? `<span class="pd-badge pd-badge-when">⏱ ${p.gift_when}</span>` : ''}
+      </div>
+      <h1 class="pd-title">${p.title || 'Без названия'}</h1>
+      <p class="pd-desc-text">${p.description || ''}</p>
+      <div class="pd-price-box">
+        <div class="pd-price-row">
+          <span class="pd-price-label">Цена для покупателя</span>
+          <span class="pd-price-value">${price.toLocaleString('ru')} <span>сом.</span></span>
+        </div>
+        ${p.market_price && p.market_price > price ? `<div class="pd-price-row" style="margin-top:4px"><span class="pd-price-label">В магазинах</span><span style="text-decoration:line-through;color:var(--gray);font-size:.95rem">${p.market_price.toLocaleString('ru')} сом.</span></div>` : ''}
+        <div class="pd-commission-note">✅ Комиссия платформы включена · Pub ID: ${p.pub_id || p.id || '—'}</div>
+      </div>
+      <div class="pd-actions">
+        <button class="btn btn-primary" onclick="window.pdAddToCart()">🛒 Добавить в корзину</button>
+        <a class="btn btn-tg" href="https://t.me/rebuket_admin" target="_blank" rel="noopener">💬 Написать в поддержку</a>
+        <button class="btn btn-outline" onclick="openInquiry(${pJson})">📩 Оставить заявку</button>
+      </div>
+    </div>`;
+  window._currentPd  = p;
+  window.pdAddToCart = () => { window.addToCart({ id: p.id || p.pub_id, title: p.title, price, city: p.city, size: p.size, img: imgs[0] || null, emoji }); };
+  return `<div class="pd-wrap">${galleryHtml}${infoHtml}</div>`;
+};
+
+window.switchPdImg = (src, thumb, imgs, idx) => {
+  const el = document.getElementById('pd-main-img-tag');
+  if (el) { el.src = src; el.onclick = () => openLightbox(imgs, idx); }
+  document.querySelectorAll('.pd-thumb').forEach(t => t.classList.remove('active'));
+  thumb.classList.add('active');
+};
+
+window.toggleBurger = () => { document.getElementById('burger').classList.toggle('open'); document.getElementById('nav-drawer').classList.toggle('open'); };
+window.closeDrawer  = () => { document.getElementById('burger').classList.remove('open'); document.getElementById('nav-drawer').classList.remove('open'); };
+window.openStoreModal = () => document.getElementById('store-modal').classList.add('open');
+window.closeModal = (id) => document.getElementById(id).classList.remove('open');
+
+window.switchHomeMode = (mode) => {
+  document.getElementById('cats-eco').style.display  = mode === 'eco'  ? 'grid' : 'none';
+  document.getElementById('cats-shop').style.display = mode === 'shop' ? 'grid' : 'none';
+  document.getElementById('home-mode-eco').classList.toggle('active',  mode === 'eco');
+  document.getElementById('home-mode-shop').classList.toggle('active', mode === 'shop');
+};
+window.setCatalogMode = (mode) => {
+  document.getElementById('cat-mode-eco').classList.toggle('active',  mode === 'eco');
+  document.getElementById('cat-mode-shop').classList.toggle('active', mode === 'shop');
+  const banner = document.getElementById('catalog-mode-banner');
+  if (mode === 'eco') { banner.className = 'mode-banner eco-banner'; banner.textContent = '🌿 Показаны Эко-объявления — перепродажа от частных лиц'; }
+  else { banner.className = 'mode-banner shop-banner'; banner.textContent = '🏪 Показаны объявления от профессиональных магазинов'; }
+};
+window.setModeAndGo = (mode) => { window.switchHomeMode(mode); window.setCatalogMode(mode); goPage('catalog'); loadCatalog(); };
+
+document.querySelectorAll('.overlay').forEach(el => { el.addEventListener('click', e => { if (e.target === el) el.classList.remove('open'); }); });
+window.addEventListener('rbt:unauth', () => { toast('Сессия истекла', 'err'); goPage('admin'); });
+window.addEventListener('rbt:page', e => {
+  const p = e.detail;
+  if (p === 'catalog') loadCatalog();
+  if (p === 'home')    loadCounts();
+  if (p === 'admin')   checkAdminAuth();
+});
+window.addEventListener('scroll', () => { document.getElementById('scroll-top').style.display = window.scrollY > 400 ? 'flex' : 'none'; });
+
+updateCartUI();
+await loadConfig();
+await loadCounts();
+loadCities('f-city');
+window.addEventListener('popstate', () => handleRoute());
+handleRoute();
+</script>
+</body>
+</html>
