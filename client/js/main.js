@@ -92,23 +92,167 @@ async function renderGrid() {
   }
 }
 
+// ── pCard with photo scroll + add-to-cart button ──────────
+let _cardUid = 0;
 function pCard(p) {
   const photos = Array.isArray(p.photos) ? p.photos : [];
-  const img = photos[0]
-    ? '<img src="' + esc(imgUrl(photos[0], 400)) + '" alt="' + esc(p.title) + '" loading="lazy" decoding="async">'
-    : '<div class="pcard-ph ' + (CAT_CLS[p.category]||'') + '">' + (CAT_EM[p.category]||'🌸') + '</div>';
-  return '<div class="pcard" onclick="openProduct(\'' + esc(p.slug||p.id) + '\')">' +
-    '<div class="pcard-img">' + img + '<span class="pbadge">' + (CAT_LABEL[p.category]||p.category) + '</span>' + timerBadge(p) + '</div>' +
-    '<div class="pcard-body">' +
-      '<h4>' + esc(p.title) + '</h4>' +
-      '<p>' + esc((p.description||'').substring(0,65)) + '...</p>' +
-      '<div class="pmeta">' +
-        '<div><span class="pprice">' + fmtPrice(priceWithCommission(p)) + '</span></div>' +
-        '<span class="pcity">📍' + esc(p.city) + '</span>' +
-      '</div>' +
-    '</div>' +
-  '</div>';
+  const price  = priceWithCommission(p);
+  const uid    = 'pci' + (++_cardUid);
+  const pJson  = JSON.stringify(p).replace(/\\/g,'\\\\').replace(/"/g,'&quot;').replace(/'/g,"\\'");
+
+  // ── photo area ──
+  let photoHtml;
+  if (photos.length === 0) {
+    photoHtml =
+      '<div class="pcard-img-wrap">' +
+        '<div class="pcard-img">' +
+          '<div class="pcard-ph ' + (CAT_CLS[p.category]||'') + '">' + (CAT_EM[p.category]||'🌸') + '</div>' +
+        '</div>' +
+      '</div>';
+  } else if (photos.length === 1) {
+    photoHtml =
+      '<div class="pcard-img-wrap">' +
+        '<div class="pcard-img">' +
+          '<img src="' + esc(imgUrl(photos[0], 400)) + '" alt="' + esc(p.title) + '" loading="lazy" decoding="async">' +
+        '</div>' +
+      '</div>';
+  } else {
+    const imgs = photos.map(ph =>
+      '<img src="' + esc(imgUrl(ph, 400)) + '" alt="' + esc(p.title) + '" loading="lazy" decoding="async">'
+    ).join('');
+    const dots = photos.map((_, i) =>
+      '<span class="img-dot' + (i===0?' active':'') + '" onclick="event.stopPropagation();_scrollCard(\'' + uid + '\',' + i + ')"></span>'
+    ).join('');
+    photoHtml =
+      '<div class="pcard-img-wrap" id="' + uid + '-wrap">' +
+        '<button class="img-arrow left"  onclick="event.stopPropagation();_scrollCard(\'' + uid + '\',-1,true)">&#8249;</button>' +
+        '<button class="img-arrow right" onclick="event.stopPropagation();_scrollCard(\'' + uid + '\', 1,true)">&#8250;</button>' +
+        '<div class="pcard-img" id="' + uid + '" onscroll="_syncDots(\'' + uid + '\')">' +
+          imgs +
+        '</div>' +
+        '<div class="img-dots">' + dots + '</div>' +
+      '</div>';
+  }
+
+  // ── badge row ──
+  const badges =
+    '<span class="pbadge">' + (CAT_LABEL[p.category]||p.category) + '</span>' +
+    timerBadge(p);
+
+  return (
+    '<div class="pcard" onclick="openProduct(\'' + esc(p.slug||p.id) + '\')">' +
+      photoHtml.replace('>', '>' + badges.replace(/'/g, "\\'")).replace('>' + badges.replace(/'/g, "\\'"), '') +
+      /* badges are inside the wrap — rebuild properly: */
+      '' +
+    '</div>'
+  );
+
+  // ↑ rebuild cleanly:
 }
+
+// rebuild pCard cleanly to avoid string replacement mess
+function pCard(p) {
+  const photos = Array.isArray(p.photos) ? p.photos : [];
+  const price  = priceWithCommission(p);
+  const uid    = 'pci' + (++_cardUid);
+  const slug   = esc(p.slug || p.id);
+
+  // encode p for onclick (safe JSON attr)
+  const pAttr = encodeURIComponent(JSON.stringify(p));
+
+  // ── photo block ──
+  let photoBlock;
+  if (photos.length === 0) {
+    photoBlock =
+      '<div class="pcard-img-wrap">' +
+        '<div class="pcard-img" id="' + uid + '">' +
+          '<div class="pcard-ph ' + (CAT_CLS[p.category]||'') + '">' + (CAT_EM[p.category]||'🌸') + '</div>' +
+        '</div>' +
+        '<span class="pbadge">' + esc(CAT_LABEL[p.category]||p.category) + '</span>' +
+        timerBadge(p) +
+      '</div>';
+  } else if (photos.length === 1) {
+    photoBlock =
+      '<div class="pcard-img-wrap">' +
+        '<div class="pcard-img" id="' + uid + '">' +
+          '<img src="' + esc(imgUrl(photos[0],400)) + '" alt="' + esc(p.title) + '" loading="lazy" decoding="async">' +
+        '</div>' +
+        '<span class="pbadge">' + esc(CAT_LABEL[p.category]||p.category) + '</span>' +
+        timerBadge(p) +
+      '</div>';
+  } else {
+    const imgs = photos.map(ph =>
+      '<img src="' + esc(imgUrl(ph,400)) + '" alt="' + esc(p.title) + '" loading="lazy" decoding="async">'
+    ).join('');
+    const dots = photos.map((_,i) =>
+      '<span class="img-dot' + (i===0?' active':'') + '" onclick="event.stopPropagation();_scrollCard(\'' + uid + '\',' + i + ')"></span>'
+    ).join('');
+    photoBlock =
+      '<div class="pcard-img-wrap" id="' + uid + '-wrap">' +
+        '<button class="img-arrow left"  onclick="event.stopPropagation();_scrollCard(\'' + uid + '\',-1,true)">&#8249;</button>' +
+        '<button class="img-arrow right" onclick="event.stopPropagation();_scrollCard(\'' + uid + '\', 1,true)">&#8250;</button>' +
+        '<div class="pcard-img" id="' + uid + '" onscroll="_syncDots(\'' + uid + '\')">' + imgs + '</div>' +
+        '<span class="pbadge">' + esc(CAT_LABEL[p.category]||p.category) + '</span>' +
+        timerBadge(p) +
+        '<div class="img-dots">' + dots + '</div>' +
+      '</div>';
+  }
+
+  return (
+    '<div class="pcard" onclick="openProduct(\'' + slug + '\')">' +
+      photoBlock +
+      '<div class="pcard-body">' +
+        '<h4>' + esc(p.title) + '</h4>' +
+        '<p>' + esc((p.description||'').substring(0,65)) + '...</p>' +
+        '<div class="pmeta">' +
+          '<span class="pprice">' + fmtPrice(price) + '</span>' +
+          '<span class="pcity">📍' + esc(p.city) + '</span>' +
+        '</div>' +
+        '<button class="pcard-cart-btn" id="' + uid + '-cartbtn" onclick="event.stopPropagation();_pCardAddToCart(\'' + uid + '\',\'' + pAttr + '\')">' +
+          '<span style="font-size:1rem">🛒</span> Добавить в корзину' +
+        '</button>' +
+      '</div>' +
+    '</div>'
+  );
+}
+
+// ── scroll helpers (global) ───────────────────────────────
+window._scrollCard = (uid, dirOrIdx, isRelative) => {
+  const el = document.getElementById(uid);
+  if (!el) return;
+  if (isRelative) {
+    const cur = Math.round(el.scrollLeft / el.clientWidth);
+    const imgs = el.querySelectorAll('img');
+    const next = Math.max(0, Math.min(imgs.length - 1, cur + dirOrIdx));
+    el.scrollTo({ left: el.clientWidth * next, behavior: 'smooth' });
+  } else {
+    el.scrollTo({ left: el.clientWidth * dirOrIdx, behavior: 'smooth' });
+  }
+};
+
+window._syncDots = (uid) => {
+  const el   = document.getElementById(uid);
+  const wrap = document.getElementById(uid + '-wrap');
+  if (!el || !wrap) return;
+  const idx = Math.round(el.scrollLeft / el.clientWidth);
+  wrap.querySelectorAll('.img-dot').forEach((d, i) => d.classList.toggle('active', i === idx));
+};
+
+window._pCardAddToCart = (uid, pAttr) => {
+  const p = JSON.parse(decodeURIComponent(pAttr));
+  const price = priceWithCommission(p);
+  const emoji = CAT_EM[p.category] || '🌸';
+  const photos = Array.isArray(p.photos) ? p.photos : [];
+  if (window.addToCart) {
+    window.addToCart({ id: p.id || p.pub_id, title: p.title, price, city: p.city, size: p.size, img: photos[0] || null, emoji });
+  }
+  const btn = document.getElementById(uid + '-cartbtn');
+  if (btn) {
+    const orig = btn.innerHTML;
+    btn.innerHTML = '✓ Добавлено'; btn.classList.add('added'); btn.disabled = true;
+    setTimeout(() => { btn.innerHTML = orig; btn.classList.remove('added'); btn.disabled = false; }, 1800);
+  }
+};
 
 function renderPgn(total, cur, el) {
   if (total <= 1) { el.innerHTML = ''; return; }
@@ -141,7 +285,8 @@ function expiryChip(p) {
 
 function renderDetail(p, el) {
   const photos = Array.isArray(p.photos) ? p.photos : [];
-  const pUrl = location.origin + '/#product-' + (p.slug||p.id);
+  const price  = priceWithCommission(p);
+  const pUrl   = location.origin + '/#product-' + (p.slug||p.id);
   window._lbPhotos = photos;
   window._lbIdx = 0;
 
@@ -160,33 +305,53 @@ function renderDetail(p, el) {
     (p.pickup_time ? '<div><div class="pd-info-lbl">Время</div><div>🕐 ' + esc(p.pickup_time) + '</div></div>' : '') +
     '</div>' : '';
 
+  // store p for cart button
+  window._detailProduct = p;
+  window._detailPrice   = price;
+
   el.innerHTML =
     '<div class="pd-wrap">' +
       '<div class="pd-gallery">' + mainImg + thumbsHtml + '</div>' +
       '<div class="pd-body">' +
         '<div class="pd-chips">' +
-          '<span class="pd-chip rose">' + (CAT_LABEL[p.category]||p.category) + '</span>' +
+          '<span class="pd-chip rose">' + esc(CAT_LABEL[p.category]||p.category) + '</span>' +
           '<span class="pd-chip">📍 ' + esc(p.city) + '</span>' +
           '<span class="pd-chip">👁 ' + (p.view_count||0) + ' просмотров</span>' +
           expiryChip(p) +
         '</div>' +
         '<h2>' + esc(p.title) + '</h2>' +
-        '<div class="pd-price">' + fmtPrice(priceWithCommission(p)) + '</div>' +
+        '<div class="pd-price">' + fmtPrice(price) + '</div>' +
         '<p class="pd-desc">' + esc(p.description||'') + '</p>' +
         '<div class="share-row">🔗 <input id="share-inp" type="text" value="' + esc(pUrl) + '" readonly><button onclick="copyLink()">Копировать</button></div>' +
         infoHtml +
-      '</div>' +
-      '<div class="pd-contact">' +
-        '<p>Хотите купить?</p>' +
-        '<div class="pd-contact-btns">' +
-          '<button class="btn btn-primary" onclick="openInqModal(\'' + esc(p.id) + '\',\'' + esc(p.title) + '\',\'' + esc(p.slug||p.id) + '\')">📩 Оставить заявку</button>' +
-          '<a class="btn btn-ig" href="' + esc(_cfg.instagram) + '" target="_blank">📸 Instagram</a>' +
-          '<a class="btn btn-tg" href="' + esc(_cfg.telegram) + '" target="_blank">✈️ Telegram</a>' +
+        // ── ADD TO CART BUTTON ──
+        '<button class="pd-cart-btn" id="pd-detail-cartbtn" onclick="_pdDetailAddToCart(this)">' +
+          '<span style="font-size:1.2rem">🛒</span> Добавить в корзину' +
+        '</button>' +
+        '<div style="display:flex;gap:10px;margin-top:10px;flex-wrap:wrap">' +
+          '<a class="btn btn-tg" href="' + esc(_cfg.telegram) + '" target="_blank" style="flex:1;min-width:140px;border-radius:14px;padding:13px 18px">✈️ Telegram</a>' +
+          '<a class="btn btn-ig" href="' + esc(_cfg.instagram) + '" target="_blank" style="flex:1;min-width:140px;border-radius:14px;padding:13px 18px">📸 Instagram</a>' +
         '</div>' +
-        '<p class="pd-contact-note">Ваши данные увидит только администратор. Мы свяжемся с вами.</p>' +
       '</div>' +
     '</div>';
 }
+
+window._pdDetailAddToCart = (btn) => {
+  const p = window._detailProduct;
+  if (!p) return;
+  const price  = window._detailPrice || priceWithCommission(p);
+  const photos = Array.isArray(p.photos) ? p.photos : [];
+  const emoji  = CAT_EM[p.category] || '🌸';
+  if (window.addToCart) {
+    window.addToCart({ id: p.id || p.pub_id, title: p.title, price, city: p.city, size: p.size, img: photos[0] || null, emoji });
+  }
+  if (btn) {
+    const orig = btn.innerHTML;
+    btn.innerHTML = '<span style="font-size:1.2rem">✓</span> Добавлено в корзину!';
+    btn.classList.add('added'); btn.disabled = true;
+    setTimeout(() => { btn.innerHTML = orig; btn.classList.remove('added'); btn.disabled = false; }, 2000);
+  }
+};
 
 window.switchThumb = (src, el, idx) => {
   window._lbIdx = idx || 0;
@@ -224,7 +389,7 @@ window.lightboxNext = (e) => {
   document.getElementById('lb-img').src = p[window._lbIdx];
 };
 
-// ── INQUIRY MODAL ─────────────────────────────────────────
+// ── INQUIRY MODAL (kept for admin workflows) ──────────────
 window.openInqModal = (pid, title, slug) => {
   document.getElementById('inq-pid').value   = pid   || '';
   document.getElementById('inq-slug').value  = slug  || pid || '';
@@ -425,8 +590,8 @@ function updateSizeField(catVal) {
     return;
   }
 
-  const chipsWrap   = document.getElementById('size-chips-wrap');
-  const textWrap    = document.getElementById('size-text-wrap');
+  const chipsWrap = document.getElementById('size-chips-wrap');
+  const textWrap  = document.getElementById('size-text-wrap');
 
   if (catVal === 'bear') {
     if (chipsWrap) chipsWrap.style.display = 'none';
@@ -515,9 +680,6 @@ window.submitListing = async () => {
   markField('sell-price', !!price);
   markField('sell-city',  !!city);
   markField('sell-phone', !!phone);
-
-  const catEl = document.querySelector('.cat-sel-wrap');
-  if (catEl) catEl.style.outline = category ? '' : '2px solid #dc3545';
 
   if (category === 'bear') {
     const bearText = document.getElementById('sell-size-text')?.value.trim();
