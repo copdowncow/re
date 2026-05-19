@@ -7,6 +7,7 @@ const { uploadMiddleware, uploadMiddlewareOptional } = require('../middleware/up
 const A = require('../controllers/auth');
 const P = require('../controllers/products');
 const I = require('../controllers/inquiries');
+const S = require('../controllers/shops');
 
 router.post('/admin/login',           A.login);
 router.post('/admin/change-password', auth, A.changePassword);
@@ -18,6 +19,9 @@ router.post('/products',      uploadMiddleware, P.createProduct);
 
 router.post('/inquiries', I.createInquiry);
 
+router.post('/shops/register', S.register);
+router.post('/shops/login',    S.login);
+
 router.get('/admin/products',         auth, P.adminList);
 router.get('/admin/products/:id',     auth, P.adminGet);
 router.put('/admin/products/:id',     auth, uploadMiddlewareOptional, P.adminUpdate);
@@ -26,3 +30,5 @@ router.delete('/admin/products/:id',  auth, P.adminDelete);
 router.get('/admin/inquiries',              auth, I.getInquiries);
 router.patch('/admin/inquiries/:id/status', auth, I.updateInquiry);
 router.get('/admin/stats',                  auth, I.getStats);
+
+module.exports = router;
