@@ -1,4 +1,4 @@
-'use strict';
+use strict';
 import { api }  from './api.js';
 import { esc, fmt, toast, openModal, goPage } from './utils.js';
 
@@ -95,7 +95,7 @@ async function renderGrid() {
 // ── pCard with photo scroll + add-to-cart button ──────────
 let _cardUid = 0;
 
-const IMG_H = '200px'; // единое место для высоты фото в карточке
+const IMG_H = '200px'; // высота фото в карточке каталога
 
 function pCard(p) {
   const photos = Array.isArray(p.photos) ? p.photos : [];
@@ -240,14 +240,25 @@ function renderDetail(p, el) {
   window._lbPhotos = photos;
   window._lbIdx = 0;
 
+  // ── миниатюры (если фото больше одного) ──
   const thumbsHtml = photos.length > 1
-    ? '<div class="pd-thumbs">' + photos.map((ph,i) =>
-        '<img src="' + esc(imgUrl(ph, 120)) + '" class="' + (i===0?'active':'') + '" onclick="switchThumb(\'' + esc(ph) + '\',this,' + i + ')" loading="lazy" decoding="async">'
+    ? '<div class="pd-thumbs">' + photos.map((ph, i) =>
+        '<img src="' + esc(imgUrl(ph, 120)) + '" ' +
+          'class="' + (i === 0 ? 'active' : '') + '" ' +
+          'onclick="switchThumb(\'' + esc(ph) + '\',this,' + i + ')" ' +
+          'loading="lazy" decoding="async" ' +
+          'style="width:72px;height:72px;object-fit:cover;border-radius:10px;cursor:pointer;flex-shrink:0">'
       ).join('') + '</div>'
     : '';
 
+  // ── главное фото или плейсхолдер ──
   const mainImg = photos[0]
-    ? '<img id="pd-main" class="pd-main" src="' + esc(imgUrl(photos[0], 800)) + '" alt="' + esc(p.title) + '" onclick="openLightbox(0)" style="cursor:zoom-in" loading="eager" decoding="async">'
+    ? '<img id="pd-main" class="pd-main" ' +
+        'src="' + esc(imgUrl(photos[0], 800)) + '" ' +
+        'alt="' + esc(p.title) + '" ' +
+        'onclick="openLightbox(0)" ' +
+        'loading="eager" decoding="async" ' +
+        'style="width:100%;max-height:360px;object-fit:cover;display:block;border-radius:16px;cursor:zoom-in">'
     : '<div class="pd-main-ph ' + (CAT_CLS[p.category]||'') + '">' + (CAT_EM[p.category]||'🌸') + '</div>';
 
   const infoHtml = (p.address||p.pickup_time) ? '<div class="pd-info">' +
