@@ -93,7 +93,7 @@ async function renderGrid() {
 }
 
 // ── pCard with photo scroll + add-to-cart button ──────────
-
+let _cardUid = 0;
 // rebuild pCard cleanly to avoid string replacement mess
 function pCard(p) {
   const photos = Array.isArray(p.photos) ? p.photos : [];
