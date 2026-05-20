@@ -130,4 +130,3 @@ exports.reject = async (id) => {
   if (error) throw new Error(error.message);
   return data;
 };
-
