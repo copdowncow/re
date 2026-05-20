@@ -2,6 +2,7 @@
 const bcrypt    = require('bcryptjs');
 const jwt       = require('jsonwebtoken');
 const { getClient } = require('../db/supabase');
+const { notifyShopRegistration } = require('../services/telegram');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'rebuket_secret_key';
 
@@ -18,7 +19,6 @@ exports.register = async (req, res) => {
 
     const db = getClient();
 
-    // Проверка: уже зарегистрирован?
     const { data: existing } = await db
       .from('shops')
       .select('id')
@@ -39,12 +39,17 @@ exports.register = async (req, res) => {
         shop_name: shop_name || null,
         city:      city      || null,
         telegram:  telegram  || null,
-        status:    'pending',   // ждёт одобрения админа
+        status:    'pending',
       })
       .select()
       .single();
 
     if (error) throw new Error(error.message);
+
+    // Уведомляем админа в Telegram
+    notifyShopRegistration(data).catch(e =>
+      console.log('notifyShopRegistration error:', e.message)
+    );
 
     res.json({ ok: true, message: 'Заявка отправлена. Ожидайте одобрения администратора.' });
   } catch (e) {
@@ -101,4 +106,27 @@ exports.login = async (req, res) => {
     console.error('shops.login error:', e.message);
     res.status(500).json({ error: e.message });
   }
+};
+
+// Вызывается из telegram.js при нажатии ✅ в боте
+exports.approve = async (id) => {
+  const { data, error } = await getClient()
+    .from('shops')
+    .update({ status: 'active' })
+    .eq('id', id)
+    .select()
+    .single();
+  if (error) throw new Error(error.message);
+  return data;
+};
+
+exports.reject = async (id) => {
+  const { data, error } = await getClient()
+    .from('shops')
+    .update({ status: 'rejected' })
+    .eq('id', id)
+    .select()
+    .single();
+  if (error) throw new Error(error.message);
+  return data;
 };
