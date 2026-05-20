@@ -24,6 +24,7 @@ exports.register = async (req, res) => {
       .select('id')
       .eq('phone', phone)
       .single();
+    
 
     if (existing) {
       return res.status(409).json({ error: 'Магазин с таким телефоном уже зарегистрирован' });
