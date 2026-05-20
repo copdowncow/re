@@ -438,78 +438,32 @@ nav {
 #price-preview { display: none; margin-top: 12px; padding: 14px; background: var(--green-l); border-radius: 12px; font-size: .88rem; line-height: 1.9; border: 1.5px solid rgba(34,160,91,.2); }
 
 /* ============================================================
-   REGISTER PAGE — страница регистрации магазина
+   REGISTER PAGE
    ============================================================ */
-.register-wrap {
-  max-width: 560px; margin: 0 auto;
-}
-.register-hero {
-  background: linear-gradient(135deg, #0f1117 0%, #1e2330 100%);
-  border-radius: 24px; padding: 36px 32px; margin-bottom: 32px;
-  color: #fff; text-align: center; position: relative; overflow: hidden;
-}
-.register-hero::before {
-  content: ''; position: absolute; top: -40px; right: -40px;
-  width: 200px; height: 200px;
-  background: radial-gradient(circle, rgba(34,160,91,.3) 0%, transparent 70%);
-  border-radius: 50%;
-}
-.register-hero::after {
-  content: ''; position: absolute; bottom: -30px; left: -30px;
-  width: 160px; height: 160px;
-  background: radial-gradient(circle, rgba(34,160,91,.15) 0%, transparent 70%);
-  border-radius: 50%;
-}
+.register-wrap { max-width: 560px; margin: 0 auto; }
+.register-hero { background: linear-gradient(135deg, #0f1117 0%, #1e2330 100%); border-radius: 24px; padding: 36px 32px; margin-bottom: 32px; color: #fff; text-align: center; position: relative; overflow: hidden; }
+.register-hero::before { content: ''; position: absolute; top: -40px; right: -40px; width: 200px; height: 200px; background: radial-gradient(circle, rgba(34,160,91,.3) 0%, transparent 70%); border-radius: 50%; }
+.register-hero::after { content: ''; position: absolute; bottom: -30px; left: -30px; width: 160px; height: 160px; background: radial-gradient(circle, rgba(34,160,91,.15) 0%, transparent 70%); border-radius: 50%; }
 .register-hero-icon { font-size: 3rem; margin-bottom: 12px; position: relative; z-index: 1; }
 .register-hero h2 { font-size: 1.9rem; color: #fff; margin-bottom: 8px; position: relative; z-index: 1; }
 .register-hero p { color: rgba(255,255,255,.55); font-size: .9rem; line-height: 1.6; position: relative; z-index: 1; }
-
-.register-steps {
-  display: flex; gap: 0; margin-bottom: 32px;
-  background: var(--warm); border-radius: 16px; padding: 20px 24px;
-  border: 1.5px solid var(--border);
-}
+.register-steps { display: flex; gap: 0; margin-bottom: 32px; background: var(--warm); border-radius: 16px; padding: 20px 24px; border: 1.5px solid var(--border); }
 .reg-step { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center; position: relative; }
-.reg-step:not(:last-child)::after {
-  content: '→'; position: absolute; right: -12px; top: 14px;
-  color: var(--border); font-size: 1rem;
-}
+.reg-step:not(:last-child)::after { content: '→'; position: absolute; right: -12px; top: 14px; color: var(--border); font-size: 1rem; }
 .reg-step-num { width: 32px; height: 32px; border-radius: 50%; background: var(--green); color: #fff; font-size: .8rem; font-weight: 700; display: flex; align-items: center; justify-content: center; }
 .reg-step span { font-size: .74rem; color: var(--gray); font-weight: 600; }
-
-.register-card {
-  background: #fff; border: 1.5px solid var(--border);
-  border-radius: 24px; padding: 36px 32px;
-  box-shadow: var(--shadow-s);
-}
+.register-card { background: #fff; border: 1.5px solid var(--border); border-radius: 24px; padding: 36px 32px; box-shadow: var(--shadow-s); }
 .register-card h3 { font-size: 1.35rem; margin-bottom: 6px; }
 .register-card > p { color: var(--gray); font-size: .85rem; margin-bottom: 28px; }
-
 .reg-form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
 .reg-form-row .form-group { margin: 0; }
 .form-group + .form-group { margin-top: 16px; }
 .reg-divider { height: 1px; background: var(--border); margin: 24px 0; }
-
-.reg-info-box {
-  background: var(--green-l); border: 1.5px solid rgba(34,160,91,.2);
-  border-radius: 14px; padding: 16px 18px; margin-bottom: 24px;
-  font-size: .83rem; color: #0f6b34; line-height: 1.7;
-}
+.reg-info-box { background: var(--green-l); border: 1.5px solid rgba(34,160,91,.2); border-radius: 14px; padding: 16px 18px; margin-bottom: 24px; font-size: .83rem; color: #0f6b34; line-height: 1.7; }
 .reg-info-box b { display: block; margin-bottom: 4px; font-size: .9rem; }
-
 #reg-msg { margin-top: 14px; font-size: .84rem; text-align: center; line-height: 1.5; min-height: 20px; }
-
-/* Успех */
-#reg-success {
-  display: none; flex-direction: column; align-items: center;
-  text-align: center; gap: 16px; padding: 48px 24px;
-}
-.reg-success-icon {
-  width: 88px; height: 88px; border-radius: 50%;
-  background: linear-gradient(135deg, var(--green) 0%, var(--green-d) 100%);
-  display: flex; align-items: center; justify-content: center; font-size: 2.4rem;
-  box-shadow: 0 12px 32px rgba(34,160,91,.35);
-}
+#reg-success { display: none; flex-direction: column; align-items: center; text-align: center; gap: 16px; padding: 48px 24px; }
+.reg-success-icon { width: 88px; height: 88px; border-radius: 50%; background: linear-gradient(135deg, var(--green) 0%, var(--green-d) 100%); display: flex; align-items: center; justify-content: center; font-size: 2.4rem; box-shadow: 0 12px 32px rgba(34,160,91,.35); }
 #reg-success h3 { font-size: 1.6rem; color: var(--black); }
 #reg-success p { color: var(--gray); font-size: .92rem; line-height: 1.7; max-width: 360px; }
 
@@ -737,9 +691,7 @@ footer { background: var(--black); color: rgba(255,255,255,.45); text-align: cen
   </div>
 </div>
 
-<!-- ══════════════════════════════════════
-     HOME
-══════════════════════════════════════ -->
+<!-- HOME -->
 <div id="page-home" class="page active">
   <div class="hero">
     <div class="hero-inner">
@@ -779,9 +731,7 @@ footer { background: var(--black); color: rgba(255,255,255,.45); text-align: cen
   </div>
 </div>
 
-<!-- ══════════════════════════════════════
-     CATALOG
-══════════════════════════════════════ -->
+<!-- CATALOG -->
 <div id="page-catalog" class="page">
   <div class="section">
     <button class="back" onclick="goPage('home')">← Назад</button>
@@ -829,9 +779,7 @@ footer { background: var(--black); color: rgba(255,255,255,.45); text-align: cen
   </div>
 </div>
 
-<!-- ══════════════════════════════════════
-     PRODUCT DETAIL
-══════════════════════════════════════ -->
+<!-- PRODUCT DETAIL -->
 <div id="page-product" class="page">
   <div class="section">
     <button class="back" onclick="goPage('catalog')">← Назад в каталог</button>
@@ -839,9 +787,7 @@ footer { background: var(--black); color: rgba(255,255,255,.45); text-align: cen
   </div>
 </div>
 
-<!-- ══════════════════════════════════════
-     SELL
-══════════════════════════════════════ -->
+<!-- SELL -->
 <div id="page-sell" class="page">
   <div class="section">
     <button class="back" onclick="goPage('home')">← Назад</button>
@@ -940,51 +886,29 @@ footer { background: var(--black); color: rgba(255,255,255,.45); text-align: cen
   </div>
 </div>
 
-<!-- ══════════════════════════════════════
-     REGISTER — Отдельная страница регистрации магазина
-══════════════════════════════════════ -->
+<!-- REGISTER -->
 <div id="page-register" class="page">
   <div class="section">
     <button class="back" onclick="goPage('home')">← На главную</button>
-
     <div class="register-wrap">
-
-      <!-- Hero-блок -->
       <div class="register-hero">
         <div class="register-hero-icon">🏪</div>
         <h2>Регистрация магазина</h2>
         <p>Получите доступ к профессиональному разделу ReBuket и привлекайте покупателей по всему Таджикистану</p>
       </div>
-
-      <!-- Шаги -->
       <div class="register-steps">
-        <div class="reg-step">
-          <div class="reg-step-num">1</div>
-          <span>Заполните форму</span>
-        </div>
-        <div class="reg-step">
-          <div class="reg-step-num">2</div>
-          <span>Ждёте одобрения</span>
-        </div>
-        <div class="reg-step">
-          <div class="reg-step-num">3</div>
-          <span>Размещаете товары</span>
-        </div>
+        <div class="reg-step"><div class="reg-step-num">1</div><span>Заполните форму</span></div>
+        <div class="reg-step"><div class="reg-step-num">2</div><span>Ждёте одобрения</span></div>
+        <div class="reg-step"><div class="reg-step-num">3</div><span>Размещаете товары</span></div>
       </div>
-
-      <!-- Форма / Успех -->
       <div class="register-card">
-
-        <!-- Форма -->
         <div id="reg-form-wrap">
           <h3>Данные магазина</h3>
           <p>Администратор рассмотрит заявку и свяжется с вами</p>
-
           <div class="reg-info-box">
             <b>🌿 Зачем регистрироваться?</b>
             Магазинный раздел видят все покупатели. Вы получаете страницу магазина, аналитику и приоритетное размещение.
           </div>
-
           <div class="reg-form-row">
             <div class="form-group">
               <label>Название магазина</label>
@@ -1001,19 +925,15 @@ footer { background: var(--black); color: rgba(255,255,255,.45); text-align: cen
               </select>
             </div>
           </div>
-
           <div class="form-group">
             <label>Номер телефона *</label>
             <input type="tel" id="reg-phone" placeholder="+992 900 000000">
           </div>
-
           <div class="form-group" style="margin-top:16px">
             <label>Telegram (необязательно)</label>
             <input type="text" id="reg-tg" placeholder="@username">
           </div>
-
           <div class="reg-divider"></div>
-
           <div class="reg-form-row">
             <div class="form-group">
               <label>Пароль * <span style="color:var(--gray);font-weight:400">(мин. 6 символов)</span></label>
@@ -1021,19 +941,15 @@ footer { background: var(--black); color: rgba(255,255,255,.45); text-align: cen
             </div>
             <div class="form-group">
               <label>Повторите пароль *</label>
-              <input type="password" id="reg-pass2" placeholder="••••••••"
-                onkeydown="if(event.key==='Enter')storeDoRegister()">
+              <input type="password" id="reg-pass2" placeholder="••••••••" onkeydown="if(event.key==='Enter')storeDoRegister()">
             </div>
           </div>
-
           <div id="reg-msg"></div>
-
           <button class="btn btn-primary" id="reg-submit-btn"
             style="width:100%;padding:15px;margin-top:20px;font-size:.95rem;border-radius:14px"
             onclick="storeDoRegister()">
             📩 Отправить заявку на регистрацию
           </button>
-
           <p style="font-size:.78rem;color:var(--gray);text-align:center;margin-top:14px;line-height:1.6">
             Уже есть аккаунт?
             <button onclick="openStoreModal()" style="background:none;border:none;color:var(--green);font-weight:700;cursor:pointer;font-size:.78rem;font-family:inherit;padding:0">
@@ -1041,8 +957,6 @@ footer { background: var(--black); color: rgba(255,255,255,.45); text-align: cen
             </button>
           </p>
         </div>
-
-        <!-- Успех -->
         <div id="reg-success">
           <div class="reg-success-icon">✅</div>
           <h3>Заявка отправлена!</h3>
@@ -1052,15 +966,12 @@ footer { background: var(--black); color: rgba(255,255,255,.45); text-align: cen
             <button class="btn btn-outline" onclick="goPage('home')">🏠 На главную</button>
           </div>
         </div>
-
-      </div><!-- /register-card -->
-    </div><!-- /register-wrap -->
+      </div>
+    </div>
   </div>
 </div>
 
-<!-- ══════════════════════════════════════
-     ADMIN
-══════════════════════════════════════ -->
+<!-- ADMIN -->
 <div id="page-admin" class="page">
   <div class="section">
     <div id="a-login" style="max-width:400px;margin:50px auto;background:#fff;border-radius:22px;padding:44px;box-shadow:var(--shadow-l);text-align:center;border:1.5px solid var(--border)">
@@ -1092,9 +1003,7 @@ footer { background: var(--black); color: rgba(255,255,255,.45); text-align: cen
   </div>
 </div>
 
-<!-- ══════════════════════════════════════
-     INQUIRY MODAL
-══════════════════════════════════════ -->
+<!-- INQUIRY MODAL -->
 <div class="overlay" id="inq-modal">
   <div class="modal">
     <button class="modal-x" onclick="closeModal('inq-modal')">✕</button>
@@ -1110,27 +1019,21 @@ footer { background: var(--black); color: rgba(255,255,255,.45); text-align: cen
   </div>
 </div>
 
-<!-- ══════════════════════════════════════
-     STORE LOGIN MODAL — только вход
-══════════════════════════════════════ -->
+<!-- STORE LOGIN MODAL -->
 <div class="overlay" id="store-modal">
   <div class="modal">
     <button class="modal-x" onclick="closeModal('store-modal')">✕</button>
-
     <div style="font-size:2.4rem;margin-bottom:10px;text-align:center">🏪</div>
     <h3 style="text-align:center;margin-bottom:4px">Вход в магазин</h3>
     <p style="color:var(--gray);font-size:.83rem;text-align:center;margin-bottom:24px">Для профессиональных флористов и магазинов</p>
-
     <div id="store-tab-login">
       <div class="form-group" style="margin-bottom:14px">
         <label>Номер телефона</label>
-        <input type="tel" id="store-phone-login" placeholder="+992 900 000000"
-          onkeydown="if(event.key==='Enter')storeDoLogin()">
+        <input type="tel" id="store-phone-login" placeholder="+992 900 000000" onkeydown="if(event.key==='Enter')storeDoLogin()">
       </div>
       <div class="form-group" style="margin-bottom:20px">
         <label>Пароль</label>
-        <input type="password" id="store-pass-login" placeholder="••••••••"
-          onkeydown="if(event.key==='Enter')storeDoLogin()">
+        <input type="password" id="store-pass-login" placeholder="••••••••" onkeydown="if(event.key==='Enter')storeDoLogin()">
       </div>
       <button class="btn btn-primary" style="width:100%;border-radius:14px;padding:14px" onclick="storeDoLogin()">
         Войти в магазин
@@ -1144,8 +1047,6 @@ footer { background: var(--black); color: rgba(255,255,255,.45); text-align: cen
         </button>
       </div>
     </div>
-
-    <!-- Инфо -->
     <div style="margin-top:20px;padding:13px 15px;background:var(--warm);border-radius:12px;font-size:.78rem;color:var(--mid);line-height:1.7;border:1.5px solid var(--border)">
       🌿 <b>Эко-раздел</b> — для частных лиц (перепродажа).<br>
       🏪 <b>Магазинный раздел</b> — только для верифицированных магазинов.<br>
@@ -1169,7 +1070,178 @@ footer { background: var(--black); color: rgba(255,255,255,.45); text-align: cen
   <p>© 2025 rebuket.tj — Подарки по всему Таджикистану</p>
 </footer>
 
-<script src="./js/shop.js"></script>
+<!-- ══════════════════════════════════════
+     SHOP AUTH — инлайн (бывший shop.js)
+══════════════════════════════════════ -->
+<script>
+function updateShopUI() {
+  var name  = localStorage.getItem('shop_name');
+  var token = localStorage.getItem('shop_token');
+  var btn   = document.getElementById('nav-shop-btn');
+  var lbl   = document.getElementById('nav-shop-label');
+  var dlbl  = document.getElementById('drawer-shop-label');
+  if (token && name) {
+    if (lbl)  lbl.textContent  = '🏪 ' + name;
+    if (dlbl) dlbl.textContent = '🏪 ' + name + ' (выйти)';
+    if (btn)  btn.classList.add('logged-in');
+  } else {
+    if (lbl)  lbl.textContent  = 'Войти как магазин';
+    if (dlbl) dlbl.textContent = 'Войти как магазин';
+    if (btn)  btn.classList.remove('logged-in');
+  }
+}
+
+function onShopBtnClick() {
+  var token = localStorage.getItem('shop_token');
+  if (token) {
+    if (confirm('Выйти из аккаунта магазина?')) {
+      localStorage.removeItem('shop_token');
+      localStorage.removeItem('shop_name');
+      updateShopUI();
+      shopToast('Вы вышли из аккаунта магазина');
+    }
+  } else {
+    openStoreModal();
+  }
+}
+
+function openStoreModal() {
+  var modal = document.getElementById('store-modal');
+  if (modal) modal.classList.add('open');
+  clearLoginForm();
+}
+
+function clearLoginForm() {
+  var phoneEl = document.getElementById('store-phone-login');
+  var passEl  = document.getElementById('store-pass-login');
+  var msgEl   = document.getElementById('store-login-msg');
+  if (phoneEl) phoneEl.value = '';
+  if (passEl)  passEl.value  = '';
+  if (msgEl)   msgEl.textContent = '';
+}
+
+function storeDoLogin() {
+  var phone    = document.getElementById('store-phone-login').value.trim();
+  var password = document.getElementById('store-pass-login').value;
+  var msgEl    = document.getElementById('store-login-msg');
+
+  if (!phone || !password) {
+    msgEl.style.color = 'var(--red)';
+    msgEl.textContent = 'Введите телефон и пароль';
+    return;
+  }
+
+  var btn = document.querySelector('#store-tab-login .btn-primary');
+  if (btn) { btn.disabled = true; btn.textContent = 'Входим…'; }
+  msgEl.style.color = 'var(--gray)';
+  msgEl.textContent = '';
+
+  fetch('/api/shops/login', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ phone: phone, password: password })
+  })
+  .then(function(r) { return r.json().then(function(d) { return { ok: r.ok, d: d }; }); })
+  .then(function(res) {
+    if (btn) { btn.disabled = false; btn.textContent = 'Войти в магазин'; }
+    if (!res.ok) {
+      msgEl.style.color = 'var(--red)';
+      msgEl.textContent = res.d.error || 'Ошибка входа';
+      return;
+    }
+    localStorage.setItem('shop_token', res.d.token);
+    localStorage.setItem('shop_name',  res.d.shop_name || res.d.phone);
+    clearLoginForm();
+    document.getElementById('store-modal').classList.remove('open');
+    updateShopUI();
+    shopToast('✅ Добро пожаловать, ' + (res.d.shop_name || res.d.phone) + '!', 'success');
+  })
+  .catch(function() {
+    if (btn) { btn.disabled = false; btn.textContent = 'Войти в магазин'; }
+    msgEl.style.color = 'var(--red)';
+    msgEl.textContent = 'Ошибка соединения с сервером';
+  });
+}
+
+function goToRegisterPage() {
+  var modal = document.getElementById('store-modal');
+  if (modal) modal.classList.remove('open');
+  if (typeof goPage === 'function') goPage('register');
+}
+
+function storeDoRegister() {
+  var shop_name = document.getElementById('reg-shop-name').value.trim();
+  var phone     = document.getElementById('reg-phone').value.trim();
+  var city      = document.getElementById('reg-city').value;
+  var tg        = document.getElementById('reg-tg').value.trim();
+  var password  = document.getElementById('reg-pass').value;
+  var pass2     = document.getElementById('reg-pass2').value;
+  var msgEl     = document.getElementById('reg-msg');
+
+  msgEl.textContent = '';
+
+  if (!phone || !password) {
+    msgEl.style.color = 'var(--red)';
+    msgEl.textContent = 'Телефон и пароль обязательны';
+    return;
+  }
+  if (password.length < 6) {
+    msgEl.style.color = 'var(--red)';
+    msgEl.textContent = 'Пароль минимум 6 символов';
+    return;
+  }
+  if (password !== pass2) {
+    msgEl.style.color = 'var(--red)';
+    msgEl.textContent = 'Пароли не совпадают';
+    return;
+  }
+
+  var btn = document.getElementById('reg-submit-btn');
+  if (btn) { btn.disabled = true; btn.textContent = 'Отправляем заявку…'; }
+  msgEl.style.color = 'var(--gray)';
+  msgEl.textContent = '';
+
+  fetch('/api/shops/register', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ phone, password, shop_name, city, telegram: tg })
+  })
+  .then(function(r) { return r.json().then(function(d) { return { ok: r.ok, d: d }; }); })
+  .then(function(res) {
+    if (btn) { btn.disabled = false; btn.textContent = 'Отправить заявку'; }
+    if (!res.ok) {
+      msgEl.style.color = 'var(--red)';
+      msgEl.textContent = res.d.error || 'Ошибка регистрации';
+      return;
+    }
+    var formEl    = document.getElementById('reg-form-wrap');
+    var successEl = document.getElementById('reg-success');
+    if (formEl)    formEl.style.display   = 'none';
+    if (successEl) successEl.style.display = 'flex';
+  })
+  .catch(function() {
+    if (btn) { btn.disabled = false; btn.textContent = 'Отправить заявку'; }
+    msgEl.style.color = 'var(--red)';
+    msgEl.textContent = 'Ошибка соединения с сервером';
+  });
+}
+
+function shopToast(msg, type) {
+  var el = document.getElementById('toast');
+  if (!el) return;
+  el.className = 'toast' + (type ? ' ' + type : '');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(el._st);
+  el._st = setTimeout(function() { el.classList.remove('show'); }, 3600);
+}
+
+updateShopUI();
+</script>
+
+<!-- ══════════════════════════════════════
+     MAIN MODULE
+══════════════════════════════════════ -->
 <script type="module">
 import { api, isAuth, setTok, clrTok } from './js/api.js';
 import { goPage, toast, closeModal, openModal } from './js/utils.js';
@@ -1466,7 +1538,6 @@ window.setModeAndGo = (mode) => { window.switchHomeMode(mode); window.setCatalog
 /* ══════════════════════════════════════
    REGISTER PAGE helpers
 ══════════════════════════════════════ */
-/* Сбрасываем форму при каждом переходе на страницу */
 window.addEventListener('rbt:page', e => {
   if (e.detail === 'register') {
     const formWrap = document.getElementById('reg-form-wrap');
