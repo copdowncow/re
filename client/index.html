@@ -140,7 +140,6 @@ nav {
   transition: all .2s; white-space: nowrap;
 }
 .btn-shop-login:hover { background: var(--green); border-color: var(--green); color: #fff; }
-/* Когда магазин вошёл */
 .btn-shop-login.logged-in { background: var(--green-l); border-color: rgba(34,160,91,.3); color: var(--green-d); }
 
 .burger {
@@ -235,7 +234,6 @@ nav {
 .dot-shop { background: #2196f3; }
 
 .cats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; }
-
 .cat-card {
   background: #fff; border: 1.5px solid var(--border);
   border-radius: 20px; overflow: hidden; cursor: pointer;
@@ -382,8 +380,6 @@ nav {
    ============================================================ */
 .pd-wrap { display: grid; grid-template-columns: 1fr 1fr; gap: 48px; max-width: 1000px; }
 .pd-gallery { display: flex; flex-direction: column; gap: 12px; }
-.pd-main { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 22px; border: 1.5px solid var(--border); display: block; background: var(--warm); }
-.pd-main-ph { width: 100%; aspect-ratio: 1; border-radius: 22px; border: 1.5px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 7rem; background: var(--warm); }
 .pd-main-img { width: 100%; aspect-ratio: 1; border-radius: 24px; object-fit: cover; background: var(--warm); border: 1.5px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 6rem; overflow: hidden; }
 .pd-main-img img { width: 100%; height: 100%; object-fit: cover; cursor: zoom-in; }
 .pd-thumbs { display: flex; gap: 10px; margin-top: 12px; flex-wrap: wrap; }
@@ -391,11 +387,7 @@ nav {
 .pd-thumb.active { border-color: var(--green); }
 .pd-thumb:hover  { border-color: var(--green-d); }
 .pd-body { display: flex; flex-direction: column; gap: 14px; }
-.pd-chips { display: flex; flex-wrap: wrap; gap: 7px; }
-.pd-chip { padding: 5px 13px; border-radius: 50px; font-size: .74rem; font-weight: 700; letter-spacing: .03em; background: var(--warm); border: 1px solid var(--border); color: var(--mid); }
-.pd-chip.rose { background: var(--green-l); border-color: rgba(34,160,91,.2); color: #0f6b34; }
-.pd-body h2 { font-size: 1.8rem; font-weight: 700; line-height: 1.15; color: var(--black); font-family: 'Cormorant Garamond',serif; margin: 0; }
-.pd-badges { display: flex; gap: 7px; flex-wrap: wrap; margin-bottom: 16px; }
+.pd-badges { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 16px; }
 .pd-badge { padding: 5px 13px; border-radius: 50px; font-size: .72rem; font-weight: 700; letter-spacing: .03em; }
 .pd-badge-eco  { background: var(--green-l); color: #0f6b34; border: 1px solid rgba(34,160,91,.2); }
 .pd-badge-shop { background: #e3f2fd; color: #1565c0; }
@@ -403,8 +395,6 @@ nav {
 .pd-badge-size { background: var(--warm); color: var(--mid); border: 1px solid var(--border); }
 .pd-badge-when { background: #fff8e1; color: #8b6914; border: 1px solid #f0d96e; }
 .pd-title { font-size: 2rem; font-weight: 700; line-height: 1.15; color: var(--black); margin-bottom: 12px; }
-.pd-price { font-size: 2.1rem; font-weight: 800; color: var(--black); font-family: 'Outfit',sans-serif; }
-.pd-desc  { font-size: .95rem; color: var(--mid); line-height: 1.7; margin: 0; }
 .pd-desc-text { font-size: .95rem; color: var(--mid); line-height: 1.7; margin-bottom: 24px; }
 .pd-price-box { background: var(--warm); border: 1.5px solid var(--border); border-radius: 16px; padding: 20px 22px; margin-bottom: 24px; }
 .pd-price-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
@@ -413,23 +403,14 @@ nav {
 .pd-price-value span { font-size: 1rem; font-weight: 500; color: var(--gray); }
 .pd-commission-note { font-size: .78rem; color: var(--gray); padding-top: 10px; border-top: 1px solid var(--border); margin-top: 10px; }
 .pd-actions { display: flex; flex-direction: column; gap: 10px; }
-.pd-actions .btn { width: 100%; padding: 14px 22px; font-size: .95rem; border-radius: 14px; }
 .pd-cart-btn { width: 100%; display: flex; align-items: center; justify-content: center; gap: 10px; padding: 16px 22px; background: linear-gradient(135deg, var(--green) 0%, var(--green-d) 100%); color: #fff; border: none; border-radius: 16px; font-size: 1rem; font-weight: 700; font-family: 'Outfit', sans-serif; cursor: pointer; transition: all .22s; position: relative; overflow: hidden; letter-spacing: .01em; box-shadow: 0 4px 20px rgba(34,160,91,.25); }
 .pd-cart-btn::before { content: ''; position: absolute; top: 0; left: -60%; width: 40%; height: 100%; background: linear-gradient(90deg, transparent, rgba(255,255,255,.2), transparent); transform: skewX(-20deg); transition: left .5s; }
 .pd-cart-btn:hover::before { left: 120%; }
 .pd-cart-btn:hover { transform: translateY(-2px); box-shadow: 0 10px 32px rgba(34,160,91,.45); }
 .pd-cart-btn.added { background: linear-gradient(135deg, #0f6b34 0%, #0d5a2c 100%); box-shadow: none; }
-.share-row { display: flex; align-items: center; gap: 8px; padding: 10px 14px; background: var(--warm); border: 1.5px solid var(--border); border-radius: 12px; font-size: .82rem; color: var(--gray); font-weight: 600; }
-.share-row input { flex: 1; border: none; background: transparent; padding: 0; font-size: .82rem; color: var(--mid); min-width: 0; outline: none; width: auto; }
-.share-row button { padding: 6px 14px; border-radius: 8px; background: var(--green); color: #fff; border: none; font-size: .78rem; font-weight: 700; cursor: pointer; font-family: 'Outfit',sans-serif; transition: background .2s; white-space: nowrap; }
-.share-row button:hover { background: var(--green-d); }
-.pd-info { display: flex; flex-direction: column; gap: 10px; padding: 14px 16px; background: var(--warm); border: 1.5px solid var(--border); border-radius: 14px; font-size: .88rem; color: var(--mid); line-height: 1.5; }
-.pd-info-lbl { font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--gray); margin-bottom: 2px; }
 .pd-contact { grid-column: 1/-1; background: linear-gradient(135deg,#f4faf7 0%,#eef7f2 100%); border: 1.5px solid rgba(34,160,91,.15); border-radius: 20px; padding: 28px 28px 24px; display: flex; flex-direction: column; gap: 16px; }
-.pd-contact > p:first-child { font-size: 1.05rem; font-weight: 700; color: var(--black); margin: 0; }
 .pd-contact-btns { display: flex; flex-wrap: wrap; gap: 10px; }
 .pd-contact-btns .btn { flex: 1; min-width: 140px; }
-.pd-contact-note { font-size: .78rem; color: var(--gray); line-height: 1.5; margin: 0; }
 .btn-ig { background: linear-gradient(135deg,#f09433 0%,#e6683c 25%,#dc2743 50%,#cc2366 75%,#bc1888 100%); color: #fff; display: inline-flex; align-items: center; justify-content: center; gap: 7px; padding: 12px 24px; border-radius: 50px; font-size: .9rem; font-weight: 600; border: none; transition: opacity .2s,transform .2s; text-decoration: none; white-space: nowrap; font-family: 'Outfit',sans-serif; }
 .btn-ig:hover { opacity: .88; transform: translateY(-1px); }
 
@@ -455,6 +436,82 @@ nav {
 .photo-del { position: absolute; top: 4px; right: 4px; width: 22px; height: 22px; border-radius: 50%; background: rgba(0,0,0,.55); color: #fff; border: none; font-size: .7rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background .15s; }
 .photo-del:hover { background: var(--red); }
 #price-preview { display: none; margin-top: 12px; padding: 14px; background: var(--green-l); border-radius: 12px; font-size: .88rem; line-height: 1.9; border: 1.5px solid rgba(34,160,91,.2); }
+
+/* ============================================================
+   REGISTER PAGE — страница регистрации магазина
+   ============================================================ */
+.register-wrap {
+  max-width: 560px; margin: 0 auto;
+}
+.register-hero {
+  background: linear-gradient(135deg, #0f1117 0%, #1e2330 100%);
+  border-radius: 24px; padding: 36px 32px; margin-bottom: 32px;
+  color: #fff; text-align: center; position: relative; overflow: hidden;
+}
+.register-hero::before {
+  content: ''; position: absolute; top: -40px; right: -40px;
+  width: 200px; height: 200px;
+  background: radial-gradient(circle, rgba(34,160,91,.3) 0%, transparent 70%);
+  border-radius: 50%;
+}
+.register-hero::after {
+  content: ''; position: absolute; bottom: -30px; left: -30px;
+  width: 160px; height: 160px;
+  background: radial-gradient(circle, rgba(34,160,91,.15) 0%, transparent 70%);
+  border-radius: 50%;
+}
+.register-hero-icon { font-size: 3rem; margin-bottom: 12px; position: relative; z-index: 1; }
+.register-hero h2 { font-size: 1.9rem; color: #fff; margin-bottom: 8px; position: relative; z-index: 1; }
+.register-hero p { color: rgba(255,255,255,.55); font-size: .9rem; line-height: 1.6; position: relative; z-index: 1; }
+
+.register-steps {
+  display: flex; gap: 0; margin-bottom: 32px;
+  background: var(--warm); border-radius: 16px; padding: 20px 24px;
+  border: 1.5px solid var(--border);
+}
+.reg-step { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center; position: relative; }
+.reg-step:not(:last-child)::after {
+  content: '→'; position: absolute; right: -12px; top: 14px;
+  color: var(--border); font-size: 1rem;
+}
+.reg-step-num { width: 32px; height: 32px; border-radius: 50%; background: var(--green); color: #fff; font-size: .8rem; font-weight: 700; display: flex; align-items: center; justify-content: center; }
+.reg-step span { font-size: .74rem; color: var(--gray); font-weight: 600; }
+
+.register-card {
+  background: #fff; border: 1.5px solid var(--border);
+  border-radius: 24px; padding: 36px 32px;
+  box-shadow: var(--shadow-s);
+}
+.register-card h3 { font-size: 1.35rem; margin-bottom: 6px; }
+.register-card > p { color: var(--gray); font-size: .85rem; margin-bottom: 28px; }
+
+.reg-form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+.reg-form-row .form-group { margin: 0; }
+.form-group + .form-group { margin-top: 16px; }
+.reg-divider { height: 1px; background: var(--border); margin: 24px 0; }
+
+.reg-info-box {
+  background: var(--green-l); border: 1.5px solid rgba(34,160,91,.2);
+  border-radius: 14px; padding: 16px 18px; margin-bottom: 24px;
+  font-size: .83rem; color: #0f6b34; line-height: 1.7;
+}
+.reg-info-box b { display: block; margin-bottom: 4px; font-size: .9rem; }
+
+#reg-msg { margin-top: 14px; font-size: .84rem; text-align: center; line-height: 1.5; min-height: 20px; }
+
+/* Успех */
+#reg-success {
+  display: none; flex-direction: column; align-items: center;
+  text-align: center; gap: 16px; padding: 48px 24px;
+}
+.reg-success-icon {
+  width: 88px; height: 88px; border-radius: 50%;
+  background: linear-gradient(135deg, var(--green) 0%, var(--green-d) 100%);
+  display: flex; align-items: center; justify-content: center; font-size: 2.4rem;
+  box-shadow: 0 12px 32px rgba(34,160,91,.35);
+}
+#reg-success h3 { font-size: 1.6rem; color: var(--black); }
+#reg-success p { color: var(--gray); font-size: .92rem; line-height: 1.7; max-width: 360px; }
 
 /* ============================================================
    ADMIN
@@ -517,7 +574,6 @@ nav {
 .cart-total-value { font-size: 1.4rem; font-weight: 700; color: var(--black); }
 .cart-checkout-btn { width: 100%; padding: 16px; background: var(--green); color: #fff; border: none; border-radius: 16px; font-size: .95rem; font-weight: 700; font-family: 'Outfit',sans-serif; transition: all .22s; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; }
 .cart-checkout-btn:hover { background: var(--green-d); box-shadow: 0 8px 28px rgba(34,160,91,.35); transform: translateY(-1px); }
-.cart-checkout-btn:active { transform: translateY(0); }
 .cart-clear-btn { width: 100%; padding: 10px; background: none; color: var(--gray); border: 1.5px solid var(--border); border-radius: 12px; font-size: .8rem; font-weight: 600; font-family: 'Outfit',sans-serif; transition: all .2s; margin-top: 8px; cursor: pointer; }
 .cart-clear-btn:hover { color: var(--red); border-color: #fca5a5; background: #fef2f2; }
 .cart-note { font-size: .73rem; color: var(--gray); text-align: center; margin-top: 10px; line-height: 1.5; display: flex; align-items: center; justify-content: center; gap: 6px; }
@@ -534,17 +590,6 @@ nav {
 .modal-x:hover { background: var(--border); color: var(--black); }
 .modal h3 { font-size: 1.4rem; margin-bottom: 8px; }
 
-/* Store modal tabs */
-.store-tabs { display: flex; border-bottom: 2px solid var(--border); margin-bottom: 24px; }
-.store-tab-btn {
-  flex: 1; padding: 11px 10px; background: none; border: none;
-  border-bottom: 2.5px solid transparent; margin-bottom: -2px;
-  font-size: .92rem; font-weight: 600; color: var(--gray);
-  cursor: pointer; font-family: 'Outfit', sans-serif;
-  transition: color .2s, border-color .2s;
-}
-.store-tab-btn.active { color: var(--green); border-bottom-color: var(--green); }
-
 /* ============================================================
    TOAST
    ============================================================ */
@@ -554,7 +599,7 @@ nav {
 .toast.err     { background: var(--red); }
 
 /* ============================================================
-   SCROLL-TOP / FOOTER / LIGHTBOX
+   FOOTER / LIGHTBOX
    ============================================================ */
 #scroll-top { display: none; position: fixed; bottom: 28px; right: 24px; width: 44px; height: 44px; background: var(--black); color: #fff; border: none; border-radius: 50%; font-size: 1.1rem; z-index: 800; box-shadow: 0 6px 20px rgba(0,0,0,.2); transition: all .2s; }
 #scroll-top:hover { background: var(--green); transform: translateY(-3px); }
@@ -576,10 +621,13 @@ footer { background: var(--black); color: rgba(255,255,255,.45); text-align: cen
   .pgrid,#pgrid { grid-template-columns: repeat(2,1fr); gap: 14px; }
   .pc-img-wrap,.pcard-img-wrap { height: 170px; }
   .pc-cart-btn,.pcard-cart-btn { font-size: .78rem; padding: 10px 10px; }
+  .reg-form-row { grid-template-columns: 1fr; }
+  .register-card { padding: 24px 20px; }
 }
 @media (max-width: 480px) {
   .pgrid,#pgrid { grid-template-columns: 1fr 1fr; gap: 12px; }
   .cart-drawer { max-width: 100%; border-radius: 20px 20px 0 0; top: auto; height: 92vh; }
+  .register-hero { padding: 28px 20px; }
 }
 @media (max-width: 600px) {
   .hero { padding: 52px 20px 44px; }
@@ -603,6 +651,8 @@ footer { background: var(--black); color: rgba(255,255,255,.45); text-align: cen
   .pcard-body { padding: 12px 12px 10px; }
   .pcard-body h4 { font-size: .9rem; }
   .pprice { font-size: 1rem; }
+  .register-steps { flex-direction: column; gap: 8px; }
+  .reg-step:not(:last-child)::after { content: '↓'; position: static; margin: 0 auto; }
 }
 @media (max-width: 400px) {
   .cats { grid-template-columns: 1fr 1fr; }
@@ -616,9 +666,7 @@ footer { background: var(--black); color: rgba(255,255,255,.45); text-align: cen
 </head>
 <body>
 
-<!-- ══════════════════════════════════════
-     NAV
-══════════════════════════════════════ -->
+<!-- NAV -->
 <nav>
   <div class="nav-wrap">
     <div class="logo" onclick="goPage('home')">rebuket<em>.tj</em></div>
@@ -655,9 +703,7 @@ footer { background: var(--black); color: rgba(255,255,255,.45); text-align: cen
   </div>
 </nav>
 
-<!-- ══════════════════════════════════════
-     CART DRAWER
-══════════════════════════════════════ -->
+<!-- CART DRAWER -->
 <div class="cart-overlay" id="cart-overlay" onclick="closeCart()"></div>
 <div class="cart-drawer" id="cart-drawer">
   <div class="cart-head">
@@ -895,6 +941,124 @@ footer { background: var(--black); color: rgba(255,255,255,.45); text-align: cen
 </div>
 
 <!-- ══════════════════════════════════════
+     REGISTER — Отдельная страница регистрации магазина
+══════════════════════════════════════ -->
+<div id="page-register" class="page">
+  <div class="section">
+    <button class="back" onclick="goPage('home')">← На главную</button>
+
+    <div class="register-wrap">
+
+      <!-- Hero-блок -->
+      <div class="register-hero">
+        <div class="register-hero-icon">🏪</div>
+        <h2>Регистрация магазина</h2>
+        <p>Получите доступ к профессиональному разделу ReBuket и привлекайте покупателей по всему Таджикистану</p>
+      </div>
+
+      <!-- Шаги -->
+      <div class="register-steps">
+        <div class="reg-step">
+          <div class="reg-step-num">1</div>
+          <span>Заполните форму</span>
+        </div>
+        <div class="reg-step">
+          <div class="reg-step-num">2</div>
+          <span>Ждёте одобрения</span>
+        </div>
+        <div class="reg-step">
+          <div class="reg-step-num">3</div>
+          <span>Размещаете товары</span>
+        </div>
+      </div>
+
+      <!-- Форма / Успех -->
+      <div class="register-card">
+
+        <!-- Форма -->
+        <div id="reg-form-wrap">
+          <h3>Данные магазина</h3>
+          <p>Администратор рассмотрит заявку и свяжется с вами</p>
+
+          <div class="reg-info-box">
+            <b>🌿 Зачем регистрироваться?</b>
+            Магазинный раздел видят все покупатели. Вы получаете страницу магазина, аналитику и приоритетное размещение.
+          </div>
+
+          <div class="reg-form-row">
+            <div class="form-group">
+              <label>Название магазина</label>
+              <input type="text" id="reg-shop-name" placeholder="Цветы Душанбе">
+            </div>
+            <div class="form-group">
+              <label>Город *</label>
+              <select id="reg-city">
+                <option value="">— Выберите —</option>
+                <option>Душанбе</option><option>Худжанд</option><option>Куляб</option>
+                <option>Бохтар</option><option>Вахдат</option><option>Турсунзода</option>
+                <option>Исфара</option><option>Шахринав</option><option>Дангара</option>
+                <option>Регар</option><option>Бустон</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Номер телефона *</label>
+            <input type="tel" id="reg-phone" placeholder="+992 900 000000">
+          </div>
+
+          <div class="form-group" style="margin-top:16px">
+            <label>Telegram (необязательно)</label>
+            <input type="text" id="reg-tg" placeholder="@username">
+          </div>
+
+          <div class="reg-divider"></div>
+
+          <div class="reg-form-row">
+            <div class="form-group">
+              <label>Пароль * <span style="color:var(--gray);font-weight:400">(мин. 6 символов)</span></label>
+              <input type="password" id="reg-pass" placeholder="••••••••">
+            </div>
+            <div class="form-group">
+              <label>Повторите пароль *</label>
+              <input type="password" id="reg-pass2" placeholder="••••••••"
+                onkeydown="if(event.key==='Enter')storeDoRegister()">
+            </div>
+          </div>
+
+          <div id="reg-msg"></div>
+
+          <button class="btn btn-primary" id="reg-submit-btn"
+            style="width:100%;padding:15px;margin-top:20px;font-size:.95rem;border-radius:14px"
+            onclick="storeDoRegister()">
+            📩 Отправить заявку на регистрацию
+          </button>
+
+          <p style="font-size:.78rem;color:var(--gray);text-align:center;margin-top:14px;line-height:1.6">
+            Уже есть аккаунт?
+            <button onclick="openStoreModal()" style="background:none;border:none;color:var(--green);font-weight:700;cursor:pointer;font-size:.78rem;font-family:inherit;padding:0">
+              Войти как магазин
+            </button>
+          </p>
+        </div>
+
+        <!-- Успех -->
+        <div id="reg-success">
+          <div class="reg-success-icon">✅</div>
+          <h3>Заявка отправлена!</h3>
+          <p>Администратор рассмотрит вашу заявку и свяжется с вами через Telegram или по телефону. Обычно это занимает до 24 часов.</p>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:8px">
+            <button class="btn btn-primary" onclick="goPage('catalog')">🛍 Смотреть каталог</button>
+            <button class="btn btn-outline" onclick="goPage('home')">🏠 На главную</button>
+          </div>
+        </div>
+
+      </div><!-- /register-card -->
+    </div><!-- /register-wrap -->
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
      ADMIN
 ══════════════════════════════════════ -->
 <div id="page-admin" class="page">
@@ -947,23 +1111,16 @@ footer { background: var(--black); color: rgba(255,255,255,.45); text-align: cen
 </div>
 
 <!-- ══════════════════════════════════════
-     STORE MODAL — Вход и Регистрация
+     STORE LOGIN MODAL — только вход
 ══════════════════════════════════════ -->
 <div class="overlay" id="store-modal">
   <div class="modal">
     <button class="modal-x" onclick="closeModal('store-modal')">✕</button>
 
     <div style="font-size:2.4rem;margin-bottom:10px;text-align:center">🏪</div>
-    <h3 style="text-align:center;margin-bottom:4px">Магазин на ReBuket</h3>
-    <p style="color:var(--gray);font-size:.83rem;text-align:center;margin-bottom:20px">Для профессиональных флористов и магазинов</p>
+    <h3 style="text-align:center;margin-bottom:4px">Вход в магазин</h3>
+    <p style="color:var(--gray);font-size:.83rem;text-align:center;margin-bottom:24px">Для профессиональных флористов и магазинов</p>
 
-    <!-- Табы -->
-    <div class="store-tabs">
-      <button class="store-tab-btn active" id="stab-login" onclick="switchStoreTab('login')">Вход</button>
-      <button class="store-tab-btn"        id="stab-reg"   onclick="switchStoreTab('register')">Регистрация</button>
-    </div>
-
-    <!-- ── ВХОД ── -->
     <div id="store-tab-login">
       <div class="form-group" style="margin-bottom:14px">
         <label>Номер телефона</label>
@@ -979,37 +1136,11 @@ footer { background: var(--black); color: rgba(255,255,255,.45); text-align: cen
         Войти в магазин
       </button>
       <div id="store-login-msg" style="margin-top:12px;font-size:.84rem;text-align:center;line-height:1.5;min-height:20px"></div>
-      <div style="text-align:center;margin-top:14px;font-size:.83rem;color:var(--gray)">
+      <div style="text-align:center;margin-top:16px;font-size:.85rem;color:var(--gray)">
         Нет аккаунта?
-        <button onclick="switchStoreTab('register')" style="background:none;border:none;color:var(--green);font-weight:700;cursor:pointer;font-size:.83rem;font-family:inherit;padding:0">
-          Зарегистрировать магазин
-        </button>
-      </div>
-    </div>
-
-    <!-- ── РЕГИСТРАЦИЯ ── -->
-    <div id="store-tab-register" style="display:none">
-      <div class="form-group" style="margin-bottom:14px">
-        <label>Название магазина</label>
-        <input type="text" id="store-reg-name" placeholder="Цветы Душанбе">
-      </div>
-      <div class="form-group" style="margin-bottom:14px">
-        <label>Номер телефона *</label>
-        <input type="tel" id="store-reg-phone" placeholder="+992 900 000000">
-      </div>
-      <div class="form-group" style="margin-bottom:20px">
-        <label>Пароль * <span style="color:var(--gray);font-weight:400">(минимум 6 символов)</span></label>
-        <input type="password" id="store-reg-pass" placeholder="••••••••"
-          onkeydown="if(event.key==='Enter')storeDoRegister()">
-      </div>
-      <button class="btn btn-primary" style="width:100%;border-radius:14px;padding:14px" onclick="storeDoRegister()">
-        Отправить заявку на регистрацию
-      </button>
-      <div id="store-reg-msg" style="margin-top:12px;font-size:.84rem;text-align:center;line-height:1.5;min-height:20px"></div>
-      <div style="text-align:center;margin-top:14px;font-size:.83rem;color:var(--gray)">
-        Уже есть аккаунт?
-        <button onclick="switchStoreTab('login')" style="background:none;border:none;color:var(--green);font-weight:700;cursor:pointer;font-size:.83rem;font-family:inherit;padding:0">
-          Войти
+        <button onclick="goToRegisterPage()"
+          style="background:none;border:none;color:var(--green);font-weight:700;cursor:pointer;font-size:.85rem;font-family:inherit;padding:0;text-decoration:underline">
+          Зарегистрировать магазин →
         </button>
       </div>
     </div>
@@ -1131,10 +1262,6 @@ window.cartCheckout = () => {
   const msg = encodeURIComponent(`Здравствуйте! Хочу заказать:\n${items}\n\nИтого: ${total.toLocaleString('ru')} сом.`);
   window.open(`https://t.me/rebuket_admin?text=${msg}`, '_blank');
 };
-
-/* ══════════════════════════════════════
-   МАГАЗИН — логика вынесена в /js/shop.js
-══════════════════════════════════════ */
 
 /* ══════════════════════════════════════
    ФОТО-СКРОЛЛ ХЕЛПЕРЫ
@@ -1263,7 +1390,7 @@ window.renderProductDetail = (p) => {
     </div>`;
 
   const infoHtml = `
-    <div class="pd-info">
+    <div class="pd-body">
       <div class="pd-badges">
         <span class="pd-badge ${isEco ? 'pd-badge-eco' : 'pd-badge-shop'}">${isEco ? '🌿 Эко' : '🏪 Магазин'}</span>
         ${p.city      ? `<span class="pd-badge pd-badge-city">📍 ${p.city}</span>` : ''}
@@ -1318,7 +1445,8 @@ window.closeDrawer = () => {
   document.getElementById('burger').classList.remove('open');
   document.getElementById('nav-drawer').classList.remove('open');
 };
-window.closeModal = (id) => document.getElementById(id).classList.remove('open');
+window.closeModal  = (id) => document.getElementById(id).classList.remove('open');
+window.openModal   = (id) => document.getElementById(id).classList.add('open');
 
 window.switchHomeMode = (mode) => {
   document.getElementById('cats-eco').style.display  = mode === 'eco'  ? 'grid' : 'none';
@@ -1334,6 +1462,21 @@ window.setCatalogMode = (mode) => {
   else { banner.className = 'mode-banner shop-banner'; banner.textContent = '🏪 Показаны объявления от профессиональных магазинов'; }
 };
 window.setModeAndGo = (mode) => { window.switchHomeMode(mode); window.setCatalogMode(mode); goPage('catalog'); loadCatalog(); };
+
+/* ══════════════════════════════════════
+   REGISTER PAGE helpers
+══════════════════════════════════════ */
+/* Сбрасываем форму при каждом переходе на страницу */
+window.addEventListener('rbt:page', e => {
+  if (e.detail === 'register') {
+    const formWrap = document.getElementById('reg-form-wrap');
+    const success  = document.getElementById('reg-success');
+    const msg      = document.getElementById('reg-msg');
+    if (formWrap) formWrap.style.display = '';
+    if (success)  success.style.display  = 'none';
+    if (msg)      msg.textContent        = '';
+  }
+});
 
 /* ══════════════════════════════════════
    LIGHTBOX
