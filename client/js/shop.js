@@ -1,8 +1,3 @@
-/* =====================================================
-   shop.js — авторизация магазина (глобальный скрипт)
-   Подключается как обычный <script> (не module),
-   поэтому все функции доступны глобально сразу.
-===================================================== */
 
 function updateShopUI() {
   var name  = localStorage.getItem('shop_name');
@@ -36,20 +31,18 @@ function onShopBtnClick() {
 }
 
 function openStoreModal() {
-  document.getElementById('store-modal').classList.add('open');
-  switchStoreTab('login');
+  var modal = document.getElementById('store-modal');
+  if (modal) modal.classList.add('open');
+  clearLoginForm();
 }
 
-function switchStoreTab(tab) {
-  var isLogin = tab === 'login';
-  document.getElementById('store-tab-login').style.display    = isLogin ? '' : 'none';
-  document.getElementById('store-tab-register').style.display = isLogin ? 'none' : '';
-  document.getElementById('stab-login').classList.toggle('active', isLogin);
-  document.getElementById('stab-reg').classList.toggle('active', !isLogin);
-  var loginMsg = document.getElementById('store-login-msg');
-  var regMsg   = document.getElementById('store-reg-msg');
-  if (loginMsg) loginMsg.textContent = '';
-  if (regMsg)   regMsg.textContent   = '';
+function clearLoginForm() {
+  var phoneEl = document.getElementById('store-phone-login');
+  var passEl  = document.getElementById('store-pass-login');
+  var msgEl   = document.getElementById('store-login-msg');
+  if (phoneEl) phoneEl.value = '';
+  if (passEl)  passEl.value  = '';
+  if (msgEl)   msgEl.textContent = '';
 }
 
 function storeDoLogin() {
@@ -63,8 +56,10 @@ function storeDoLogin() {
     return;
   }
 
+  var btn = document.querySelector('#store-tab-login .btn-primary');
+  if (btn) { btn.disabled = true; btn.textContent = 'Входим…'; }
   msgEl.style.color = 'var(--gray)';
-  msgEl.textContent = 'Входим…';
+  msgEl.textContent = '';
 
   fetch('/api/shops/login', {
     method: 'POST',
@@ -73,6 +68,7 @@ function storeDoLogin() {
   })
   .then(function(r) { return r.json().then(function(d) { return { ok: r.ok, d: d }; }); })
   .then(function(res) {
+    if (btn) { btn.disabled = false; btn.textContent = 'Войти в магазин'; }
     if (!res.ok) {
       msgEl.style.color = 'var(--red)';
       msgEl.textContent = res.d.error || 'Ошибка входа';
@@ -80,24 +76,39 @@ function storeDoLogin() {
     }
     localStorage.setItem('shop_token', res.d.token);
     localStorage.setItem('shop_name',  res.d.shop_name || res.d.phone);
-    document.getElementById('store-phone-login').value = '';
-    document.getElementById('store-pass-login').value  = '';
-    msgEl.textContent = '';
+    clearLoginForm();
     document.getElementById('store-modal').classList.remove('open');
     updateShopUI();
     shopToast('✅ Добро пожаловать, ' + (res.d.shop_name || res.d.phone) + '!', 'success');
   })
   .catch(function() {
+    if (btn) { btn.disabled = false; btn.textContent = 'Войти в магазин'; }
     msgEl.style.color = 'var(--red)';
     msgEl.textContent = 'Ошибка соединения с сервером';
   });
 }
 
+/* =====================================================
+   РЕГИСТРАЦИЯ МАГАЗИНА — отдельная страница
+===================================================== */
+
+function goToRegisterPage() {
+  /* Закрываем модал входа, переходим на страницу регистрации */
+  var modal = document.getElementById('store-modal');
+  if (modal) modal.classList.remove('open');
+  if (typeof goPage === 'function') goPage('register');
+}
+
 function storeDoRegister() {
-  var shop_name = document.getElementById('store-reg-name').value.trim();
-  var phone     = document.getElementById('store-reg-phone').value.trim();
-  var password  = document.getElementById('store-reg-pass').value;
-  var msgEl     = document.getElementById('store-reg-msg');
+  var shop_name = document.getElementById('reg-shop-name').value.trim();
+  var phone     = document.getElementById('reg-phone').value.trim();
+  var city      = document.getElementById('reg-city').value;
+  var tg        = document.getElementById('reg-tg').value.trim();
+  var password  = document.getElementById('reg-pass').value;
+  var pass2     = document.getElementById('reg-pass2').value;
+  var msgEl     = document.getElementById('reg-msg');
+
+  msgEl.textContent = '';
 
   if (!phone || !password) {
     msgEl.style.color = 'var(--red)';
@@ -109,29 +120,44 @@ function storeDoRegister() {
     msgEl.textContent = 'Пароль минимум 6 символов';
     return;
   }
+  if (password !== pass2) {
+    msgEl.style.color = 'var(--red)';
+    msgEl.textContent = 'Пароли не совпадают';
+    return;
+  }
 
+  var btn = document.getElementById('reg-submit-btn');
+  if (btn) { btn.disabled = true; btn.textContent = 'Отправляем заявку…'; }
   msgEl.style.color = 'var(--gray)';
-  msgEl.textContent = 'Отправляем заявку…';
+  msgEl.textContent = '';
 
   fetch('/api/shops/register', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ phone: phone, password: password, shop_name: shop_name })
+    body: JSON.stringify({
+      phone:     phone,
+      password:  password,
+      shop_name: shop_name,
+      city:      city,
+      telegram:  tg
+    })
   })
   .then(function(r) { return r.json().then(function(d) { return { ok: r.ok, d: d }; }); })
   .then(function(res) {
+    if (btn) { btn.disabled = false; btn.textContent = 'Отправить заявку'; }
     if (!res.ok) {
       msgEl.style.color = 'var(--red)';
       msgEl.textContent = res.d.error || 'Ошибка регистрации';
       return;
     }
-    msgEl.style.color = '#0f6b34';
-    msgEl.textContent = '✅ Заявка отправлена! Администратор рассмотрит её и одобрит доступ.';
-    document.getElementById('store-reg-name').value  = '';
-    document.getElementById('store-reg-phone').value = '';
-    document.getElementById('store-reg-pass').value  = '';
+    /* Успех — показываем финальный экран */
+    var formEl    = document.getElementById('reg-form-wrap');
+    var successEl = document.getElementById('reg-success');
+    if (formEl)    formEl.style.display   = 'none';
+    if (successEl) successEl.style.display = 'flex';
   })
   .catch(function() {
+    if (btn) { btn.disabled = false; btn.textContent = 'Отправить заявку'; }
     msgEl.style.color = 'var(--red)';
     msgEl.textContent = 'Ошибка соединения с сервером';
   });
